@@ -1,0 +1,41 @@
+.background{
+    background-color: #f5f5f5;
+    height: 100vh;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    /* background-image: url("./pokerBackground.png"); */
+    background-image: url("./wheelBackground.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.connectWalletBackground{
+    background-color: #f5f5f5;
+    height: 100vh;
+    width: 100%;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: -1;
+    background-image: url("./ConnectWallet.png");
+    background-size: cover;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+/* .btn-primary{
+    background-color: #9e79e2;
+    border-color: #ffffff;
+    color: #000000;
+} */
+
+.title{
+    font-family: 'Crimson Text', serif;
+    font-size: 50px;
+    font-weight: bold;
+    color: #000000;
+}

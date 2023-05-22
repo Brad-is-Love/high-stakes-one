@@ -2,7 +2,7 @@ import React from "react";
 
 export function Loading() {
   return (
-    <div
+    <div className="background"
       style={{
         position: "fixed",
         zIndex: 2,
@@ -10,7 +10,6 @@ export function Loading() {
         left: 0,
         width: "100%",
         height: "100%",
-        background: "rgba(255, 255, 255, 0.5)",
       }}
     >
       <div
@@ -26,9 +25,18 @@ export function Loading() {
           textAlign: "center",
         }}
       >
-        <div className="spinner-border" role="status">
+        {/* huge thick spinner */}
+        <div
+          className="spinner-border text-warning"
+          role="status"
+          style={{
+            fontWeight: "extra-bold",
+            width: "100px",
+            height: "100px",
+          }}
+        >
           <span className="sr-only">Loading...</span>
-        </div>
+          </div>
       </div>
     </div>
   );

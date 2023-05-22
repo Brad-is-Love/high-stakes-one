@@ -20,7 +20,7 @@ import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { NoTokensMessage } from "./NoTokensMessage";
 
 // This is the default id used by the Hardhat Network
-const HARDHAT_NETWORK_ID = '31337';
+const HARDHAT_NETWORK_ID = "31337";
 
 // This is an error code that indicates that the user canceled a transaction
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
@@ -72,8 +72,8 @@ export class Dapp extends React.Component {
     // clicks a button. This callback just calls the _connectWallet method.
     if (!this.state.selectedAddress) {
       return (
-        <ConnectWallet 
-          connectWallet={() => this._connectWallet()} 
+        <ConnectWallet
+          connectWallet={() => this._connectWallet()}
           networkError={this.state.networkError}
           dismiss={() => this._dismissNetworkError()}
         />
@@ -88,71 +88,77 @@ export class Dapp extends React.Component {
 
     // If everything is loaded, we render the application.
     return (
-      <div className="container p-4">
-        <div className="row">
-          <div className="col-12">
-            <h1>
-              {this.state.tokenData.name} ({this.state.tokenData.symbol})
-            </h1>
-            <p>
-              Welcome <b>{this.state.selectedAddress}</b>, you have{" "}
-              <b>
-                {this.state.balance.toString()} {this.state.tokenData.symbol}
-              </b>
-              .
-            </p>
+      <div className="background">
+        <div className="container p-3">
+          <div className="row p-3 justify-content-center">
+            <div className="col-8 shadow bg-white rounded ">
+              <h1 className="text-center title">HIGH STAKES</h1>
+              <p className="text-center">
+                Welcome <b>{this.state.selectedAddress}</b>, you have{" "}
+                <b>
+                  {this.state.balance.toString()} {this.state.tokenData.symbol}
+                </b>
+                .
+              </p>
+              <p className="text-center">
+                Stake your ONE with everyone else's. Rewards are paid monthly
+                via a lottery!
+              </p>
+            </div>
           </div>
-        </div>
 
-        <hr />
+          <hr />
 
-        <div className="row">
-          <div className="col-12">
-            {/* 
+          <div className="row my-1">
+            <div className="col-12">
+              {/* 
               Sending a transaction isn't an immediate action. You have to wait
               for it to be mined.
               If we are waiting for one, we show a message here.
             */}
-            {this.state.txBeingSent && (
-              <WaitingForTransactionMessage txHash={this.state.txBeingSent} />
-            )}
+              {this.state.txBeingSent && (
+                <WaitingForTransactionMessage txHash={this.state.txBeingSent} />
+              )}
 
-            {/* 
+              {/* 
               Sending a transaction can fail in multiple ways. 
               If that happened, we show a message here.
             */}
-            {this.state.transactionError && (
-              <TransactionErrorMessage
-                message={this._getRpcErrorMessage(this.state.transactionError)}
-                dismiss={() => this._dismissTransactionError()}
-              />
-            )}
+              {this.state.transactionError && (
+                <TransactionErrorMessage
+                  message={this._getRpcErrorMessage(
+                    this.state.transactionError
+                  )}
+                  dismiss={() => this._dismissTransactionError()}
+                />
+              )}
+            </div>
           </div>
-        </div>
 
-        <div className="row">
-          <div className="col-12">
-            {/*
+          <div className="row">
+            <div className="col-12">
+              {/*
               If the user has no tokens, we don't show the Transfer form
             */}
-            {this.state.balance.eq(0) && (
-              <NoTokensMessage selectedAddress={this.state.selectedAddress} />
-            )}
+              {this.state.balance.eq(0) && (
+                <NoTokensMessage selectedAddress={this.state.selectedAddress} />
+              )}
 
-            {/*
+              {/*
               This component displays a form that the user can use to send a 
               transaction and transfer some tokens.
               The component doesn't have logic, it just calls the transferTokens
               callback.
             */}
-            {this.state.balance.gt(0) && (
-              <Transfer
-                transferTokens={(to, amount) =>
-                  this._transferTokens(to, amount)
-                }
-                tokenSymbol={this.state.tokenData.symbol}
-              />
-            )}
+              {this.state.balance.gt(0) && (
+                <Transfer
+                  transferTokens={(to, amount) =>
+                    this._transferTokens(to, amount)
+                  }
+                  tokenSymbol={this.state.tokenData.symbol}
+                />
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -171,7 +177,9 @@ export class Dapp extends React.Component {
 
     // To connect to the user's wallet, we have to run this method.
     // It returns a promise that will resolve to the user's address.
-    const [selectedAddress] = await window.ethereum.request({ method: 'eth_requestAccounts' });
+    const [selectedAddress] = await window.ethereum.request({
+      method: "eth_requestAccounts",
+    });
 
     // Once we have the address, we can initialize the application.
 
@@ -186,11 +194,11 @@ export class Dapp extends React.Component {
       // `accountsChanged` event can be triggered with an undefined newAddress.
       // This happens when the user removes the Dapp from the "Connected
       // list of sites allowed access to your addresses" (Metamask > Settings > Connections)
-      // To avoid errors, we reset the dapp state 
+      // To avoid errors, we reset the dapp state
       if (newAddress === undefined) {
         return this._resetState();
       }
-      
+
       this._initialize(newAddress);
     });
   }
@@ -345,7 +353,7 @@ export class Dapp extends React.Component {
   }
 
   async _switchChain() {
-    const chainIdHex = `0x${HARDHAT_NETWORK_ID.toString(16)}`
+    const chainIdHex = `0x${HARDHAT_NETWORK_ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: chainIdHex }],
