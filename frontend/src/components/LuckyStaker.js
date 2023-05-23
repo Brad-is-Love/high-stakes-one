@@ -1,34 +1,7 @@
 import React, { useState } from "react";
-
-// EnterForm component
-const EnterForm = ({ transferTokens, tokenSymbol }) => {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    // Handle form submission logic for Enter option
-    // ...
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      {/* Enter form specific fields and UI */}
-    </form>
-  );
-};
-
-// WithdrawForm component
-const WithdrawForm = ({ transferTokens, tokenSymbol }) => {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    // Handle form submission logic for Withdraw option
-    // ...
-  };
-
-  return (
-    <form onSubmit={handleSubmit}>
-      {/* Withdraw form specific fields and UI */}
-    </form>
-  );
-};
+import { EnterForm } from "./EnterForm";
+import { WithdrawForm } from "./WithdrawForm";
+import { LuckyStakerRules } from "./LuckyStakerRules";
 
 // PrizesForm component
 const PrizesForm = ({ transferTokens, tokenSymbol }) => {
@@ -46,7 +19,7 @@ const PrizesForm = ({ transferTokens, tokenSymbol }) => {
 };
 
 // Transfer component
-export function Transfer({ transferTokens, tokenSymbol }) {
+export function LuckyStaker({ transferTokens, tokenSymbol }) {
   const [selectedOption, setSelectedOption] = useState("enter");
 
   const handleOptionChange = (option) => {
@@ -70,25 +43,27 @@ export function Transfer({ transferTokens, tokenSymbol }) {
   }
 
   return (
-    <div className="card p-3">
+    <>
+    <div className="card p-3 mb-5">
       <div className="row">
         <div className="col-12 text-center">
-          <h4>Stake ONE to enter the lottery</h4>
+          <h4>Lucky Staker</h4>
+          <p>Stake your ONE in a pool with other players. A monthly draw determines who gets the rewards!</p>
         </div>
       </div>
       <div className="row pb-2">
         <div className="col-md-6">
-          <h6>Current pot: 78,900 ONE</h6>
+          <h6>Next draw's prize pool: 78,900 ONE</h6>
         </div>
         <div className="col-md-6 text-md-right">
           <h6>Drawn in: 241:51:49</h6>
         </div>
       </div>
-      <div className="btn-group">
+      <div className="btn-group pb-3">
         <button
           type="button"
           className={`btn ${
-            selectedOption === "enter" ? "btn-primary" : "btn-secondary"
+            selectedOption === "enter" ? "btn-primary" : "btn-outline-primary"
           }`}
           onClick={() => handleOptionChange("enter")}
         >
@@ -97,7 +72,7 @@ export function Transfer({ transferTokens, tokenSymbol }) {
         <button
           type="button"
           className={`btn ${
-            selectedOption === "withdraw" ? "btn-primary" : "btn-secondary"
+            selectedOption === "withdraw" ? "btn-primary" : "btn-outline-primary"
           }`}
           onClick={() => handleOptionChange("withdraw")}
         >
@@ -106,7 +81,7 @@ export function Transfer({ transferTokens, tokenSymbol }) {
         <button
           type="button"
           className={`btn ${
-            selectedOption === "prizes" ? "btn-primary" : "btn-secondary"
+            selectedOption === "prizes" ? "btn-primary" : "btn-outline-primary"
           }`}
           onClick={() => handleOptionChange("prizes")}
         >
@@ -114,6 +89,9 @@ export function Transfer({ transferTokens, tokenSymbol }) {
         </button>
       </div>
       {formComponent}
+      
     </div>
+    <LuckyStakerRules/>
+    </>
   );
 }

@@ -20,22 +20,14 @@ export function Loading() {
           left: "50%",
           width: "100px",
           height: "50px",
-          marginLeft: "-50px",
-          marginTop: " -25px",
+          marginLeft: "-100px",
+          marginTop: " -13px",
           textAlign: "center",
         }}
       >
-        {/* huge thick spinner */}
-        <div
-          className="spinner-border text-warning"
-          role="status"
-          style={{
-            fontWeight: "extra-bold",
-            width: "100px",
-            height: "100px",
-          }}
-        >
-          <span className="sr-only">Loading...</span>
+        {/* loading bar */}
+        <div>
+          <span className="loader"></span>
           </div>
       </div>
     </div>

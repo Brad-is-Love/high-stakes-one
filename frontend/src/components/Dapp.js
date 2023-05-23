@@ -14,7 +14,7 @@ import contractAddress from "../contracts/contract-address.json";
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
-import { Transfer } from "./Transfer";
+import { LuckyStaker } from "./LuckyStaker";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { NoTokensMessage } from "./NoTokensMessage";
@@ -88,21 +88,16 @@ export class Dapp extends React.Component {
 
     // If everything is loaded, we render the application.
     return (
-      <div className="background">
+      <>
+      <div className="background"></div>
         <div className="container p-3">
-          <div className="row p-3 justify-content-center">
-            <div className="col-8 shadow bg-white rounded ">
+          <div className="row p-3 justify-content-center align-items-center">
+            <div className="col-8 shadow bg-white rounded">
               <h1 className="text-center title">HIGH STAKES</h1>
+              <p className="text-center text-danger">WARNING: Alpha Version. Contracts are not audited.</p>
               <p className="text-center">
-                Welcome <b>{this.state.selectedAddress}</b>, you have{" "}
-                <b>
-                  {this.state.balance.toString()} {this.state.tokenData.symbol}
-                </b>
-                .
-              </p>
-              <p className="text-center">
-                Stake your ONE with everyone else's. Rewards are paid monthly
-                via a lottery!
+                {/* left 4 and right 4 characters of address */}
+                Welcome <b>{this.state.selectedAddress.slice(0, 3)}...{this.state.selectedAddress.slice(-3)}</b>
               </p>
             </div>
           </div>
@@ -151,7 +146,7 @@ export class Dapp extends React.Component {
               callback.
             */}
               {this.state.balance.gt(0) && (
-                <Transfer
+                <LuckyStaker
                   transferTokens={(to, amount) =>
                     this._transferTokens(to, amount)
                   }
@@ -161,7 +156,7 @@ export class Dapp extends React.Component {
             </div>
           </div>
         </div>
-      </div>
+      </>
     );
   }
 
