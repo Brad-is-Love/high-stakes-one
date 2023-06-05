@@ -1,19 +1,50 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.9;
 
-/// @title A contract that allows users to stake ONE tokens where rewards are paid out in a lottery
-/// @notice This contract is not yet audited 
+import { StakingPrecompiles, Directive } from "./StakingPrecompiles.sol";
+/// @title This contract holds the list of entrants for the lottery and the logic to add and remove them. The lottery functionality is in Lottery.sol
+/// @notice This contract is not yet audited and the owner is not yet a multi-sig wallet 
 
-// Lottery opens, the StONE price is saved as openingPrice
-// 1 ticket is ticketPrice x current StONE price / openingPrice
-// When it closes, the prize pool is tickets * ticketPrice * (closingPrice - openingPrice)
+contract StakingContract is StakingPrecompiles {
 
+    event StakingPrecompileCalled(uint8 directive, bool success);
+
+    function acceptMoney() public payable {
+    }
+
+    function _delegate(address validatorAddress, uint256 amount) public returns (bool success) {
+        uint256 result = delegate(validatorAddress, amount);
+        success = result != 0;
+        emit StakingPrecompileCalled(uint8(Directive.DELEGATE), success);
+    }
+
+    function _undelegate(address validatorAddress, uint256 amount) public returns (bool success) {
+        uint256 result = undelegate(validatorAddress, amount);
+        success = result != 0;
+        emit StakingPrecompileCalled(uint8(Directive.UNDELEGATE), success);
+    }
+
+    function _collectRewards() public returns (bool success) {
+        uint256 result = collectRewards();
+        success = result != 0;
+        emit StakingPrecompileCalled(uint8(Directive.COLLECT_REWARDS), success);
+    }
+}
+
+contract Entrants {
+    address public manager;
+    mapping(address => uint) public tickets;
+    mapping(address => uint[]) public participantIndices;
+    address[] public participants;
+}
 
 contract Lottery {
     address public manager;
+    uint public totalStaked;
     uint public ticketPrice;
     mapping(address => uint) public tickets;
     mapping(address => uint[]) public participantIndices;
+    //split the participants arrays into 100s,1000s,10000s,100000s,1000000s
     address[] public participants;
     uint public winnerIndex;
 
@@ -24,6 +55,12 @@ contract Lottery {
     constructor() {
         manager = msg.sender;
         ticketPrice = 1 ether; // Set the ticket price to 1 ether, you can adjust this as needed
+    }
+
+    function getPrice() public view returns (uint) {
+        //get the APY of the stakers...? Maybe just collect rewards and then calculate...
+        //get rewards
+        //calculate APY
     }
 
     function buyTickets(uint ticketCount) public payable {
