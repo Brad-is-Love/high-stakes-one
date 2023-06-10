@@ -57,3 +57,28 @@
       background-position: 0 0;
     }
   }
+
+/* btn primary colors */
+.btn-primary {
+    color: #fff;
+    background-color: #303030;
+    border-color: #303030;
+}
+
+.btn-outline-primary {
+    color: #303030;
+    border-color: #303030;
+}
+
+/* change h1 to override the bootstrap h1 */
+.special {
+    font-family: 'Crimson Text', serif;
+    font-size: 60px;
+    font-weight: bold;
+    color: #000000;
+}
+
+.custom-nav-bg{
+    background-color: rgb(48, 48, 48, 0.5);
+
+}

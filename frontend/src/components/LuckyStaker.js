@@ -44,11 +44,11 @@ export function LuckyStaker({ transferTokens, tokenSymbol }) {
 
   return (
     <>
-    <div className="card p-3 mb-5">
+    <div className="card p-4 mb-5 mx-5 mt-1">
       <div className="row">
         <div className="col-12 text-center">
           <h4>Lucky Staker</h4>
-          <p>Stake your ONE in a pool with other players. A monthly draw determines who gets the rewards!</p>
+          <p>Stake in a pool with other players. A monthly draw determines who gets the rewards!</p>
         </div>
       </div>
       <div className="row pb-2">
@@ -56,7 +56,7 @@ export function LuckyStaker({ transferTokens, tokenSymbol }) {
           <h6>Next draw's prize pool: 78,900 ONE</h6>
         </div>
         <div className="col-md-6 text-md-right">
-          <h6>Drawn in: 241:51:49</h6>
+          <h6>Drawn in: 21:51:49</h6>
         </div>
       </div>
       <div className="btn-group pb-3">

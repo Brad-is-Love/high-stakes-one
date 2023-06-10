@@ -8,14 +8,13 @@ export function EnterForm({ transferTokens, tokenSymbol }) {
   };
 
   const [tickets, setTickets] = useState(0);
-  const price = 100.18;
 
   const handleTicketsChange = (event) => {
     setTickets(event.target.value);
   };
 
   const handleMaxClick = () => {
-    setTickets(100);
+    setTickets(10000);
   };
 
   return (
@@ -23,7 +22,7 @@ export function EnterForm({ transferTokens, tokenSymbol }) {
       <div className="row">
         <div className="col-12">
           <div className="form-group">
-            <label htmlFor="tickets">How many tickets do you want?</label>
+            <label htmlFor="tickets">How much do you want to stake?</label>
             <div className="input-group">
               <input
                 type="number"
@@ -47,11 +46,11 @@ export function EnterForm({ transferTokens, tokenSymbol }) {
           </div>
         </div>
         <div className="col-md-6">
-          <p>Current ticket price: {price} ONE</p>
+          <p>Minimum Stake: 100 ONE</p>
         </div>
       </div>
       <button type="submit" className="btn btn-primary">
-        Stake {Math.round(tickets * price * 100) / 100} ONE to enter
+        Stake {tickets} ONE to enter
       </button>
     </form>
   );

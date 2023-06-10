@@ -18,6 +18,7 @@ import { LuckyStaker } from "./LuckyStaker";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { NoTokensMessage } from "./NoTokensMessage";
+import { Nav } from "./Nav";
 
 // This is the default id used by the Hardhat Network
 const HARDHAT_NETWORK_ID = "31337";
@@ -89,21 +90,11 @@ export class Dapp extends React.Component {
     // If everything is loaded, we render the application.
     return (
       <>
-      <div className="background"></div>
-        <div className="container p-3">
-          <div className="row p-3 justify-content-center align-items-center">
-            <div className="col-8 shadow bg-white rounded">
-              <h1 className="text-center title">HIGH STAKES</h1>
-              <p className="text-center text-danger">WARNING: Alpha Version. Contracts are not audited.</p>
-              <p className="text-center">
-                {/* left 4 and right 4 characters of address */}
-                Welcome <b>{this.state.selectedAddress.slice(0, 3)}...{this.state.selectedAddress.slice(-3)}</b>
-              </p>
-            </div>
-          </div>
-
-          <hr />
-
+        <div className="background"></div>
+        <Nav selectedAddress={this.state.selectedAddress} />
+        <div className="app bg-light">
+        <div className="container p-3 mt-2">
+        
           <div className="row my-1">
             <div className="col-12">
               {/* 
@@ -130,7 +121,7 @@ export class Dapp extends React.Component {
             </div>
           </div>
 
-          <div className="row">
+          <div className="row ">
             <div className="col-12">
               {/*
               If the user has no tokens, we don't show the Transfer form
@@ -156,8 +147,15 @@ export class Dapp extends React.Component {
             </div>
           </div>
         </div>
+        </div>
       </>
     );
+  }
+
+  //mount component
+  async componentDidMount() {
+    //intialize the dapp
+    this._connectWallet();
   }
 
   componentWillUnmount() {
