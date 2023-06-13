@@ -196,14 +196,14 @@ contract Delegator is StakingPrecompiles {
     function validatorSelection(bool _enter) internal view returns (address) {
         address validator = validators[0];
         if(_enter){
-            //if entering, find the validator with the least amount staked (by us) and stake there
+            //if entering, find the validator with the least amount staked and stake there
             for(uint i=1;i<validators.length;i++){
                 if(stakedToValidators[validators[i]] < stakedToValidators[validator]){
                     validator = validators[i];
                 }
             }
         } else {
-            //if withdrawing, find the validator with the most amount staked (by us) and withdraw from there
+            //if withdrawing, find the validator with the most amount staked and withdraw from there
             for(uint i=1;i<validators.length;i++){
                 if(stakedToValidators[validators[i]] > stakedToValidators[validator]){
                     validator = validators[i];
