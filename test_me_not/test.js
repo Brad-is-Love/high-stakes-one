@@ -73,7 +73,7 @@ describe("TestStaker check, fund and withdraw", function () {
 //     it("fund contract", async function () {
 //         await testStaker.acceptMoney({value: ethers.utils.parseEther("100.0")});
 //         expect(await ethers.provider.getBalance(testStaker.address)).to.equal(ethers.utils.parseEther("100.0"));
-//         // will need to use the harmony SDK to check it's been staked
+        
 
 
 
