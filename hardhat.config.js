@@ -1,11 +1,17 @@
 require("@nomicfoundation/hardhat-toolbox");
+require('dotenv').config();
 
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   networks: {
     docker: {
       url: "http://localhost:9599",
-    }
+    },
+    testnet: {
+      url: "https://api.s0.b.hmny.io",
+      accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ACC1_PRIVATE_KEY, process.env.ACC2_PRIVATE_KEY],
+      chainId: 1666700000,
+    },
   },
   solidity: {
     compilers: [

@@ -1,7 +1,6 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
-
 before(async function () {
   console.log("Before:");
   [owner] = await ethers.getSigners();
