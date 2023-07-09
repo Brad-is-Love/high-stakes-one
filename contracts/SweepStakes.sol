@@ -3,44 +3,28 @@
 
 pragma solidity ^0.8.9;
 
-// A system where users can stake ONE in a pool and receive rewards by lottery
-
-/*
-
-- Users can unstake, sets an endEpoch to allow withdrawals
-- Owner can rebalance
-- Users can always unstake, takes from top validator first then the others
-- Has roles: owner, lottery
-- Returns address from index
-- Pays out winner if called by lottery
-- Has totalStaked and totalStakers
-- Zeros an NFT and resets owner if withdrawn
-- Can't leave a ticket of less than 100 ONE
-- Reallocates zeroed NFTs  
-- Every 100th token is a checkpoint
-*/
-
-import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
-import "@openzeppelin/contracts/access/Ownable.sol";
-import "../StakingContract.sol";
+import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
+import "./lib/StakingContract.sol";
 
 /// @title SweepStakesNFTs
 /// @notice Users can stake ONE in a pool and receive rewards by lottery
-/// @dev Users receive an NFT which is there ticket to the lottery.
+/// @dev Users receive an NFT which is their ticket to the lottery.
 ///      It stores the amount they've staked and manages unstaking.
 ///      The lottery contract calls the addressAtIndex function to find the winner.
 ///      This iterates through all the holders, summing the amount staked.
-contract SweepStakesNFTs is ERC721, Ownable, StakingContract {
+contract SweepStakesNFTs is ERC721Enumerable, StakingContract {
+    uint256 public undelegationPeriod = 7; //epochs
     uint256 public tokenCounter;
     uint256[] public availableTokenIds;
     uint256 public totalStaked;
-    uint256 public initiateMoveEpoch;
-    uint256 public moving;
-    uint256 public undelegationPeriod = 7; //epochs
     uint256 public drawPeriod;
     uint256 public lastDrawTime;
+    uint256 public prizeFee; //As a percentage
+    uint256 public ownerHoldings;
+    address payable public owner;
+    StakingHelper public stakingHelper;
+    uint256 public minStake = 100 ether;
 
-    Lottery public lottery;
     struct tokenInfo {
         uint256 staked;
         uint256 unstaked;
@@ -52,19 +36,28 @@ contract SweepStakesNFTs is ERC721, Ownable, StakingContract {
     // every 100 tokens is a checkpoint, with the total up to there
     // saves gas when iterating
     mapping(uint256 => uint256) public checkpoints;
-    address[] public validators;
 
-    constructor() ERC721("SweepStakesNFTs", "SSN") {
+    constructor() ERC721("Sweepstakes NFTs", "SSN") {
         tokenCounter = 0;
-        owner = msg.sender;
-        lottery = new Lottery(address(this), msg.sender);
+        owner = payable(msg.sender);
         drawPeriod = 7 days;
+        lastDrawTime = block.timestamp;
+        prizeFee = 5;
+        stakingHelper = new StakingHelper(address(this));
+    }
+
+    //NEED TO DO THE FEES AND OWNER WITHDRAWAL
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
     }
 
     // - Users can enter/stake
     function stake(uint256 _amount) external payable {
-        require(msg.value == _amount, "Must send the correct amount of ONE");
-        require(_amount >= 100 ether, "Must stake at least 100 ONE");
+        require(msg.value == _amount, "Wrong Amount");
+        require(_amount >= minStake, "Too low");
+        stakingHelper.delegateToMany(_amount);
         //check if user owns tokens
         if (balanceOf(msg.sender) == 0) {
             // if not, mint one
@@ -94,7 +87,7 @@ contract SweepStakesNFTs is ERC721, Ownable, StakingContract {
         tokenIdToInfo[tokenId].endEpoch = _epoch() + undelegationPeriod;
         checkpoints[tokenId / 100] -= _amount;
         totalStaked -= _amount;
-        require(undelegateFromMany(_amount), "Undelegate failed");
+        stakingHelper.undelegateFromMany(_amount);
     }
 
     //withdraw - will send the unstaked amount to the user
@@ -103,7 +96,7 @@ contract SweepStakesNFTs is ERC721, Ownable, StakingContract {
     function withdraw() external {
         uint256 tokenId = tokenOfOwnerByIndex(msg.sender, 0);
         require(
-            tokenIdToInfo[tokenId].endEpoch <= _epoch(),
+            tokenIdToInfo[tokenId].endEpoch <= stakingHelper._epoch(),
             "Must wait until undelegation complete"
         );
         uint256 amount = tokenIdToInfo[tokenId].unstaked;
@@ -134,7 +127,6 @@ contract SweepStakesNFTs is ERC721, Ownable, StakingContract {
     }
 
     function burn(uint256 _tokenId) internal {
-        checkpoints[tokenId / 100 + 1] -= _value;
         _burn(_tokenId);
         delete tokenIdToInfo[_tokenId];
         // make token available for reuse
@@ -149,27 +141,33 @@ contract SweepStakesNFTs is ERC721, Ownable, StakingContract {
         uint256 amount = claimRewards();
         //get the token of the winner and add the amount to the prizes
         uint256 tokenId = tokenOfOwnerByIndex(winner, 0);
-        tokenIdToInfo[tokenId].prizes += amount;
+        tokenIdToInfo[tokenId].prizes += (amount * (100 - prizeFee)) / 100;
+        ownerHoldings += (amount * prizeFee) / 100;
         lastDrawTime = block.timestamp;
     }
 
     // claims rewards for the entire pool and returns the amount claimed
     function claimRewards() internal returns (uint256) {
         uint256 initialBalance = address(this).balance;
-        require(_collectRewards(), "Collect rewards failed");
+        stakingHelper.collect();
         uint256 finalBalance = address(this).balance;
         return finalBalance - initialBalance;
     }
 
+    function ownerWithdraw() external onlyOwner {
+        uint256 amount = ownerHoldings;
+        ownerHoldings = 0;
+        payable(msg.sender).transfer(amount);
+    }
+
     //owner can claim prizes
-    function claimPrizes() {
+    function claimPrizes() external {
         uint256 tokenId = tokenOfOwnerByIndex(msg.sender, 0);
         uint256 amount = tokenIdToInfo[tokenId].prizes;
         tokenIdToInfo[tokenId].prizes = 0;
         payable(msg.sender).transfer(amount);
     }
 
-    // This function is called by the lottery contract
     // Iterates through checkpoints first, then through addresses
     // This is done to save gas: should be able to get 50-100k address in here on harmony
     function addressAtIndex(uint256 _index) public view returns (address) {
@@ -192,7 +190,60 @@ contract SweepStakesNFTs is ERC721, Ownable, StakingContract {
         return address(0);
     }
 
-    function delegateToMany(uint256 _amount) internal {
+    function setDrawPeriod(uint256 _drawPeriod) external onlyOwner {
+        drawPeriod = _drawPeriod;
+    }
+
+    function setUndelegationPeriod(
+        uint256 _undelegationPeriod
+    ) external onlyOwner {
+        undelegationPeriod = _undelegationPeriod;
+    }
+
+    function setPrizeFee(uint256 _prizeFee) external onlyOwner {
+        prizeFee = _prizeFee;
+    }
+
+    function setMinStake(uint256 _minStake) external onlyOwner {
+        minStake = _minStake;
+    }
+
+    function vrf() internal view returns (uint256 result) {
+        uint256[1] memory bn;
+        bn[0] = block.number;
+        assembly {
+            let memPtr := mload(0x40)
+            if iszero(staticcall(not(0), 0xff, bn, 0x20, memPtr, 0x20)) {
+                invalid()
+            }
+            result := mload(memPtr)
+        }
+    }
+}
+
+contract StakingHelper is StakingContract {
+    address[] public validators;
+    address public owner;
+    address public sweepstakes;
+    uint256 public initiateMoveEpoch;
+    uint256 public moving;
+
+    constructor(address _sweepstakes) {
+        owner = msg.sender;
+        sweepstakes = _sweepstakes;
+    }
+
+    modifier onlyOwner() {
+        require(msg.sender == owner, "Only owner");
+        _;
+    }
+
+    modifier onlySweepstakes() {
+        require(msg.sender == sweepstakes, "Only sweepstakes");
+        _;
+    }
+
+    function delegateToMany(uint256 _amount) external onlySweepstakes {
         //delegates a spread over all the validators
         for (uint256 i = 0; i < validators.length; i++) {
             require(
@@ -202,7 +253,7 @@ contract SweepStakesNFTs is ERC721, Ownable, StakingContract {
         }
     }
 
-    function undelegateFromMany(uint256 _amount) internal {
+    function undelegateFromMany(uint256 _amount) external onlySweepstakes {
         //undelegates a spread over all the validators
         for (uint256 i = 0; i < validators.length; i++) {
             require(
@@ -210,6 +261,10 @@ contract SweepStakesNFTs is ERC721, Ownable, StakingContract {
                 "Undelegate failed"
             );
         }
+    }
+
+    function collect() external onlySweepstakes {
+        require(_collectRewards(), "Collect rewards failed");
     }
 
     function moveFrom(
@@ -236,25 +291,11 @@ contract SweepStakesNFTs is ERC721, Ownable, StakingContract {
         validators = _validators;
     }
 
-    function setUndelegationPeriod(
-        uint256 _undelegationPeriod
-    ) external onlyOwner {
-        undelegationPeriod = _undelegationPeriod;
+    function setSweepstakes(address _sweepstakes) external onlyOwner {
+        sweepstakes = _sweepstakes;
     }
 
-    function setDrawPeriod(uint256 _drawPeriod) external onlyOwner {
-        drawPeriod = _drawPeriod;
-    }
-
-    function vrf() public view returns (uint256 result) {
-        uint256[1] memory bn;
-        bn[0] = block.number;
-        assembly {
-            let memPtr := mload(0x40)
-            if iszero(staticcall(not(0), 0xff, bn, 0x20, memPtr, 0x20)) {
-                invalid()
-            }
-            result := mload(memPtr)
-        }
+    function setOwner(address _owner) external onlyOwner {
+        owner = _owner;
     }
 }

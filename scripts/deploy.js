@@ -1,4 +1,5 @@
 // This is a script for deploying your contracts. You can adapt it to deploy
+// deploy with npx hardhat run scripts/deploy.js --network localhost
 // yours, or create new ones.
 
 const path = require("path");

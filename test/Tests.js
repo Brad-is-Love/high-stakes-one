@@ -1,90 +1,58 @@
-// We import Chai to use its asserting functions here.
 const { expect } = require("chai");
+const { ethers } = require("hardhat");
 
-main = async () => {
-  //deploy the contract
-  describe("Deploy Participants Contract", function () {
-    //deploy the contract
-    it("Should deploy the contract", async function () {
-      [owner, addr1, addr2, addr3] = await ethers.getSigners();
-      const Participants = await ethers.getContractFactory("Participants");
-      participants = await Participants.deploy();
-      await participants.deployed();
-      console.log("Participants deployed to:", participants.address);
 
-      //check the owner
-      expect(await participants.owner()).to.equal(owner.address);
-    });
+before(async function () {
+  console.log("Before:");
+  [owner] = await ethers.getSigners();
+  const SweepStakesNFTs = await ethers.getContractFactory("SweepStakesNFTs");
+  sweepstakes = await SweepStakesNFTs.deploy();
+  await sweepstakes.deployed();
+  console.log("SweepStakesNFTs deployed to:", sweepstakes.address);
+  //log contract size and gas used
+  const contractSize = await ethers.provider.getCode(sweepstakes.address);
+  console.log("Contract size: ", contractSize.length);
+  const tx = await sweepstakes.deployTransaction.wait();
+  console.log("Gas used to deploy contract: ", tx.gasUsed.toString());
+});
+
+describe("Test constructor", function () {
+  it("name and symbol are correct", async function () {
+    expect(await sweepstakes.name()).to.equal("Sweepstakes NFTs");
+    expect(await sweepstakes.symbol()).to.equal("SSN");
   });
 
-  describe("Buy tickets", function () {
-    it("Should buy tickets and update vars", async function () {
-      //buy tickets
-      await participants.buyTickets(addr1.address, 100);
-      //check addr1 has 100 tickets
-      expect(await participants.tickets(addr1.address)).to.equal(100);
-      //check addr1 is at index zero
-      expect(await participants.participantIndex(addr1.address)).to.equal(0);
-      //check addr1 is in the participants array
-      expect(await participants.participants(0)).to.equal(addr1.address);
-      //check totalStaked
-      expect(await participants.totalStaked()).to.equal(100);
-
-      //same thing with addr2 and addr3, call from addr2
-      await participants.connect(addr2).buyTickets(addr2.address, 100);
-      expect(await participants.tickets(addr2.address)).to.equal(100);
-      expect(await participants.participantIndex(addr2.address)).to.equal(1);
-      expect(await participants.participants(1)).to.equal(addr2.address);
-      expect(await participants.totalStaked()).to.equal(200);
-
-      await participants.connect(addr2).buyTickets(addr3.address, 100);
-      expect(await participants.tickets(addr3.address)).to.equal(100);
-      expect(await participants.participantIndex(addr3.address)).to.equal(2);
-      expect(await participants.participants(2)).to.equal(addr3.address);
-      expect(await participants.totalStaked()).to.equal(300);
-    });
+  it("token count, owner, draw period, lastdraw and prize fee", async function () {
+    expect(await sweepstakes.tokenCounter()).to.equal(0);
+    expect(await sweepstakes.owner()).to.equal(owner.address);
+    expect(await sweepstakes.drawPeriod()).to.equal(7*24*60*60);
+    const block = await ethers.provider.getBlock();
+    const currentBlockTime = block.timestamp;
+    expect(await sweepstakes.lastDrawTime()).to.equal(currentBlockTime);
+    expect(await sweepstakes.prizeFee()).to.equal(5);  
   });
+});
 
-  describe("find index", function () {
-    it("Should find index", async function () {
-      expect(await participants.findIndex(59)).to.equal(addr1.address);
-      expect(await participants.findIndex(100)).to.equal(addr1.address);
-      expect(await participants.findIndex(101)).to.equal(addr2.address);
-      expect(await participants.findIndex(299)).to.equal(addr3.address);
-      //reverts if not found
-        await expect(participants.findIndex(301)).to.be.reverted;
-        });
-  });
+// Can upload the validator list - only owner
 
-  describe("refund tickets", function () {
-    it("Should refund tickets and update vars", async function () {
-      //refund tickets
-      await participants.refundTickets(addr1.address, 100);
-      //check addr1 has 0 tickets
-      expect(await participants.tickets(addr1.address)).to.equal(0);
-      //check addr1 is not in the participants array
-      expect(await participants.participants(0)).to.equal(addr3.address);
-      //check totalStaked
-      expect(await participants.totalStaked()).to.equal(200);
-    });
+// Users can stake
+  // users get NFT with correct balance
+  // totalstaked updated correctly
+  // delegated among validators correctly - check validators received
+  // do 3 users so later can check indexes
 
-    it("find index again", async function () {
-        expect(await participants.findIndex(59)).to.equal(addr3.address);
-        expect(await participants.findIndex(100)).to.equal(addr3.address);
-        expect(await participants.findIndex(101)).to.equal(addr2.address);
-        expect(await participants.findIndex(200)).to.equal(addr2.address);
-        await expect(participants.findIndex(201)).to.be.reverted;
-    });
+// Users can unstake
+  // partial unstake updates correctly
+  // totalstaked updated correctly
+  // Undelegated among validators correctly - check validators balances reduced
+  // Zeros an NFT and resets owner if withdrawn
 
-    it("try again with smaller amount", async function () {
-        await participants.refundTickets(addr2.address, 50);
-        expect(await participants.tickets(addr2.address)).to.equal(50);
-        expect(await participants.participants(1)).to.equal(addr2.address);
-        expect(await participants.totalStaked()).to.equal(150);
-        expect(await participants.findIndex(150)).to.equal(addr2.address);
-        await expect(participants.findIndex(151)).to.be.reverted;
-        });
-  });
-};
+// Reallocates zeroed NFTs  
+// Every 100th token is a checkpoint
+// Owner gets 5% fee on prizes
+// Owner can rebalance
+// Pays out winner if called by lottery
+// Returns address from index so external lotteries can call it
+// Can't call lottery if not enough time has passed
 
-main();
+
