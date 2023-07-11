@@ -12,7 +12,7 @@ import "./lib/StakingContract.sol";
 ///      It stores the amount they've staked and manages unstaking.
 ///      The lottery contract calls the addressAtIndex function to find the winner.
 ///      This iterates through all the holders, summing the amount staked.
-contract SweepStakesNFTs is ERC721Enumerable, StakingContract {
+contract SweepStakesNFTs is ERC721Enumerable {
     uint256 public undelegationPeriod = 7; //epochs
     uint256 public tokenCounter;
     uint256[] public availableTokenIds;
@@ -53,11 +53,11 @@ contract SweepStakesNFTs is ERC721Enumerable, StakingContract {
         _;
     }
 
+    modifier onlyStaking
+
     // - Users can enter/stake
-    function stake(uint256 _amount) external payable {
-        require(msg.value == _amount, "Wrong Amount");
+    function enter(address _entrant, uint256 _amount) external onlyStaking {
         require(_amount >= minStake, "Too low");
-        stakingHelper.delegateToMany(_amount);
         //check if user owns tokens
         if (balanceOf(msg.sender) == 0) {
             // if not, mint one
@@ -243,7 +243,8 @@ contract StakingHelper is StakingContract {
         _;
     }
 
-    function delegateToMany(uint256 _amount) external onlySweepstakes {
+    function enter(uint256 _amount) external payable {
+        require(msg.value == _amount, "Wrong Amount");
         //delegates a spread over all the validators
         for (uint256 i = 0; i < validators.length; i++) {
             require(
@@ -251,6 +252,7 @@ contract StakingHelper is StakingContract {
                 "Delegate failed"
             );
         }
+        Sweepstakes(sweepstakes).enter(msg.sender, _amount);
     }
 
     function undelegateFromMany(uint256 _amount) external onlySweepstakes {
