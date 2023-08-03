@@ -1,12 +1,14 @@
 //SPDX-License-Identifier: Unlicense
 pragma solidity ^0.8.0;
 
-import { StakingPrecompiles, Directive } from "./StakingPrecompiles.sol";
+import { StakingPrecompiles, Directive } from "../lib/StakingPrecompiles.sol";
 
 contract StakingContract is StakingPrecompiles {
+
     event StakingPrecompileCalled(uint8 directive, bool success);
 
-    function acceptMoney() public payable {}
+    function acceptMoney() public payable {
+    }
 
     function _delegate(address validatorAddress, uint256 amount) internal returns (bool success) {
         uint256 result = delegate(validatorAddress, amount);
@@ -24,9 +26,5 @@ contract StakingContract is StakingPrecompiles {
         uint256 result = collectRewards();
         success = result != 0;
         emit StakingPrecompileCalled(uint8(Directive.COLLECT_REWARDS), success);
-    }
-
-    function _epoch() public view returns (uint256 epochNumber) {
-        epochNumber = uint256(epoch());
     }
 }

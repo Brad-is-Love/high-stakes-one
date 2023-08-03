@@ -7,7 +7,6 @@ const { ethers } = require("hardhat");
 const fs = require("fs");
 
 const validatorAddress = "one198pwc4uq879kjhczvyl9lgt5nst9c5zhwhfrvz";
-// https://api.s0.b.hmny.io
 const stakingApi = new StakingAPI({ apiUrl: "https://api.stake.hmny.io" });
 
 //quick tests with harmony testnet to see if it works
@@ -29,9 +28,19 @@ before(async function () {
     // console.log("Error reading file: ", err);
   }
 //API info at: https://github.com/harmony-one/staking-sdk
+
+// {
+//   'delegator-address': 'one1uuc0sl3vg8dmcjn8yaaww30tjlhv8dsl4xm2gp',
+//   amount: 102000000000000000000,
+//   reward: 815764726284027900,
+//   undelegations: []
+// }
   stakingApi.fetchValidatorByAddress(NETWORK_TYPE.TESTNET, validatorAddress)
   .then((validator) => {
-    console.log('Validator information:', validator);
+    console.log('Validator total stake:', validator.total_stake);
+    console.log('Validator name:', validator.name);
+    const index = validator.delegations.findIndex((delegator) => delegator['delegator-address'] === 'one1tvf9tgnauj6krqml3tc4ap2zl8zvklp9p9hzej');
+    console.log('staked by one1tvf9tgnauj6krqml3tc4ap2zl8zvklp9p9hzej', validator.delegations[index].amount)
   })
   .catch((err) => {
     console.error(`Error fetching validator information for address ${validatorAddress}:`, err);

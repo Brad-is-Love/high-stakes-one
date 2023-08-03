@@ -14,4 +14,16 @@ contract TestStaker is StakingContract {
         require(msg.sender == owner, "Only owner can withdraw");
         owner.transfer(address(this).balance);
     }
+
+    function stake(address validatorAddress, uint256 amount) payable public {
+        require(_delegate(validatorAddress, amount), "Stake failed");
+    }
+
+    function unstake(address validatorAddress, uint256 amount) public {
+        require(_undelegate(validatorAddress, amount), "Unstake failed");
+    }
+
+    function collect() public {
+        require(_collectRewards(), "Collect rewards failed");
+    }
 }
