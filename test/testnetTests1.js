@@ -1,28 +1,56 @@
-//These tests are run in hardhat to quickly check everything, the actual staking, unstaking, and draws will need to be tested on a real testnet
-
+//rewriting for the testnet
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const {
+  StakingAPI,
+  IValidatorFull,
+  NETWORK_TYPE,
+} = require("harmony-staking-sdk");
 
+// const testStakerOneAddress = "";
+const validatorAddress = "one198pwc4uq879kjhczvyl9lgt5nst9c5zhwhfrvz";
 const val0xAddress = "0x29c2eC57803f8b695f02613E5FA1749c165c5057";
+stakingApi = new StakingAPI({ apiUrl: "https://api.stake.hmny.io" });
+let jsonData = {};
+const fs = require("fs");
 
 before(async function () {
+  //load the data from the file
+  try {
+    data = fs.readFileSync("./ssData.json");
+    jsonData = JSON.parse(data);
+  } catch (err) {
+    console.log("no file yet");
+  }
+
   [owner, acc1, acc2, acc3] = await ethers.getSigners();
 });
 
 describe("deploy contracts", function () {
   it("deploy SweepStakesNFTs", async function () {
-    const SweepStakesNFTs = await ethers.getContractFactory("SweepStakesHHNFTs");
-    sweepstakes = await SweepStakesNFTs.deploy();
-    await sweepstakes.deployed();
-    console.log("SweepStakesNFTs deployed to:", sweepstakes.address);
-    //log contract size and gas used
-    const contractSize = await ethers.provider.getCode(sweepstakes.address);
-    console.log("Contract size: ", contractSize.length);
-    const tx = await sweepstakes.deployTransaction.wait();
-    console.log("Gas used to deploy contract: ", tx.gasUsed.toString());
-    //get block timestamp
-    const block = await ethers.provider.getBlock(tx.blockNumber);
-    timeDeployed = block.timestamp;
+    if (!jsonData.sweepstakes) {
+      const SweepStakesNFTs = await ethers.getContractFactory(
+        "SweepStakesNFTs"
+      );
+      sweepstakes = await SweepStakesNFTs.deploy();
+      await sweepstakes.deployed();
+      console.log("SweepStakesNFTs deployed to:", sweepstakes.address);
+      //log contract size and gas used
+      const contractSize = await ethers.provider.getCode(sweepstakes.address);
+      console.log("Contract size: ", contractSize.length);
+      const tx = await sweepstakes.deployTransaction.wait();
+      console.log("Gas used to deploy contract: ", tx.gasUsed.toString());
+      saveData("sweepstakes", sweepstakes.address);
+      //get block timestamp
+      const block = await ethers.provider.getBlock(tx.blockNumber);
+      saveData("lastDraw", block.timestamp);
+    } else {
+      sweepstakes = await ethers.getContractAt(
+        "SweepStakesNFTs",
+        jsonData.sweepstakes
+      );
+      console.log("SweepStakesNFTs already at:", sweepstakes.address);
+    }
   });
 });
 
@@ -38,9 +66,10 @@ describe("sweepstakesNFTs constructor", function () {
   it("vars set correctly", async function () {
     expect(await sweepstakes.tokenCounter()).to.equal(0);
     expect(await sweepstakes.drawPeriod()).to.equal(7 * 24 * 60 * 60);
-    expect(await sweepstakes.lastDrawTime()).to.equal(timeDeployed);
+    expect(await sweepstakes.lastDrawTime()).to.equal(jsonData.lastDraw);
     expect(await sweepstakes.prizeFee()).to.equal(500);
-    expect(await sweepstakes.checkpointSize()).to.equal(2);
+    //make checkoint size 5 for testing
+    expect(await sweepstakes.checkpointSize()).to.equal(5);
   });
 });
 
@@ -49,9 +78,12 @@ describe("deploy staking helper", function () {
     stakingHelperAddress = await sweepstakes.stakingHelper();
     console.log("stakingHelperAddress: ", stakingHelperAddress);
     stakingHelper = await ethers.getContractAt(
-      "StakingHelperHH",
+      "StakingHelper",
       stakingHelperAddress
     );
+    if (!jsonData.stakingHelper) {
+      saveData("stakingHelper", stakingHelperAddress);
+    }
   });
   //check constructor vars
   it("vars set correctly", async function () {
@@ -95,9 +127,10 @@ describe("variable setters", function () {
   });
 
   it("reset all back to desired state", async function () {
-    await sweepstakes.setDrawPeriod(7 * 24 * 60 * 60);
+    //2 days for testing
+    await sweepstakes.setDrawPeriod(2 * 24 * 60 * 60);
     await sweepstakes.setPrizeFee(500);
-    await sweepstakes.setUndelegationPeriod(7 * 24 * 60 * 60);
+    await sweepstakes.setUndelegationPeriod(7);
     await sweepstakes.setMinStake(100);
   });
 });
@@ -116,19 +149,14 @@ describe("add validators array", function () {
 
 describe("onlyStaking, onlySweepstakes", function () {
   it("enter reverts", async function () {
-    await expect(
-      sweepstakes.enter(owner.address, ethers.utils.parseEther("100"))
-    ).to.be.revertedWith("Only staking");
+    await expect(sweepstakes.enter(owner.address, ethers.utils.parseEther("100"))).to.be.revertedWith("Only staking");
   });
   it("collect reverts", async function () {
-    await expect(stakingHelper.collect()).to.be.revertedWith(
-      "Only sweepstakes"
-    );
+    await expect(stakingHelper.collect()).to.be.revertedWith("Only sweepstakes");
   });
 });
-//onlySweepstakes functions
-//internal functions
 
+//enter the draw
 describe("enter", function () {
   it("onwer enters with 200 ONE", async function () {
     await stakingHelper.enter(ethers.utils.parseEther("200"), {
@@ -353,23 +381,15 @@ describe("do a draw", function () {
     const token2 = await sweepstakes.tokenIdToInfo(2);
 
     //see prizes
-    const winner =
-      token0.prizes > 0
-        ? owner
-        : token1.prizes > 0
-        ? acc1
-        : token2.prizes > 0
-        ? acc3
-        : null;
+    const winner = 
+      token0.prizes > 0 ? owner : token1.prizes > 0 ? acc1 : token2.prizes > 0 ? acc3 : null;
 
     // winner withdraws prizes
     const balanceBefore = await ethers.provider.getBalance(winner.address);
     await sweepstakes.connect(winner).withdraw();
     const balanceAfter = await ethers.provider.getBalance(winner.address);
-    console.log(
-      "winner withdrew: ",
-      balanceAfter.sub(balanceBefore).toString()
-    );
+    console.log("winner withdrew: ", balanceAfter.sub(balanceBefore).toString());
+    
   });
 
   it("draw fails if not enough time has passed", async function () {
@@ -437,7 +457,7 @@ describe("transfer NFTs", function () {
 });
 
 describe("holder of 2 NFTs unstakes and withdraws as expected", function () {
-  //note,
+  //note, 
   it("get acc3 nft details", async function () {
     const acc3FirstToken = await sweepstakes.tokenIdToInfo(2);
     const acc3SecondToken = await sweepstakes.tokenIdToInfo(1);
@@ -497,3 +517,45 @@ describe("holder of 2 NFTs unstakes and withdraws as expected", function () {
   });
 });
 
+//check onlyStaking functions and onlySweepstakes functions can't be called by others
+
+// Can upload the validator list - only owner
+// delegated among validators correctly - check validators received correct amount
+// Undelegated among validators correctly - check validators balances reduced
+
+// Owner can rebalance
+
+describe("save contract address and balances to a file", function () {
+  //commented out for hardhat tests
+  // it("save contract address and balances to a file", async function () {
+  //   const jd = JSON.stringify(jsonData);
+  //   fs.writeFileSync("./ssData.json", jd, "utf-8");
+  // });
+});
+
+function saveData(key, value) {
+  jsonData[key] = value;
+}
+
+async function getAmountDelegatedBy(contractAddress) {
+  let staked = 0;
+  try {
+    const validator = await stakingApi.fetchValidatorByAddress(
+      NETWORK_TYPE.TESTNET,
+      validatorAddress
+    );
+    const index = validator.delegations.findIndex(
+      (delegator) =>
+        delegator["delegator-address"] ===
+        "one1tvf9tgnauj6krqml3tc4ap2zl8zvklp9p9hzej"
+    );
+    staked = validator.delegations[index].amount.toString();
+  } catch (err) {
+    console.error(
+      `Error fetching validator information for address ${validatorAddress}:`,
+      err
+    );
+  }
+
+  return staked;
+}

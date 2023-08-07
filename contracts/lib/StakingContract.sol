@@ -7,8 +7,9 @@ contract StakingContract is StakingPrecompiles {
 
     event StakingPrecompileCalled(uint8 directive, bool success);
 
-    function acceptMoney() public payable {
-    }
+    //removed acceptMoney to put into child contract
+    // function acceptMoney() public payable {
+    // }
 
     function _delegate(address validatorAddress, uint256 amount) internal returns (bool success) {
         uint256 result = delegate(validatorAddress, amount);

@@ -12,7 +12,7 @@ import "./lib/StakingContract.sol";
 ///      It stores the amount they've staked and manages unstaking.
 ///      The lottery contract calls the addressAtIndex function to find the winner.
 ///      This iterates through all the holders, summing the amount staked.
-contract SweepStakesNFTs is ERC721Enumerable {
+contract SweepStakesHHNFTs is ERC721Enumerable {
     uint256 public undelegationPeriod = 7; //epochs
     uint256 public checkpointSize;
     uint256 public tokenCounter;
@@ -20,7 +20,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     uint256 public totalStaked;
     uint256 public drawPeriod;
     uint256 public lastDrawTime;
-    uint256 public prizeFee = 500; // 5%
+    uint256 public prizeFee= 500; // 5%
     uint256 public ownerHoldings;
     address public owner;
     address public stakingHelper;
@@ -28,6 +28,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     address private lastWinner;
     uint256 private lastPrize;
     bool public prizeAssigned;
+
 
     struct tokenInfo {
         uint256 staked;
@@ -47,8 +48,8 @@ contract SweepStakesNFTs is ERC721Enumerable {
         drawPeriod = 7 days;
         lastDrawTime = block.timestamp;
         prizeAssigned = true;
-        checkpointSize = 5;
-        StakingHelper sh = new StakingHelper(address(this), owner);
+        checkpointSize = 2;
+        StakingHelperHH sh = new StakingHelperHH(address(this), owner);
         stakingHelper = address(sh);
     }
 
@@ -98,10 +99,10 @@ contract SweepStakesNFTs is ERC721Enumerable {
             tokenCounter++;
         }
     }
-
+    
     // unstake - will add an withdrawEpoch to the token, along with the amount to unstake
 
-    function unstake(address _holder, uint256 _amount) external onlyStaking {
+    function unstake(address _holder, uint256 _amount) external onlyStaking() {
         uint256 tokenId = tokenOfOwnerByIndex(_holder, 0);
         require(
             tokenIdToInfo[tokenId].staked >= _amount,
@@ -109,9 +110,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         );
         tokenIdToInfo[tokenId].staked -= _amount;
         tokenIdToInfo[tokenId].unstaked += _amount;
-        tokenIdToInfo[tokenId].withdrawEpoch =
-            StakingHelper(stakingHelper).epoch() +
-            undelegationPeriod;
+        tokenIdToInfo[tokenId].withdrawEpoch = StakingHelperHH(stakingHelper).epoch() + undelegationPeriod;
         checkpoints[tokenId / checkpointSize] -= _amount;
         totalStaked -= _amount;
     }
@@ -125,16 +124,17 @@ contract SweepStakesNFTs is ERC721Enumerable {
         //     tokenIdToInfo[tokenId].withdrawEpoch <= StakingHelper(stakingHelper).epoch(),
         //     "Must wait until undelegation complete"
         // );
-        uint256 amount = tokenIdToInfo[tokenId].unstaked +
-            tokenIdToInfo[tokenId].prizes;
+        uint256 amount = tokenIdToInfo[tokenId].unstaked + tokenIdToInfo[tokenId].prizes;
         tokenIdToInfo[tokenId].unstaked = 0;
         tokenIdToInfo[tokenId].withdrawEpoch = 0;
         tokenIdToInfo[tokenId].prizes = 0;
         if (tokenIdToInfo[tokenId].staked == 0) {
             burn(tokenId);
         }
-        StakingHelper(stakingHelper).payUser(msg.sender, amount);
+        StakingHelperHH(stakingHelper).payUser(msg.sender, amount);
     }
+
+
 
     function burn(uint256 _tokenId) internal {
         _burn(_tokenId);
@@ -146,12 +146,12 @@ contract SweepStakesNFTs is ERC721Enumerable {
     // We draw the winner and assign to a private variable to prevent malicious draws
     function drawWinner() external {
         require(block.timestamp > lastDrawTime + drawPeriod, "Too soon");
-        if (!prizeAssigned) {
-            assignPrize();
-        }
-        uint index = vrf() % totalStaked;
+        if(!prizeAssigned){assignPrize();}        
+        // uint index = vrf() % totalStaked; // COMMENTED OUT FOR HARDHAT TESTS
+        //for hardhat tests use blockhash
+        uint256 index = uint256(keccak256(abi.encodePacked(blockhash(block.number - 1)))) % totalStaked;
         lastWinner = addressAtIndex(index);
-        lastPrize = StakingHelper(stakingHelper).collect();
+        lastPrize = StakingHelperHH(stakingHelper).collect();
         lastDrawTime = block.timestamp;
         prizeAssigned = false;
     }
@@ -161,9 +161,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         require(block.timestamp > lastDrawTime, "can't execute with draw");
         //get the token of the winner and add the amount to the prizes
         uint256 tokenId = tokenOfOwnerByIndex(lastWinner, 0);
-        tokenIdToInfo[tokenId].prizes +=
-            (lastPrize * (10000 - prizeFee)) /
-            10000;
+        tokenIdToInfo[tokenId].prizes += (lastPrize * (10000 - prizeFee)) / 10000;
         ownerHoldings += (lastPrize * prizeFee) / 10000;
         prizeAssigned = true;
     }
@@ -171,7 +169,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     function withdrawFees() external onlyOwner {
         uint256 amount = ownerHoldings;
         ownerHoldings = 0;
-        StakingHelper(stakingHelper).payUser(owner, amount);
+        StakingHelperHH(stakingHelper).payUser(owner, amount);
     }
 
     //owner can claim prizes
@@ -193,11 +191,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
                 //iterate through the checkpoints[i] block
                 for (uint256 j = 0; j < checkpointSize; j++) {
                     //find the first address above the index and return it
-                    if (
-                        subTotal +
-                            tokenIdToInfo[i * checkpointSize + j].staked >
-                        _index
-                    ) {
+                    if (subTotal + tokenIdToInfo[i * checkpointSize + j].staked > _index) {
                         return ownerOf(i * checkpointSize + j);
                     }
                     subTotal += tokenIdToInfo[i * checkpointSize + j].staked;
@@ -214,7 +208,6 @@ contract SweepStakesNFTs is ERC721Enumerable {
     }
 
     function setUndelegationPeriod(
-        //epochs
         uint256 _undelegationPeriod
     ) external onlyOwner {
         undelegationPeriod = _undelegationPeriod;
@@ -241,20 +234,16 @@ contract SweepStakesNFTs is ERC721Enumerable {
     }
 
     function getNFTValue(uint256 _tokenId) external view returns (uint256) {
-        return
-            tokenIdToInfo[_tokenId].staked +
-            tokenIdToInfo[_tokenId].unstaked +
-            tokenIdToInfo[_tokenId].prizes;
+        return tokenIdToInfo[_tokenId].staked + tokenIdToInfo[_tokenId].unstaked + tokenIdToInfo[_tokenId].prizes;
     }
 }
 
-contract StakingHelper is StakingContract {
+contract StakingHelperHH is StakingContract {
     address[] public validators;
     address public owner;
     address public sweepstakes;
     uint256 public initiateMoveEpoch;
     uint256 public moving;
-    uint256 public extraFunds;
 
     constructor(address _sweepstakes, address _owner) StakingContract() {
         owner = _owner;
@@ -271,41 +260,42 @@ contract StakingHelper is StakingContract {
         _;
     }
 
-    function acceptMoney() public payable {
-        //extra funds get automatically raffled in the next draw
-        extraFunds += msg.value;
-    }
-
     function enter(uint256 _amount) external payable {
         require(msg.value == _amount, "Wrong Amount");
         //delegates a spread over all the validators
         for (uint256 i = 0; i < validators.length; i++) {
-            require(
-                _delegate(validators[i], _amount / validators.length),
-                "Delegate failed"
-            );
+            // delegate(validatorAddress, amount);
+            //TEST WITH A REQUIRE STATEMENT
+            require(true, "Delegate failed");
         }
-        SweepStakesNFTs(sweepstakes).enter(msg.sender, _amount);
+        SweepStakesHHNFTs(sweepstakes).enter(msg.sender, _amount);
     }
 
     function unstake(uint256 _amount) external {
         //withdraws a spread over all the validators
         for (uint256 i = 0; i < validators.length; i++) {
-            require(
-                _undelegate(validators[i], _amount / validators.length),
-                "Withdraw failed"
-            );
+            // require(
+            //     _undelegate(validators[i], _amount / validators.length),
+            //     "Withdraw failed"
+            // );
+            //TEST WITH A REQUIRE STATEMENT
+            require(true, "Withdraw failed");
         }
-        SweepStakesNFTs(sweepstakes).unstake(msg.sender, _amount);
+        SweepStakesHHNFTs(sweepstakes).unstake(msg.sender, _amount);
     }
 
-    function collect() external onlySweepstakes returns (uint256) {
-        uint256 balance = address(this).balance;
-        require(_collectRewards(), "Collect rewards failed");
-        return address(this).balance + extraFunds - balance;
+    function collect() external view onlySweepstakes returns (uint256) {
+        // uint256 balance = address(this).balance;
+        // require(_collectRewards(), "Collect rewards failed");
+        //TEST WITH A REQUIRE STATEMENT
+        require(true, "Collect rewards failed");
+        // return address(this).balance - balance;
+        // for testing return 1 ether
+        return 1000000000000000000;
     }
 
     function payUser(address _user, uint256 _amount) external onlySweepstakes {
+        //does this need reentrancy protection?
         payable(_user).transfer(_amount);
     }
 
