@@ -9,12 +9,12 @@ module.exports = {
     },
     testnet: {
       url: "https://api.s0.b.hmny.io",
-      accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ACC1_PRIVATE_KEY, process.env.ACC2_PRIVATE_KEY],
+      accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ACC1_PRIVATE_KEY, process.env.ACC2_PRIVATE_KEY, process.env.ACC3_PRIVATE_KEY],
       chainId: 1666700000,
     },
     mainnet: {
       url: "https://api.s0.t.hmny.io",
-      accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ACC1_PRIVATE_KEY, process.env.ACC2_PRIVATE_KEY],
+      accounts: [process.env.OWNER_PRIVATE_KEY, process.env.ACC1_PRIVATE_KEY, process.env.ACC2_PRIVATE_KEY, process.env.ACC3_PRIVATE_KEY],
       chainId: 1666600000,
     },
   },

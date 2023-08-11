@@ -8,7 +8,7 @@ const {
 
 // Testing as an ongoing thing on the testnet
 // So need to save to files and read in the next run
-// newest testStaker ""
+// newest testStaker "0x7722612Ec486c28b42C76A44F3ecE30387d7fA46"
 // new testStaker "0x6eB221b1654BA536784029ce2fd34BA813Cf3261"
 // old "testStaker":"0x5b1255A27de4b561837f8Af15e8542f9c4Cb7c25"
 const testStakerOneAddress = "one1wu3xztkysmpgksk8dfz08m8rqwra07jxagcgfa"
@@ -94,41 +94,53 @@ describe("deploy TestStaker", function () {
 //   });
 // });
 
-describe("stake", function () {
-  // it("0 delegated", async function () {
-  //   expect(await getValidatorStats(testStakerOneAddress)).to.equal(0);
-  // });
+// describe("stake", function () {
+//   // it("0 delegated", async function () {
+//   //   expect(await getValidatorStats(testStakerOneAddress)).to.equal(0);
+//   // });
 
-  it("try delegate", async function () {
-    await testStaker.stake(val0xAddress, ethers.utils.parseEther("100.0"), {value: ethers.utils.parseEther("100.0")});
+//   it("try delegate", async function () {
+//     await testStaker.stake(val0xAddress, ethers.utils.parseEther("100.0"), {value: ethers.utils.parseEther("100.0")});
 
+//     expect(await ethers.provider.getBalance(testStaker.address)).to.equal(0);
+//   });
+
+//   it("100 delegated", async function () {
+//     expect(await getValidatorStats(testStakerOneAddress,"staked")).to.equal("100000000000000000000");
+//   });
+// });
+
+// describe("unstake", function () {
+//   // it("try unstake", async function () {
+//   //   await testStaker.unstake(val0xAddress, ethers.utils.parseEther("100.0"));
+//   // });
+//   // it("confirm undelegated", async function () {
+//   //   expect(await getValidatorStats(testStakerOneAddress,"undelegations")).to.equal("100000000000000000000");
+//   // });
+//   it("save epoch to the file", async function () {
+//     epoch = await testStaker.epoch();
+//   });
+// });
+
+// describe("collect rewards", function () {
+//   // it("try collect rewards", async function () {
+//   //   await testStaker.collect();
+
+//   //   const rewards = await ethers.provider.getBalance(testStaker.address)
+//   //   console.log("rewards: ", rewards.toString());
+//   // });
+// });
+
+describe("withdraw all", function () {
+  it("try withdraw all", async function () {
+    //get balance
+    const balance = await ethers.provider.getBalance(testStaker.address);
+    console.log("balance: ", balance.toString());
+    //withdraw
+    await testStaker.withdraw();
+    //check balance
     expect(await ethers.provider.getBalance(testStaker.address)).to.equal(0);
   });
-
-  it("100 delegated", async function () {
-    expect(await getValidatorStats(testStakerOneAddress,"staked")).to.equal("100000000000000000000");
-  });
-});
-
-describe("unstake", function () {
-  // it("try unstake", async function () {
-  //   await testStaker.unstake(val0xAddress, ethers.utils.parseEther("100.0"));
-  // });
-  // it("confirm undelegated", async function () {
-  //   expect(await getValidatorStats(testStakerOneAddress,"undelegations")).to.equal("100000000000000000000");
-  // });
-  it("save epoch to the file", async function () {
-    epoch = await testStaker.epoch();
-  });
-});
-
-describe("collect rewards", function () {
-  // it("try collect rewards", async function () {
-  //   await testStaker.collect();
-
-  //   const rewards = await ethers.provider.getBalance(testStaker.address)
-  //   console.log("rewards: ", rewards.toString());
-  // });
 });
 
 // save the contract address and balances to a file

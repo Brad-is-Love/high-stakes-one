@@ -1,252 +1,58 @@
-//These tests are run in hardhat to quickly check everything, the actual staking, unstaking, and draws will need to be tested on a real testnet
-
+//Testnet 3: 3 days later, do a draw, wihtdrawing, transfers etc.
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
+const {
+  StakingAPI,
+  IValidatorFull,
+  NETWORK_TYPE,
+} = require("harmony-staking-sdk");
 
+const stakingHelperOneAddress = "one1jy4jej8t9u89px5tm9uty2kt46qcct2eg9773e";
+const validatorAddress = "one198pwc4uq879kjhczvyl9lgt5nst9c5zhwhfrvz";
 const val0xAddress = "0x29c2eC57803f8b695f02613E5FA1749c165c5057";
+stakingApi = new StakingAPI({ apiUrl: "https://api.stake.hmny.io" });
+let jsonData = {};
+const fs = require("fs");
+const exp = require("constants");
 
 before(async function () {
+  //load the data from the file
+  try {
+    data = fs.readFileSync("./ssData.json");
+    jsonData = JSON.parse(data);
+  } catch (err) {
+    console.log("no file yet");
+  }
+
   [owner, acc1, acc2, acc3] = await ethers.getSigners();
 });
 
-describe("deploy contracts", function () {
-  it("deploy SweepStakesNFTs", async function () {
-    const SweepStakesNFTs = await ethers.getContractFactory(
-      "SweepStakesHHNFTs"
+describe("get contracts", function () {
+  it("get SweepStakesNFTs", async function () {
+    sweepstakes = await ethers.getContractAt(
+      "SweepStakesNFTs",
+      jsonData.sweepstakes
     );
-    sweepstakes = await SweepStakesNFTs.deploy();
-    await sweepstakes.deployed();
-    console.log("SweepStakesNFTs deployed to:", sweepstakes.address);
-    //log contract size and gas used
-    const contractSize = await ethers.provider.getCode(sweepstakes.address);
-    console.log("Contract size: ", contractSize.length);
-    const tx = await sweepstakes.deployTransaction.wait();
-    console.log("Gas used to deploy contract: ", tx.gasUsed.toString());
-    //get block timestamp
-    const block = await ethers.provider.getBlock(tx.blockNumber);
-    timeDeployed = block.timestamp;
+    console.log("SweepStakesNFTs already at:", sweepstakes.address);
   });
-});
 
-describe("sweepstakesNFTs constructor", function () {
-  it("should set the owner", async function () {
-    expect(await sweepstakes.owner()).to.equal(owner.address);
-  });
-  it("stakingHelper not zero address", async function () {
-    expect(await sweepstakes.stakingHelper()).to.not.equal(
-      ethers.constants.AddressZero
-    );
-  });
-  it("vars set correctly", async function () {
-    expect(await sweepstakes.tokenCounter()).to.equal(0);
-    expect(await sweepstakes.drawPeriod()).to.equal(7 * 24 * 60 * 60);
-    expect(await sweepstakes.lastDrawTime()).to.equal(timeDeployed);
-    expect(await sweepstakes.prizeFee()).to.equal(500);
-    expect(await sweepstakes.checkpointSize()).to.equal(2);
-  });
-});
-
-describe("deploy staking helper", function () {
   it("get StakingHelper: ", async function () {
     stakingHelperAddress = await sweepstakes.stakingHelper();
     console.log("stakingHelperAddress: ", stakingHelperAddress);
     stakingHelper = await ethers.getContractAt(
-      "StakingHelperHH",
+      "StakingHelper",
       stakingHelperAddress
     );
-  });
-  //check constructor vars
-  it("vars set correctly", async function () {
-    expect(await stakingHelper.owner()).to.equal(owner.address);
-    expect(await stakingHelper.sweepstakes()).to.equal(sweepstakes.address);
+    if (!jsonData.stakingHelper) {
+      saveData("stakingHelper", stakingHelperAddress);
+    }
   });
 });
 
-//let's start with the basic functions that set the variables
-describe("variable setters", function () {
-  it("set drawPeriod", async function () {
-    await sweepstakes.setDrawPeriod(2 * 24 * 60 * 60);
-    expect(await sweepstakes.drawPeriod()).to.equal(2 * 24 * 60 * 60);
-  });
-  it("set prizeFee", async function () {
-    await sweepstakes.setPrizeFee(1000);
-    expect(await sweepstakes.prizeFee()).to.equal(1000);
-  });
-  it("setUndelegationPeriod", async function () {
-    await sweepstakes.setUndelegationPeriod(2 * 24 * 60 * 60);
-    expect(await sweepstakes.undelegationPeriod()).to.equal(2 * 24 * 60 * 60);
-  });
-  it("set minStake", async function () {
-    await sweepstakes.setMinStake(1000);
-    expect(await sweepstakes.minStake()).to.equal(1000);
-  });
-  //all fail if not owner
-  it("non owner fails", async function () {
-    await expect(
-      sweepstakes.connect(acc1).setDrawPeriod(2 * 24 * 60 * 60)
-    ).to.be.revertedWith("Only owner");
-    await expect(
-      sweepstakes.connect(acc1).setPrizeFee(1000)
-    ).to.be.revertedWith("Only owner");
-    await expect(
-      sweepstakes.connect(acc1).setUndelegationPeriod(2 * 24 * 60 * 60)
-    ).to.be.revertedWith("Only owner");
-    await expect(
-      sweepstakes.connect(acc1).setMinStake(1000)
-    ).to.be.revertedWith("Only owner");
-  });
+//need to wait 3 days to do a draw and some withdrawing
 
-  it("reset all back to desired state", async function () {
-    await sweepstakes.setDrawPeriod(7 * 24 * 60 * 60);
-    await sweepstakes.setPrizeFee(500);
-    await sweepstakes.setUndelegationPeriod(7 * 24 * 60 * 60);
-    await sweepstakes.setMinStake(100);
-  });
-});
 
-describe("add validators array", function () {
-  it("add validators array", async function () {
-    stakingHelper.setValidators([val0xAddress]);
-    expect(await stakingHelper.validators(0)).to.equal(val0xAddress);
-  });
-  it("non owner fails", async function () {
-    await expect(
-      stakingHelper.connect(acc1).setValidators([val0xAddress])
-    ).to.be.revertedWith("Only owner");
-  });
-});
-
-describe("onlyStaking, onlySweepstakes", function () {
-  it("enter reverts", async function () {
-    await expect(
-      sweepstakes.enter(owner.address, ethers.utils.parseEther("100"))
-    ).to.be.revertedWith("Only staking");
-  });
-  it("collect reverts", async function () {
-    await expect(stakingHelper.collect()).to.be.revertedWith(
-      "Only sweepstakes"
-    );
-  });
-});
-//onlySweepstakes functions
-//internal functions
-
-describe("enter", function () {
-  it("onwer enters with 200 ONE", async function () {
-    await stakingHelper.enter(ethers.utils.parseEther("200"), {
-      value: ethers.utils.parseEther("200"),
-    });
-    expect(await ethers.provider.getBalance(stakingHelper.address)).to.equal(
-      ethers.utils.parseEther("200")
-    );
-  });
-  it("acc1 enters with 100 ONE", async function () {
-    await stakingHelper.connect(acc1).enter(ethers.utils.parseEther("100"), {
-      value: ethers.utils.parseEther("100"),
-    });
-    expect(await ethers.provider.getBalance(stakingHelper.address)).to.equal(
-      ethers.utils.parseEther("300")
-    );
-  });
-  it("acc2 enters with 500 ONE", async function () {
-    await stakingHelper.connect(acc2).enter(ethers.utils.parseEther("500"), {
-      value: ethers.utils.parseEther("500"),
-    });
-    expect(await ethers.provider.getBalance(stakingHelper.address)).to.equal(
-      ethers.utils.parseEther("800")
-    );
-  });
-});
-
-describe("check amounts in sweepstakes", function () {
-  it("check totalStaked", async function () {
-    expect(await sweepstakes.totalStaked()).to.equal(
-      ethers.utils.parseEther("800")
-    );
-  });
-  it("3 tokens issued", async function () {
-    expect(await sweepstakes.tokenCounter()).to.equal(3);
-  });
-  it("check checkpoints", async function () {
-    expect(await sweepstakes.checkpoints(0)).to.equal(
-      ethers.utils.parseEther("300")
-    );
-    expect(await sweepstakes.checkpoints(1)).to.equal(
-      ethers.utils.parseEther("500")
-    );
-  });
-  it("check NFT balances", async function () {
-    expect(await sweepstakes.balanceOf(owner.address)).to.equal(1);
-    expect(await sweepstakes.balanceOf(acc1.address)).to.equal(1);
-    expect(await sweepstakes.balanceOf(acc2.address)).to.equal(1);
-  });
-  it("check NFT owners", async function () {
-    expect(await sweepstakes.tokenOfOwnerByIndex(owner.address, 0)).to.equal(0);
-    expect(await sweepstakes.ownerOf(0)).to.equal(owner.address);
-    expect(await sweepstakes.ownerOf(1)).to.equal(acc1.address);
-    expect(await sweepstakes.ownerOf(2)).to.equal(acc2.address);
-  });
-  it("check token info", async function () {
-    const token0 = await sweepstakes.tokenIdToInfo(0);
-    expect(token0.staked).to.equal(ethers.utils.parseEther("200"));
-  });
-});
-
-describe("address at index", function () {
-  it("get address at index 100 is owner", async function () {
-    expect(
-      await sweepstakes.addressAtIndex(ethers.utils.parseEther("100"))
-    ).to.equal(owner.address);
-  });
-  it("get address at index 299.999999999999999999 is acc1", async function () {
-    expect(
-      await sweepstakes.addressAtIndex(
-        ethers.utils.parseEther("299.999999999999999999")
-      )
-    ).to.equal(acc1.address);
-  });
-  it("get address at index 300 is acc2", async function () {
-    expect(
-      await sweepstakes.addressAtIndex(ethers.utils.parseEther("300"))
-    ).to.equal(acc2.address);
-  });
-  it("get address at index 635.123456 is acc2", async function () {
-    expect(
-      await sweepstakes.addressAtIndex(ethers.utils.parseEther("635.123546"))
-    ).to.equal(acc2.address);
-  });
-  it("address at index 800 fails", async function () {
-    await expect(
-      sweepstakes.addressAtIndex(ethers.utils.parseEther("800"))
-    ).to.be.revertedWith("Index out of range");
-  });
-});
-
-describe("acc 2 unstakes and withdraws", function () {
-  let epoch = 0;
-  it("acc2 unstake 100 (400 remains)", async function () {
-    await stakingHelper.connect(acc2).unstake(ethers.utils.parseEther("100"));
-    expect(await sweepstakes.totalStaked()).to.equal(
-      ethers.utils.parseEther("700")
-    );
-    expect(await sweepstakes.checkpoints(1)).to.equal(
-      ethers.utils.parseEther("400")
-    );
-    epoch = await stakingHelper.epoch();
-  });
-  it("check nft details", async function () {
-    const token2 = await sweepstakes.tokenIdToInfo(2);
-    expect(token2.staked).to.equal(ethers.utils.parseEther("400"));
-    expect(token2.unstaked).to.equal(ethers.utils.parseEther("100"));
-    expect(token2.withdrawEpoch).to.equal(epoch + 7 * 24 * 60 * 60);
-  });
-
-  //REQUIREMENT FOR EPOCH TO ADVANCE REMOVED FOR TESTING
-  // it("withdraw fails", async function () {
-  //   await expect(sweepstakes.connect(acc2).withdraw()).to.be.revertedWith("Must wait until undelegation complete");
-  // });
-  //ADVANCE EPOCH
-
+describe("acc 2 withdraws", function () {
   it("acc2 withdraws", async function () {
     // get acc2 bal
     const balanceBefore = await ethers.provider.getBalance(acc2.address);
@@ -499,15 +305,64 @@ describe("holder of 2 NFTs unstakes and withdraws as expected", function () {
   });
 });
 
-describe("send eth to stakingHelper", function () {
-  it("send 1 eth", async function () {
-    //send eth to stakingHelper without calling a function
-    const tx = await owner.sendTransaction({
-      to: stakingHelper.address,
-      value: ethers.utils.parseEther("1"),
-    });
-    expect(await ethers.provider.getBalance(stakingHelper.address)).to.equal(
-      ethers.utils.parseEther("301")
-    );
+//check onlyStaking functions and onlySweepstakes functions can't be called by others
+
+// Can upload the validator list - only owner
+// delegated among validators correctly - check validators received correct amount
+// Undelegated among validators correctly - check validators balances reduced
+
+// Owner can rebalance
+
+describe("save contract address and balances to a file", function () {
+  it("save contract address and balances to a file", async function () {
+    const jd = JSON.stringify(jsonData);
+    fs.writeFileSync("./ssData.json", jd, "utf-8");
   });
 });
+
+function saveData(key, value) {
+  jsonData[key] = value;
+}
+
+async function getValidator() {
+  try {
+    const validator = await stakingApi.fetchValidatorByAddress(
+      NETWORK_TYPE.TESTNET,
+      validatorAddress
+    );
+    return validator;
+  } catch (err) {
+    console.error(
+      `Error fetching validator information for address ${validatorAddress}:`,
+      err
+    );
+    return null;
+  }
+}
+
+async function getAmountDelegatedBy(contractAddress) {
+  let staked = 0;
+  try {
+    const validator = await getValidator();
+    const index = validator.delegations.findIndex(
+      (delegator) => delegator["delegator-address"] === validatorAddress
+    );
+    staked = validator.delegations[index].amount.toString();
+  } catch (err) {
+    console.error(
+      `Error fetching validator information for address ${validatorAddress}:`,
+      err
+    );
+  }
+
+  return staked;
+}
+
+async function expectFail(functionToCall){
+  try {
+    await functionToCall();
+    return "succeeded";
+  } catch (err) {
+    return "failed";
+  }
+}

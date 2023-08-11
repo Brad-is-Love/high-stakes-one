@@ -37,6 +37,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     }
 
     mapping(uint256 => tokenInfo) public tokenIdToInfo;
+
     // every 100 tokens is a checkpoint, with the total up to there
     // saves gas when iterating
     mapping(uint256 => uint256) public checkpoints;
@@ -44,15 +45,19 @@ contract SweepStakesNFTs is ERC721Enumerable {
     constructor() ERC721("Sweepstakes NFTs", "SSN") {
         tokenCounter = 0;
         owner = msg.sender;
-        drawPeriod = 7 days;
+        drawPeriod = 3 days; //3 days for tests
         lastDrawTime = block.timestamp;
         prizeAssigned = true;
-        checkpointSize = 5;
+        checkpointSize = 2; // 2 for tests
         StakingHelper sh = new StakingHelper(address(this), owner);
         stakingHelper = address(sh);
     }
 
-    //NEED TO DO THE FEES AND OWNER WITHDRAWAL
+    event Enter(address indexed _entrant, uint256 _amount);
+    event Unstake(address indexed _entrant, uint256 _amount);
+    event Withdraw(address indexed _entrant, uint256 _amount);
+    event DrawWinner();
+    event WinnerAssigned(address indexed _winner, uint256 _amount);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
@@ -76,10 +81,11 @@ contract SweepStakesNFTs is ERC721Enumerable {
             uint256 tokenId = tokenOfOwnerByIndex(_entrant, 0);
             tokenIdToInfo[tokenId].staked += _amount;
             checkpoints[tokenId / checkpointSize] += _amount;
-            totalStaked += _amount;
         }
         // add to totalStaked
         totalStaked += _amount;
+
+        emit Enter(_entrant, _amount);
     }
 
     function mint(address _to, uint256 _value) internal {
@@ -114,19 +120,21 @@ contract SweepStakesNFTs is ERC721Enumerable {
             undelegationPeriod;
         checkpoints[tokenId / checkpointSize] -= _amount;
         totalStaked -= _amount;
+
+        emit Unstake(_holder, _amount);
     }
 
-    //withdraw - will send the unstaked amount to the user
+    //withdraw - will send the unstaked amount and/or any prizes to the user
+
     //if staked is zero, this will burn the token
     function withdraw() external {
         uint256 tokenId = tokenOfOwnerByIndex(msg.sender, 0);
-        // commented out for hardhat tests
-        // require(
-        //     tokenIdToInfo[tokenId].withdrawEpoch <= StakingHelper(stakingHelper).epoch(),
-        //     "Must wait until undelegation complete"
-        // );
-        uint256 amount = tokenIdToInfo[tokenId].unstaked +
-            tokenIdToInfo[tokenId].prizes;
+        require(
+            tokenIdToInfo[tokenId].withdrawEpoch <= StakingHelper(stakingHelper).epoch(),
+            "Must wait until undelegation complete"
+        );
+        uint256 amount = tokenIdToInfo[tokenId].unstaked + tokenIdToInfo[tokenId].prizes;
+
         tokenIdToInfo[tokenId].unstaked = 0;
         tokenIdToInfo[tokenId].withdrawEpoch = 0;
         tokenIdToInfo[tokenId].prizes = 0;
@@ -134,6 +142,17 @@ contract SweepStakesNFTs is ERC721Enumerable {
             burn(tokenId);
         }
         StakingHelper(stakingHelper).payUser(msg.sender, amount);
+
+        emit Withdraw(msg.sender, amount);
+    }
+
+    function claimPrizes() external {
+        uint256 tokenId = tokenOfOwnerByIndex(msg.sender, 0);
+        uint256 amount = tokenIdToInfo[tokenId].prizes;
+        tokenIdToInfo[tokenId].prizes = 0;
+        StakingHelper(stakingHelper).payUser(msg.sender, amount);
+
+        emit Withdraw(msg.sender, amount);
     }
 
     function burn(uint256 _tokenId) internal {
@@ -154,6 +173,8 @@ contract SweepStakesNFTs is ERC721Enumerable {
         lastPrize = StakingHelper(stakingHelper).collect();
         lastDrawTime = block.timestamp;
         prizeAssigned = false;
+
+        emit DrawWinner();
     }
 
     function assignPrize() public {
@@ -166,20 +187,14 @@ contract SweepStakesNFTs is ERC721Enumerable {
             10000;
         ownerHoldings += (lastPrize * prizeFee) / 10000;
         prizeAssigned = true;
+
+        emit WinnerAssigned(lastWinner, lastPrize);
     }
 
     function withdrawFees() external onlyOwner {
         uint256 amount = ownerHoldings;
         ownerHoldings = 0;
         StakingHelper(stakingHelper).payUser(owner, amount);
-    }
-
-    //owner can claim prizes
-    function claimPrizes() external {
-        uint256 tokenId = tokenOfOwnerByIndex(msg.sender, 0);
-        uint256 amount = tokenIdToInfo[tokenId].prizes;
-        tokenIdToInfo[tokenId].prizes = 0;
-        payable(msg.sender).transfer(amount);
     }
 
     // Iterates through checkpoints first, then through addresses
@@ -209,7 +224,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         return address(0);
     }
 
-    function setDrawPeriod(uint256 _drawPeriod) external onlyOwner {
+     function setDrawPeriod(uint256 _drawPeriod) external onlyOwner {
         drawPeriod = _drawPeriod;
     }
 
@@ -255,11 +270,15 @@ contract StakingHelper is StakingContract {
     uint256 public initiateMoveEpoch;
     uint256 public moving;
     uint256 public extraFunds;
+    mapping(address => uint256) public delegatedToValidator;
 
     constructor(address _sweepstakes, address _owner) StakingContract() {
         owner = _owner;
         sweepstakes = _sweepstakes;
     }
+
+    event MoveStarted(address indexed _fromValidator, uint256 _amount);
+    event MoveCompleted(uint256 _amount);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
@@ -271,7 +290,7 @@ contract StakingHelper is StakingContract {
         _;
     }
 
-    function acceptMoney() public payable {
+    function juicePrizePool() public payable {
         //extra funds get automatically raffled in the next draw
         extraFunds += msg.value;
     }
@@ -284,6 +303,7 @@ contract StakingHelper is StakingContract {
                 _delegate(validators[i], _amount / validators.length),
                 "Delegate failed"
             );
+            delegatedToValidator[validators[i]] += _amount / validators.length;
         }
         SweepStakesNFTs(sweepstakes).enter(msg.sender, _amount);
     }
@@ -295,6 +315,7 @@ contract StakingHelper is StakingContract {
                 _undelegate(validators[i], _amount / validators.length),
                 "Withdraw failed"
             );
+            delegatedToValidator[validators[i]] -= _amount / validators.length;
         }
         SweepStakesNFTs(sweepstakes).unstake(msg.sender, _amount);
     }
@@ -309,24 +330,40 @@ contract StakingHelper is StakingContract {
         payable(_user).transfer(_amount);
     }
 
-    function moveFrom(
-        address _fromValidator,
-        uint256 _amount
+    //this function is to reallocate funds to set validators if one has been removed
+    function moveFromOldValidator(
+        address _fromValidator
     ) external onlyOwner {
-        //undelegates an amount from the validator to be reassigned
+        //check that the validator has been removed
+        require(
+            !isValidator(_fromValidator),
+            "Validator still active"
+        );
+        //undelegates from the validator to be reassigned
         require(moving == 0, "Already moving");
-        require(_undelegate(_fromValidator, _amount), "Undelegate failed");
+        uint256 amount = delegatedToValidator[_fromValidator];
+        delegatedToValidator[_fromValidator] = 0;
+        require(_undelegate(_fromValidator, amount), "Undelegate failed");
         uint256 currentEpoch = epoch();
         initiateMoveEpoch = currentEpoch;
-        moving = _amount;
+        moving = amount;
+
+        emit MoveStarted(_fromValidator, moving);
     }
 
-    function moveTo(address _toValidator) external onlyOwner {
-        //delegates the amount to the new validator
+    function moveToCurrentValidators() external onlyOwner {
         require(moving > 0, "Nothing to move");
         require(epoch() > initiateMoveEpoch, "Epoch not passed");
-        require(_delegate(_toValidator, moving), "Delegate failed");
+        //delegates a spread over all the validators
+        for (uint256 i = 0; i < validators.length; i++) {
+            require(
+                _delegate(validators[i], moving / validators.length),
+                "Delegate failed"
+            );
+        }
         moving = 0;
+
+        emit MoveCompleted(moving);
     }
 
     function setValidators(address[] memory _validators) external onlyOwner {
@@ -339,5 +376,14 @@ contract StakingHelper is StakingContract {
 
     function setOwner(address _owner) external onlyOwner {
         owner = _owner;
+    }
+
+    function isValidator(address _validator) public view returns (bool) {
+        for (uint256 i = 0; i < validators.length; i++) {
+            if (validators[i] == _validator) {
+                return true;
+            }
+        }
+        return false;
     }
 }
