@@ -28,6 +28,8 @@ async function main() {
   await sweepStakesNFTs.deployed();
 
   console.log("SweepStakesNFTs address:", sweepStakesNFTs.address);
+  console.log("sweepstakes name:", await sweepStakesNFTs.name());
+  console.log("sweepstakes symbol:", await sweepStakesNFTs.symbol());
 
   // We also save the contract's artifacts and address in the frontend directory
   saveFrontendFiles(sweepStakesNFTs, "SweepStakesNFTs");
@@ -50,7 +52,7 @@ function saveFrontendFiles(contract, name) {
 
   fs.writeFileSync(
     path.join(contractsDir, name+"-address.json"),
-    JSON.stringify({ contract: contract.address }, undefined, 2)
+    JSON.stringify({ address: contract.address }, undefined, 2)
   );
 
   const artifact = artifacts.readArtifactSync(name);

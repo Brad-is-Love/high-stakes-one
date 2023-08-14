@@ -12,7 +12,7 @@ const {
   NETWORK_TYPE,
 } = require("harmony-staking-sdk");
 
-const stakingHelperOneAddress = "one1pfrttm3plxjuyhegjmj0ayahd7m097hnshxn4n";
+const stakingHelperOneAddress = "one1jy4jej8t9u89px5tm9uty2kt46qcct2eg9773e";
 const validatorAddress = "one198pwc4uq879kjhczvyl9lgt5nst9c5zhwhfrvz";
 const val0xAddress = "0x29c2eC57803f8b695f02613E5FA1749c165c5057";
 stakingApi = new StakingAPI({ apiUrl: "https://api.stake.hmny.io" });
@@ -50,27 +50,15 @@ describe("deploy contracts", function () {
   });
 });
 
-describe("withdraw all at epoch 1855 or later", function () {
-    it("get balance of owner, acc1 and acc2", async function () {
-        ownerBalance = await sweepstakes.balanceOf(owner.address);
-        acc1Balance = await sweepstakes.balanceOf(acc1.address);
-        acc2Balance = await sweepstakes.balanceOf(acc2.address);
-        console.log("ownerBalance: ", ownerBalance.toString());
-        console.log("acc1Balance: ", acc1Balance.toString());
-        console.log("acc2Balance: ", acc2Balance.toString());
-    });
-    it("all withdraw", async function () {
-        await sweepstakes.connect(acc1).withdraw();
-        await sweepstakes.connect(acc2).withdraw();
-    });
-    it("get balance of owner, acc1 and acc2", async function () {
-        ownerBalance = await sweepstakes.balanceOf(owner.address);
-        acc1Balance = await sweepstakes.balanceOf(acc1.address);
-        acc2Balance = await sweepstakes.balanceOf(acc2.address);
-        console.log("ownerBalance: ", ownerBalance.toString());
-        console.log("acc1Balance: ", acc1Balance.toString());
-        console.log("acc2Balance: ", acc2Balance.toString());
-    });
+describe("get epoch", function () {
+   it("get epoch", async function () {
+    epoch = await stakingHelper.epoch();
+    console.log("epoch: ", epoch.toString());
+   });
+   it("get name", async function () {
+    const name = await sweepstakes.name();
+    console.log("name: ", name);
+   });
 });
 
 function saveData(key, value) {

@@ -14,7 +14,7 @@ export function EnterForm({ transferTokens, tokenSymbol }) {
   };
 
   const handleMaxClick = () => {
-    setTickets(10000);
+    setTickets(9874.148);
   };
 
   return (
@@ -28,7 +28,7 @@ export function EnterForm({ transferTokens, tokenSymbol }) {
                 type="number"
                 className="form-control"
                 id="tickets"
-                placeholder="Enter no. of tickets"
+                placeholder="Min 100 ONE"
                 value={tickets}
                 onChange={handleTicketsChange}
               />
@@ -44,9 +44,6 @@ export function EnterForm({ transferTokens, tokenSymbol }) {
               </div>
             </div>
           </div>
-        </div>
-        <div className="col-md-6">
-          <p>Minimum Stake: 100 ONE</p>
         </div>
       </div>
       <button type="submit" className="btn btn-primary">

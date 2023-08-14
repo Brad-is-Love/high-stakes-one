@@ -17,17 +17,15 @@ export function LuckyStakerRules() {
           {!isCollapsed && (
             <ol>
               <li>Stake ONE to enter the lottery.</li>
-              <li>Every ONE you have is a chance to win.</li>
+              <li>Every ONE you stake is a chance to win.</li>
               <li>
-                Winners are chosen randomly, based on Harmony's built-in
-                verified RNG.
+                Winners are chosen randomly, based on Harmony's built-in verified RNG.
               </li>
               <li>
-                When the lottery is drawn, the rewards for that week are
-                distributed to the winners, minus High Stakes' 5% fee.
+                High Stakes makes money by a 5% fee on staking rewards.
               </li>
               <li>
-                The losers will not lose their stake, they just won't get any rewards that month.
+                The losers will not lose their stake, they just won't get any rewards that week.
               </li>
               <li>
                 You can unstake your ONE to exit the lottery. You will receive

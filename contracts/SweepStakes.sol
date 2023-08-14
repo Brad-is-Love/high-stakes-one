@@ -8,10 +8,11 @@ import "./lib/StakingContract.sol";
 
 /// @title SweepStakesNFTs
 /// @notice Users can stake ONE in a pool and receive rewards by lottery
-/// @dev Users stake via StakingHelper receive an NFT which is their ticket to the lottery.
-///      It stores the amount they've staked and manages unstaking.
-///      The lottery contract calls the addressAtIndex function to find the winner.
-///      This iterates through all the holders, summing the amount staked.
+/// @dev StakingHelper holds the funds, stakes and unstakes etc. 
+///      SweepStakesNFTs is the ERC721, holds the user data and runs draws.
+///      It stores the amount they've staked and manages unstaking, fees etc.
+///      i.e StakingHelper is the bank, SweepStakesNFTs is the database.
+
 contract SweepStakesNFTs is ERC721Enumerable {
     uint256 public undelegationPeriod = 7; //epochs
     uint256 public checkpointSize;
@@ -21,8 +22,9 @@ contract SweepStakesNFTs is ERC721Enumerable {
     uint256 public drawPeriod;
     uint256 public lastDrawTime;
     uint256 public prizeFee = 500; // 5%
-    uint256 public ownerHoldings;
+    uint256 public feesToCollect;
     address public owner;
+    address public beneficiary;
     address public stakingHelper;
     uint256 public minStake = 100 ether;
     address private lastWinner;
@@ -45,6 +47,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     constructor() ERC721("Sweepstakes NFTs", "SSN") {
         tokenCounter = 0;
         owner = msg.sender;
+        beneficiary = msg.sender;
         drawPeriod = 3 days; //3 days for tests
         lastDrawTime = block.timestamp;
         prizeAssigned = true;
@@ -185,16 +188,16 @@ contract SweepStakesNFTs is ERC721Enumerable {
         tokenIdToInfo[tokenId].prizes +=
             (lastPrize * (10000 - prizeFee)) /
             10000;
-        ownerHoldings += (lastPrize * prizeFee) / 10000;
+        feesToCollect += (lastPrize * prizeFee) / 10000;
         prizeAssigned = true;
 
         emit WinnerAssigned(lastWinner, lastPrize);
     }
 
     function withdrawFees() external onlyOwner {
-        uint256 amount = ownerHoldings;
-        ownerHoldings = 0;
-        StakingHelper(stakingHelper).payUser(owner, amount);
+        uint256 amount = feesToCollect;
+        feesToCollect = 0;
+        StakingHelper(stakingHelper).payUser(beneficiary, amount);
     }
 
     // Iterates through checkpoints first, then through addresses
@@ -222,6 +225,18 @@ contract SweepStakesNFTs is ERC721Enumerable {
             }
         }
         return address(0);
+    }
+
+    function setBeneficiary(address _beneficiary) external onlyOwner {
+        beneficiary = _beneficiary;
+    }
+
+    function setStakingHelper(address _stakingHelper) external onlyOwner {
+        stakingHelper = _stakingHelper;
+    }
+
+    function setOwner(address _owner) external onlyOwner {
+        owner = _owner;
     }
 
      function setDrawPeriod(uint256 _drawPeriod) external onlyOwner {
@@ -320,10 +335,12 @@ contract StakingHelper is StakingContract {
         SweepStakesNFTs(sweepstakes).unstake(msg.sender, _amount);
     }
 
+//collect is called by the sweepstakes contract to collect rewards and add to the prize pool, extraFunds are also added.
     function collect() external onlySweepstakes returns (uint256) {
-        uint256 balance = address(this).balance;
+        uint256 balance = address(this).balance + extraFunds;
+        extraFunds = 0;
         require(_collectRewards(), "Collect rewards failed");
-        return address(this).balance + extraFunds - balance;
+        return address(this).balance - balance;
     }
 
     function payUser(address _user, uint256 _amount) external onlySweepstakes {
