@@ -1,16 +1,26 @@
-.background{
-    background-color: #f5f5f5;
-    height: 100vh;
-    width: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: -1;
-    /* background-image: url("./pokerBackground.png"); */
-    background-image: url("./wheelBackground.png");
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
+/* color palette */
+:root {
+  --dark: #222831;
+  --blue-grad: #6d7cff;
+  --pink-grad: #d863de;
+  --dark-grey: #37414f;
+  --off-black: #0d0f13;
+  --light-purple: #a0aaff;
+  --background-red: #833232aa;
+}
+
+.background {
+  background-color: #f5f5f5;
+  height: 100vh;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  background-image: url("./wheelBackground.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
 .app {
@@ -26,72 +36,174 @@
   margin-top: 56px;
 }
 
-.connectWalletBackground{
-    background-color: #f5f5f5;
-    height: 100vh;
-    width: 100%;
-    position: fixed;
-    top: 0;
-    left: 0;
-    z-index: -1;
-    background-image: url("./ConnectWallet.png");
-    background-size: cover;
-    background-repeat: no-repeat;
-    background-position: center;
+.connectWalletBackground {
+  background-color: #f5f5f5;
+  height: 100vh;
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: -1;
+  background-image: url("./ConnectWallet.png");
+  background-size: cover;
+  background-repeat: no-repeat;
+  background-position: center;
 }
 
-.title{
-    font-family: 'Crimson Text', serif;
-    font-size: 50px;
-    font-weight: bold;
-    color: #000000;
+.title {
+  font-family: "Crimson Text", serif;
+  font-size: 50px;
+  font-weight: bold;
+  color: #000000;
 }
-
 
 .loader {
-    width: 200px;
-    height: 26px;
-    display: inline-block;
-    background-color: #FFF;
-    border: 1px solid #FFF;
-    border-radius: 4px;
-    background-image: linear-gradient(45deg, rgba(0, 0, 0, 0.25) 25%, transparent 25%, transparent 50%, rgba(0, 0, 0, 0.25) 50%, rgba(0, 0, 0, 0.25) 75%, transparent 75%, transparent);
-    font-size: 50px;
-    background-size: 1em 1em;
-    box-sizing: border-box;
-    animation: barStripe 1s linear infinite;
-  }
-  
-  @keyframes barStripe {
-    0% {
-      background-position: 1em 0;
-    }
-    100% {
-      background-position: 0 0;
-    }
-  }
+  width: 200px;
+  height: 26px;
+  display: inline-block;
+  background-color: #fff;
+  border: 1px solid #fff;
+  border-radius: 4px;
+  background-image: linear-gradient(
+    45deg,
+    rgba(0, 0, 0, 0.25) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(0, 0, 0, 0.25) 50%,
+    rgba(0, 0, 0, 0.25) 75%,
+    transparent 75%,
+    transparent
+  );
+  font-size: 50px;
+  background-size: 1em 1em;
+  box-sizing: border-box;
+  animation: barStripe 1s linear infinite;
+}
 
-/* btn primary colors */
+@keyframes barStripe {
+  0% {
+    background-position: 1em 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+/* btn primary colors with hover changed*/
 .btn-primary {
-    color: #fff;
-    background-color: #303030;
-    border-color: #303030;
+  color: #fff;
+  background-color: #303030;
+  border-color: #303030;
 }
 
 .btn-outline-primary {
-    color: #303030;
-    border-color: #303030;
+  color: #303030;
+  border-color: #303030;
+}
+
+.btn-success {
+  color: #fff;
+  position: relative;
+  background-color: transparent;
+  border: #fff 1px solid;
+  transition: opacity 0.3s ease;
+}
+
+.btn-success::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("./chips-blurred.png");
+  background-position: center;
+  background-size: cover;
+  z-index: -1;
+  transition: opacity 0.3s ease;
+}
+
+.btn-success:hover::before {
+  background-color: #8332322c;
+  background-image: url("./chips-filtered.png");
+  background-position: center;
+  background-size: cover;
+}
+
+.btn-success:hover {
+  color: #fff;
+  background-color: #8332322c;
+  background-image: url("./chips-filtered.png");
+  background-position: center;
+  background-size: cover;
+  border: #fff 1px solid;
+}
+
+.btn-success:active {
+  color: #fff;
+  background-color: #8332322c;
+  background-image: url("./chips-filtered.png");
+  background-position: center;
+  background-size: cover;
+  border: #fff 1px solid;
+  box-shadow: none;
+}
+
+.btn-success:focus {
+  color: #fff;
+  background-color: #8332322c;
+  background-image: url("./chips-filtered.png");
+  background-position: center;
+  background-size: cover;
+  border: #fff 1px solid;
+  box-shadow: none;
 }
 
 /* change h1 to override the bootstrap h1 */
 .special {
-    font-family: 'Crimson Text', serif;
-    font-size: 60px;
-    font-weight: bold;
-    color: #000000;
+  font-family: "Crimson Text", serif;
+  font-size: 60px;
+  font-weight: bold;
+  color: #000000;
 }
 
-.custom-nav-bg{
-    background-color: rgb(48, 48, 48, 0.5);
+.custom-nav-bg {
+  background-color: rgb(48, 48, 48, 0.5);
+}
 
+.landing-page {
+  min-height: 100vh;
+  width: 100vw;
+  background-color: #833232aa;
+  align-items: center;
+  justify-content: center;
+  display: flex;
+  color: #fff;
+}
+
+.socmed {
+  padding: 30px 0;
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 150px;
+}
+
+.socmed .row {
+  text-align: center;
+}
+
+.logo-background {
+  margin-bottom: 50px;
+}
+
+.logo-header {
+  font-size: 75px;
+  font-weight: 600;
+  font-family: "Dancing Script", cursive;
+}
+
+.slogan {
+  z-index: -1;
+  letter-spacing: 6px; 
 }
