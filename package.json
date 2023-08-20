@@ -32,7 +32,7 @@
   "dependencies": {
     "@harmony-js/core": "^0.1.58",
     "@harmony-js/staking": "^0.1.58",
-    "@openzeppelin/contracts": "^4.9.1",
+    "@openzeppelin/contracts": "^4.9.3",
     "dotenv": "^16.3.1",
     "harmony-staking-sdk": "^1.0.6",
     "tslib": "^2.6.0"
