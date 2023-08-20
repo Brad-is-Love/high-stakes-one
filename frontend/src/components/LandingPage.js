@@ -53,7 +53,7 @@ export class LandingPage extends React.Component {
       <>
         <div className="background"></div>
           <div className="landing-page">
-            <div className="container">
+            <div className="container text-center">
               <div className="row justify-content-center">
                 <Logo />
               </div>
