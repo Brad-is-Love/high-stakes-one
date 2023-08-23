@@ -6,14 +6,14 @@ pragma solidity ^0.8.9;
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721Enumerable.sol";
 import "./lib/StakingContract.sol";
 
-/// @title SweepStakesNFTs
+/// @title SweepStakesOld
 /// @notice Users can stake ONE in a pool and receive rewards by lottery
 /// @dev StakingHelper holds the funds, stakes and unstakes etc. 
-///      SweepStakesNFTs is the ERC721, holds the user data and runs draws.
+///      SweepStakesOld is the ERC721, holds the user data and runs draws.
 ///      It stores the amount they've staked and manages unstaking, fees etc.
-///      i.e StakingHelper is the bank, SweepStakesNFTs is the database.
+///      i.e StakingHelper is the bank, SweepStakesOld is the database.
 
-contract SweepStakesNFTs is ERC721Enumerable {
+contract SweepStakesOld is ERC721Enumerable {
     uint256 public undelegationPeriod = 7; //epochs
     uint256 public checkpointSize;
     uint256 public tokenCounter;
@@ -30,28 +30,29 @@ contract SweepStakesNFTs is ERC721Enumerable {
     address private lastWinner;
     uint256 private lastPrize;
     bool public prizeAssigned;
-    bool public paused;
 
     struct tokenInfo {
         uint256 staked;
         uint256 unstaked;
-        uint256 withdrawEpoch;
+        uint256 withdrawEpoch; // this is when we can withdraw unstaked amount
+        uint256 prizes; // Withdrawable any time
     }
 
     mapping(uint256 => tokenInfo) public tokenIdToInfo;
 
-    // every 100 tokens is a checkpoint, with the total up to there. saves gas when iterating
+    // every 100 tokens is a checkpoint, with the total up to there
+    // saves gas when iterating
     mapping(uint256 => uint256) public checkpoints;
 
     constructor() ERC721("Sweepstakes NFTs", "SSN") {
         tokenCounter = 0;
         owner = msg.sender;
         beneficiary = msg.sender;
-        drawPeriod = 4*60*60; // 4 hours for testing
+        drawPeriod = 3 days; //3 days for tests
         lastDrawTime = block.timestamp;
         prizeAssigned = true;
         checkpointSize = 2; // 2 for tests
-        StakingHelper sh = new StakingHelper(address(this), owner);
+        StakingHelperOld sh = new StakingHelperOld(address(this), owner);
         stakingHelper = address(sh);
     }
 
@@ -97,12 +98,12 @@ contract SweepStakesNFTs is ERC721Enumerable {
             availableTokenIds.pop();
             _safeMint(_to, tokenId);
             checkpoints[tokenId / checkpointSize] += _value;
-            tokenIdToInfo[tokenId] = tokenInfo(_value, 0, 0);
+            tokenIdToInfo[tokenId] = tokenInfo(_value, 0, 0, 0);
         } else {
             // otherwise mint a new one
             _safeMint(_to, tokenCounter);
             checkpoints[tokenCounter / checkpointSize] += _value;
-            tokenIdToInfo[tokenCounter] = tokenInfo(_value, 0, 0);
+            tokenIdToInfo[tokenCounter] = tokenInfo(_value, 0, 0, 0);
             tokenCounter++;
         }
     }
@@ -118,7 +119,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         tokenIdToInfo[tokenId].staked -= _amount;
         tokenIdToInfo[tokenId].unstaked += _amount;
         tokenIdToInfo[tokenId].withdrawEpoch =
-            StakingHelper(stakingHelper).epoch() +
+            StakingHelperOld(stakingHelper).epoch() +
             undelegationPeriod;
         checkpoints[tokenId / checkpointSize] -= _amount;
         totalStaked -= _amount;
@@ -132,16 +133,27 @@ contract SweepStakesNFTs is ERC721Enumerable {
     function withdraw() external {
         uint256 tokenId = tokenOfOwnerByIndex(msg.sender, 0);
         require(
-            tokenIdToInfo[tokenId].withdrawEpoch <= StakingHelper(stakingHelper).epoch(),
+            tokenIdToInfo[tokenId].withdrawEpoch <= StakingHelperOld(stakingHelper).epoch(),
             "Must wait until undelegation complete"
         );
-        uint256 amount = tokenIdToInfo[tokenId].unstaked;
+        uint256 amount = tokenIdToInfo[tokenId].unstaked + tokenIdToInfo[tokenId].prizes;
+
         tokenIdToInfo[tokenId].unstaked = 0;
         tokenIdToInfo[tokenId].withdrawEpoch = 0;
+        tokenIdToInfo[tokenId].prizes = 0;
         if (tokenIdToInfo[tokenId].staked == 0) {
             burn(tokenId);
         }
-        StakingHelper(stakingHelper).payUser(msg.sender, amount);
+        StakingHelperOld(stakingHelper).payUser(msg.sender, amount);
+
+        emit Withdraw(msg.sender, amount);
+    }
+
+    function claimPrizes() external {
+        uint256 tokenId = tokenOfOwnerByIndex(msg.sender, 0);
+        uint256 amount = tokenIdToInfo[tokenId].prizes;
+        tokenIdToInfo[tokenId].prizes = 0;
+        StakingHelperOld(stakingHelper).payUser(msg.sender, amount);
 
         emit Withdraw(msg.sender, amount);
     }
@@ -161,7 +173,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         }
         uint index = vrf() % totalStaked;
         lastWinner = addressAtIndex(index);
-        lastPrize = StakingHelper(stakingHelper).collect();
+        lastPrize = StakingHelperOld(stakingHelper).collect();
         lastDrawTime = block.timestamp;
         prizeAssigned = false;
 
@@ -171,9 +183,11 @@ contract SweepStakesNFTs is ERC721Enumerable {
     function assignPrize() public {
         require(prizeAssigned == false);
         require(block.timestamp > lastDrawTime, "can't execute with draw");
-        //auto compound prizes
-        uint amount = (lastPrize * (10000 - prizeFee)) / 10000;
-        StakingHelper(stakingHelper).autoCompound(lastWinner, amount);
+        //get the token of the winner and add the amount to the prizes
+        uint256 tokenId = tokenOfOwnerByIndex(lastWinner, 0);
+        tokenIdToInfo[tokenId].prizes +=
+            (lastPrize * (10000 - prizeFee)) /
+            10000;
         feesToCollect += (lastPrize * prizeFee) / 10000;
         prizeAssigned = true;
 
@@ -183,7 +197,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     function withdrawFees() external onlyOwner {
         uint256 amount = feesToCollect;
         feesToCollect = 0;
-        StakingHelper(stakingHelper).payUser(beneficiary, amount);
+        StakingHelperOld(stakingHelper).payUser(beneficiary, amount);
     }
 
     // Iterates through checkpoints first, then through addresses
@@ -259,11 +273,12 @@ contract SweepStakesNFTs is ERC721Enumerable {
     function getNFTValue(uint256 _tokenId) external view returns (uint256) {
         return
             tokenIdToInfo[_tokenId].staked +
-            tokenIdToInfo[_tokenId].unstaked;
+            tokenIdToInfo[_tokenId].unstaked +
+            tokenIdToInfo[_tokenId].prizes;
     }
 }
 
-contract StakingHelper is StakingContract {
+contract StakingHelperOld is StakingContract {
     address[] public validators;
     address public owner;
     address public sweepstakes;
@@ -305,19 +320,7 @@ contract StakingHelper is StakingContract {
             );
             delegatedToValidator[validators[i]] += _amount / validators.length;
         }
-        SweepStakesNFTs(sweepstakes).enter(msg.sender, _amount);
-    }
-
-    function autoCompound(address _winner, uint256 _amount) external onlySweepstakes {
-        //delegates a spread over all the validators
-        for (uint256 i = 0; i < validators.length; i++) {
-            require(
-                _delegate(validators[i], _amount / validators.length),
-                "Delegate failed"
-            );
-            delegatedToValidator[validators[i]] += _amount / validators.length;
-        }
-        SweepStakesNFTs(sweepstakes).enter(_winner, _amount);
+        SweepStakesOld(sweepstakes).enter(msg.sender, _amount);
     }
 
     function unstake(uint256 _amount) external {
@@ -329,7 +332,7 @@ contract StakingHelper is StakingContract {
             );
             delegatedToValidator[validators[i]] -= _amount / validators.length;
         }
-        SweepStakesNFTs(sweepstakes).unstake(msg.sender, _amount);
+        SweepStakesOld(sweepstakes).unstake(msg.sender, _amount);
     }
 
 //collect is called by the sweepstakes contract to collect rewards and add to the prize pool, extraFunds are also added.

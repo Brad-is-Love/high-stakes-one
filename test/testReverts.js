@@ -43,42 +43,20 @@ describe("deploy contracts", function () {
     stakingHelperAddress = await sweepstakes.stakingHelper();
     console.log("stakingHelperAddress: ", stakingHelperAddress);
     stakingHelper = await ethers.getContractAt(
-      "StakingHelper",
+      "StakingHelperOld",
       stakingHelperAddress
     );
   });
 });
 
-describe("withdraw", function () {
-  it("get token balances", async function () {
-    const token0 = await stakingHelper.tokenIdToInfo(0);
-    const token1 = await stakingHelper.tokenIdToInfo(1);
-    const token2 = await stakingHelper.tokenIdToInfo(2);
-    token0Unstaked = token0.unstaked;
-    token0Prizes = token0.prizes;
-    token1Unstaked = token1.unstaked;
-    token2Unstaked = token2.unstaked;
+describe("only Owner reverts", function () {
+  it("setPrizeFee", async function () {
+    console.log("prizeFee", await sweepstakes.prizeFee());
+    await expect(sweepstakes.connect(acc1).setPrizeFee(100, {gasLimit: 200000})).to.be.revertedWith("Only Owner");
   });
-  it("get balances before", async function () {
-    balance0 = await ethers.provider.getBalance(owner.address);
-    balance1 = await ethers.provider.getBalance(acc1.address);
-    balance2 = await ethers.provider.getBalance(acc2.address);
+  it("log prizeFee", async function () {
+    console.log("prizeFee After", await sweepstakes.prizeFee());
   });
-  it("withdraw", async function () {
-    await stakingHelper.connect(owner).withdraw();
-    await stakingHelper.connect(acc1).withdraw();
-    await stakingHelper.connect(acc2).withdraw();
-  });
-  it("get balances after", async function () {
-    balance0After = await ethers.provider.getBalance(owner.address);
-    balance1After = await ethers.provider.getBalance(acc1.address);
-    balance2After = await ethers.provider.getBalance(acc2.address);
-  });
-  it("compare", async function () {
-    console.log("owner expected: ", balance0.add(token0Unstaked).add(token0Prizes).toString(), " actual: ", balance0After.toString());
-    console.log("acc1 expected: ", balance1.add(token1Unstaked).toString(), " actual: ", balance1After.toString());
-    console.log("acc2 expected: ", balance2.add(token2Unstaked).toString(), " actual: ", balance2After.toString());
-  }); 
 });
 
 

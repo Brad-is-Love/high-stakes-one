@@ -67,9 +67,10 @@ describe("sweepstakesNFTs constructor", function () {
   });
   it("vars set correctly", async function () {
     expect(await sweepstakes.tokenCounter()).to.equal(0);
-    expect(await sweepstakes.drawPeriod()).to.equal(3 * 24 * 60 * 60);
+    expect(await sweepstakes.drawPeriod()).to.equal(4 * 60 * 60);
     expect(await sweepstakes.lastDrawTime()).to.equal(jsonData.lastDraw);
     expect(await sweepstakes.prizeFee()).to.equal(500);
+    expect(await sweepstakes.beneficiary()).to.equal(owner.address);
     //make checkoint size 2 for testing
     expect(await sweepstakes.checkpointSize()).to.equal(2);
     expect(await sweepstakes.undelegationPeriod()).to.equal(7);
@@ -122,13 +123,20 @@ describe("variable setters", function () {
     //non-owner fails
     expect(await expectFail(() => sweepstakes.connect(acc1).setMinStake(1000))).to.equal("failed")
   });
+  it("set beneficiary", async function () {
+    await sweepstakes.setBeneficiary(acc1.address);
+    expect(await sweepstakes.minStake()).to.equal(acc1.address);
+    //non-owner fails
+    expect(await expectFail(() => sweepstakes.connect(acc1).setBeneficiary(acc1.address))).to.equal("failed")
+  });
 
   it("reset all back to desired state", async function () {
     //3 days for testing
-    await sweepstakes.setDrawPeriod(3 * 24 * 60 * 60);
+    await sweepstakes.setDrawPeriod(4 * 60 * 60);
     await sweepstakes.setPrizeFee(500);
     await sweepstakes.setUndelegationPeriod(7);
     await sweepstakes.setMinStake(100);
+    await sweepstakes.setBeneficiary(owner.address);
   });
 });
 
@@ -234,7 +242,6 @@ describe("check amounts in sweepstakes", function () {
     expect(token0.staked).to.equal(ethers.utils.parseEther("100"));
     expect(token0.unstaked).to.equal(0);
     expect(token0.withdrawEpoch).to.equal(0);
-    expect(token0.prizes).to.equal(0);
   });
   it("check NFT value", async function () {
     expect(await sweepstakes.getNFTValue(0)).to.equal(ethers.utils.parseEther("100"));
