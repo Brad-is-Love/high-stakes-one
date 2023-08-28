@@ -109,7 +109,7 @@ export class LandingPage extends React.Component {
                 <div className="row justify-content-center text-center pt-5 mt-3 pb-5 mb-3" style={{maxWidth: "200px", margin: "0 auto"}}>
                   <div className="col">
                     <a
-                      href="https://discord.gg/pYXGSfZx"
+                      href="https://discord.gg/5MUbkKaX"
                       target="_blank"
                       rel="noopener noreferrer"
                     >
