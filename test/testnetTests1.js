@@ -6,8 +6,8 @@ const {
   IValidatorFull,
   NETWORK_TYPE,
 } = require("harmony-staking-sdk");
+const { toBech32 } = require('@harmony-js/crypto');
 
-const stakingHelperOneAddress = "one1jy4jej8t9u89px5tm9uty2kt46qcct2eg9773e";
 const validatorAddress = "one198pwc4uq879kjhczvyl9lgt5nst9c5zhwhfrvz";
 const val0xAddress = "0x29c2eC57803f8b695f02613E5FA1749c165c5057";
 stakingApi = new StakingAPI({ apiUrl: "https://api.stake.hmny.io" });
@@ -71,8 +71,8 @@ describe("sweepstakesNFTs constructor", function () {
     expect(await sweepstakes.lastDrawTime()).to.equal(jsonData.lastDraw);
     expect(await sweepstakes.prizeFee()).to.equal(500);
     expect(await sweepstakes.beneficiary()).to.equal(owner.address);
-    //make checkoint size 2 for testing
-    expect(await sweepstakes.checkpointSize()).to.equal(2);
+    //make page size 2 for testing
+    expect(await sweepstakes.pageSize()).to.equal(2);
     expect(await sweepstakes.undelegationPeriod()).to.equal(7);
     expect(await sweepstakes.minStake()).to.equal(ethers.utils.parseEther("100"));
   });
@@ -81,6 +81,7 @@ describe("sweepstakesNFTs constructor", function () {
 describe("deploy staking helper", function () {
   it("get StakingHelper: ", async function () {
     stakingHelperAddress = await sweepstakes.stakingHelper();
+    stakingHelperOneAddress = toBech32(stakingHelperAddress);
     console.log("stakingHelperAddress: ", stakingHelperAddress);
     stakingHelper = await ethers.getContractAt(
       "StakingHelper",
@@ -112,10 +113,10 @@ describe("variable setters", function () {
     expect(await expectFail(() => sweepstakes.connect(acc1).setPrizeFee(1000))).to.equal("failed")
   });
   it("setUndelegationPeriod", async function () {
-    await sweepstakes.setUndelegationPeriod(2 * 24 * 60 * 60);
-    expect(await sweepstakes.undelegationPeriod()).to.equal(2 * 24 * 60 * 60);
+    await sweepstakes.setUndelegationPeriod(2);
+    expect(await sweepstakes.undelegationPeriod()).to.equal(2);
     //non-owner fails
-    expect(await expectFail(() => sweepstakes.connect(acc1).setUndelegationPeriod(2 * 24 * 60 * 60))).to.equal("failed")
+    expect(await expectFail(() => sweepstakes.connect(acc1).setUndelegationPeriod(4))).to.equal("failed")
   });
   it("set minStake", async function () {
     await sweepstakes.setMinStake(1000);
@@ -125,17 +126,21 @@ describe("variable setters", function () {
   });
   it("set beneficiary", async function () {
     await sweepstakes.setBeneficiary(acc1.address);
-    expect(await sweepstakes.minStake()).to.equal(acc1.address);
+    expect(await sweepstakes.beneficiary()).to.equal(acc1.address);
     //non-owner fails
     expect(await expectFail(() => sweepstakes.connect(acc1).setBeneficiary(acc1.address))).to.equal("failed")
   });
 
-  it("reset all back to desired state", async function () {
+  it("reset back to desired state 1", async function () {
     //3 days for testing
-    await sweepstakes.setDrawPeriod(4 * 60 * 60);
+    await sweepstakes.setDrawPeriod(4 * 60); //setting to 4 mins for testing
     await sweepstakes.setPrizeFee(500);
+  });
+  it("reset back to desired state 2", async function () {
     await sweepstakes.setUndelegationPeriod(7);
     await sweepstakes.setMinStake(100);
+  });
+  it("reset back to desired state 3", async function () {
     await sweepstakes.setBeneficiary(owner.address);
   });
 });
@@ -218,11 +223,11 @@ describe("check amounts in sweepstakes", function () {
   it("3 tokens issued", async function () {
     expect(await sweepstakes.tokenCounter()).to.equal(3);
   });
-  it("check checkpoints", async function () {
-    expect(await sweepstakes.checkpoints(0)).to.equal(
+  it("check pages", async function () {
+    expect(await sweepstakes.pages(0)).to.equal(
       ethers.utils.parseEther("300")
     );
-    expect(await sweepstakes.checkpoints(1)).to.equal(
+    expect(await sweepstakes.pages(1)).to.equal(
       ethers.utils.parseEther("300")
     );
   });
@@ -293,11 +298,11 @@ describe("acc 1 stakes 100 more", function () {
     expect(await sweepstakes.totalStaked()).to.equal(
       ethers.utils.parseEther("700")
     );
-    expect(await sweepstakes.checkpoints(0)).to.equal(
+    expect(await sweepstakes.pages(0)).to.equal(
       ethers.utils.parseEther("400")
     );
     expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(ethers.utils.parseEther("700"));
-    expect(await getAmountDelegatedBy(jsonData.stakingHelper)).to.equal("700000000000000000000");
+    expect(await getAmountDelegatedBy(stakingHelperOneAddress)).to.equal("700000000000000000000");
   });
   it("check nft details", async function () {
     const token1 = await sweepstakes.tokenIdToInfo(1);
@@ -317,7 +322,7 @@ describe("unstake", function () {
     expect(await sweepstakes.totalStaked()).to.equal(
       ethers.utils.parseEther("600")
     );
-    expect(await sweepstakes.checkpoints(1)).to.equal(
+    expect(await sweepstakes.pages(1)).to.equal(
       ethers.utils.parseEther("200")
     );
     epoch = parseInt(await stakingHelper.epoch());

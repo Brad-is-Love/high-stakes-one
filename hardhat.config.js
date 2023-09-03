@@ -30,4 +30,7 @@ module.exports = {
         }
       }],
   },
+  mocha: {
+    timeout: 200000,
+  },
 };

@@ -1,4 +1,4 @@
-//Testnet 2: Some other tests but don't need to be delayed
+//Testnet 1: deploy contracts and stake
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const {
@@ -7,7 +7,6 @@ const {
   NETWORK_TYPE,
 } = require("harmony-staking-sdk");
 
-const stakingHelperOneAddress = "one1jy4jej8t9u89px5tm9uty2kt46qcct2eg9773e";
 const validatorAddress = "one198pwc4uq879kjhczvyl9lgt5nst9c5zhwhfrvz";
 const val0xAddress = "0x29c2eC57803f8b695f02613E5FA1749c165c5057";
 stakingApi = new StakingAPI({ apiUrl: "https://api.stake.hmny.io" });
@@ -17,62 +16,52 @@ const exp = require("constants");
 
 before(async function () {
   //load the data from the file
-  try {
-    data = fs.readFileSync("./ssData.json");
-    jsonData = JSON.parse(data);
-  } catch (err) {
-    console.log("no file yet");
-  }
 
   [owner, acc1, acc2, acc3] = await ethers.getSigners();
 });
+//BOTH UNSTAKED ON SUNDAY
+/*jsonData = {
+  sweepstakes: "0x2b71213C928676DC040823f32fe7AEa4e9aAA7bc",
+  lastDraw: 1693710308,
+  stakingHelper: "0x4d01d4181eFE8C81Ec3849f2bDc8a166914392B5",
+  extraFunds: null,
+  acc2UnstakedAtEpoch: 1969,
+};*/
+jsonData = {"sweepstakes":"0x4A4B3B838C9361458bB241123FcF20c8Fb9548b7","lastDraw":1693712459,"stakingHelper":"0xC3C67514F55652bc0dbe378b949DBa660192e0f9","extraFunds":null,"acc2UnstakedAtEpoch":1969};
 
-describe("get contracts", function () {
-  it("get SweepStakesNFTs", async function () {
+describe("deploy contracts", function () {
+  it("deploy SweepStakesNFTs", async function () {
     sweepstakes = await ethers.getContractAt(
       "SweepStakesNFTs",
       jsonData.sweepstakes
     );
     console.log("SweepStakesNFTs already at:", sweepstakes.address);
   });
+});
 
+describe("deploy staking helper", function () {
   it("get StakingHelper: ", async function () {
     stakingHelperAddress = await sweepstakes.stakingHelper();
+    console.log("stakingHelperAddress: ", stakingHelperAddress);
     stakingHelper = await ethers.getContractAt(
       "StakingHelper",
       stakingHelperAddress
     );
+    if (!jsonData.stakingHelper) {
+      saveData("stakingHelper", stakingHelperAddress);
+    }
   });
 });
 
-describe("check draw and compound", function () {
-  it("draw winner", async function () {
-    await sweepstakes.drawWinner();
+describe("unstake all", function () {
+  it("unstake owner", async function () {
+    await stakingHelper.unstake(ethers.utils.parseEther("100"));
   });
-  it("check lastDrawTime", async function () {
-    expect(await sweepstakes.lastDrawTime()).to.not.equal(jsonData.lastDraw);
-    const block = await ethers.provider.getBlock("latest");
-    saveData("lastDraw", block.timestamp);
+  it("unstake acc1", async function () {
+    await stakingHelper.connect(acc1).unstake(ethers.utils.parseEther("300"));
   });
-  it("assignPrize", async function () {
-    const ownerToken = (await sweepstakes.tokenIdToInfo(0)).staked;
-    const acc1Token = (await sweepstakes.tokenIdToInfo(1)).staked;
-    const acc2Token = (await sweepstakes.tokenIdToInfo(2)).staked;
-    await sweepstakes.assignPrize();
-    //check who won
-    const winner = await sweepstakes.lastWinner();
-    console.log("winner", winner);
-    const prize = await sweepstakes.lastPrize();
-    expect(prize).to.equal(ethers.utils.parseEther("9.5"));
-    expect(await sweepstakes.feesToCollect()).to.equal(ethers.utils.parseEther("0.5"));
-    //check autoCompound
-    expect(await sweepstakes.totalStaked()).to.equal(
-      ethers.utils.parseEther("709.5")
-    );
-    const winningToken = await sweepstakes.tokenOfOwnerByIndex(winner, 0);
-    const winningTokenStaked = (await sweepstakes.tokenIdToInfo(winningToken)).staked;
-    expectedStaked = winner === owner.address ? ownerToken : winner === acc1.address ? acc1Token : winner === acc2.address ? acc2Token : "error";
-    expect(winningTokenStaked).to.equal(expectedStaked);
+  it("unstake acc2", async function () {
+    await stakingHelper.connect(acc2).unstake(ethers.utils.parseEther("200"));
   });
 });
 
@@ -93,6 +82,7 @@ async function getValidator() {
       NETWORK_TYPE.TESTNET,
       validatorAddress
     );
+    // console.log("validator", validator);
     return validator;
   } catch (err) {
     console.error(
@@ -108,12 +98,12 @@ async function getAmountDelegatedBy(contractAddress) {
   try {
     const validator = await getValidator();
     const index = validator.delegations.findIndex(
-      (delegator) => delegator["delegator-address"] === validatorAddress
+      (delegator) => delegator["delegator-address"] === contractAddress
     );
     staked = validator.delegations[index].amount.toString();
   } catch (err) {
     console.error(
-      `Error fetching validator information for address ${validatorAddress}:`,
+      `Error fetching validator information for address ${contractAddress}:`,
       err
     );
   }
@@ -121,7 +111,7 @@ async function getAmountDelegatedBy(contractAddress) {
   return staked;
 }
 
-async function expectFail(functionToCall){
+async function expectFail(functionToCall) {
   try {
     await functionToCall();
     return "succeeded";

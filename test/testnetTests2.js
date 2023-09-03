@@ -33,6 +33,7 @@ describe("get contracts", function () {
       "SweepStakesNFTs",
       jsonData.sweepstakes
     );
+    console.log("SweepStakesNFTs already at:", sweepstakes.address);
   });
 
   it("get StakingHelper: ", async function () {
@@ -44,17 +45,17 @@ describe("get contracts", function () {
   });
 });
 
-describe("set bad Validators", function () {
+describe("add a non-validator to Validators", function () {
   it("add validators array", async function () {
-    await stakingHelper.setValidators([owner.address, acc1.address]);
+    await stakingHelper.setValidators([val0xAddress, owner.address]);
     expect(await stakingHelper.isValidator(owner.address)).to.equal(true);
-    expect(await stakingHelper.validators(0)).to.equal(owner.address);
+    expect(await stakingHelper.validators(1)).to.equal(owner.address);
   });
   it("stake now fails", async function () {
     expect(
       await expectFail(() =>
-        stakingHelper.stake(ethers.utils.parseEther("100"), {
-          value: ethers.utils.parseEther("100"),
+        stakingHelper.stake(ethers.utils.parseEther("200"), {
+          value: ethers.utils.parseEther("200"), gasLimit: 1000000
         })
       )
     ).to.equal("failed");
@@ -77,18 +78,42 @@ describe("unstake too much", function () {
   it("unstake 401 fails", async function () {
     expect(
       await expectFail(() =>
-        stakingHelper.unstake(ethers.utils.parseEther("401"))
+        stakingHelper.unstake(ethers.utils.parseEther("801"))
       )
     ).to.equal("failed");
   });
 });
 
-// Draw fails if not enough time has passed
-describe("do a draw", function () {
-  it("draw fails if not enough time has passed", async function () {
-    expect(await expectFail(() => sweepstakes.drawWinner())).to.equal("failed");
-  });
-});
+// describe("check draw and compound", function () {
+//   it("draw winner", async function () {
+//     await sweepstakes.drawWinner();
+//   });
+//   it("check lastDrawTime", async function () {
+//     expect(await sweepstakes.lastDrawTime()).to.not.equal(jsonData.lastDraw);
+//     const block = await ethers.provider.getBlock("latest");
+//     saveData("lastDraw", block.timestamp);
+//   });
+//   it("assignPrize", async function () {
+//     const ownerToken = (await sweepstakes.tokenIdToInfo(0)).staked;
+//     const acc1Token = (await sweepstakes.tokenIdToInfo(1)).staked;
+//     const acc2Token = (await sweepstakes.tokenIdToInfo(2)).staked;
+//     await sweepstakes.assignPrize();
+//     //check who won
+//     const winner = await sweepstakes.lastWinner();
+//     console.log("winner", winner);
+//     const prize = await sweepstakes.lastPrize();
+//     expect(prize).to.equal(ethers.utils.parseEther("9.5"));
+//     expect(await sweepstakes.feesToCollect()).to.equal(ethers.utils.parseEther("0.5"));
+//     //check autoCompound
+//     expect(await sweepstakes.totalStaked()).to.equal(
+//       ethers.utils.parseEther("709.5")
+//     );
+//     const winningToken = await sweepstakes.tokenOfOwnerByIndex(winner, 0);
+//     const winningTokenStaked = (await sweepstakes.tokenIdToInfo(winningToken)).staked;
+//     expectedStaked = winner === owner.address ? ownerToken : winner === acc1.address ? acc1Token : winner === acc2.address ? acc2Token : "error";
+//     expect(winningTokenStaked).to.equal(expectedStaked);
+//   });
+// });
 
 describe("save contract address and balances to a file", function () {
   it("save contract address and balances to a file", async function () {

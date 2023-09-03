@@ -17,7 +17,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     uint256 public undelegationPeriod = 7; //epochs
     uint256 public pageSize;
     // every 100 tokens is a page, with the total up to there. first find the page where the winner is located, then find the token.
-    uint256[] public pages;
+    mapping (uint256 => uint256) public pages;
     uint256 public tokenCounter;
     uint256[] public availableTokenIds;
     uint256 public totalStaked;
@@ -46,7 +46,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         tokenCounter = 0;
         owner = msg.sender;
         beneficiary = msg.sender;
-        drawPeriod = 4 * 60 * 60; // 4 hours for testing
+        drawPeriod = 4 * 60 * 60; // 4 mins for testing
         lastDrawTime = block.timestamp;
         prizeAssigned = true;
         pageSize = 2; // 2 tokens per page for tests
@@ -199,25 +199,22 @@ contract SweepStakesNFTs is ERC721Enumerable {
         require(_index < totalStaked, "Index out of range");
         uint256 subTotal = 0;
         //find the page the address is on:
-        for (uint256 page = 0; page < pages.length; page++) {
-            // every page has a value, which is the sum of all the token stakings on that page
-            // we add the current page value to the subTotal and if it's > the index, it means the address is on the current page
-            if (subTotal + page > _index) {
-                //So we iterate through the tokens on this page.
+        for (uint256 page = 0; page <= tokenCounter/pageSize; page++) {
+            //add the page value to subtotal
+            if (subTotal + pages[page] > _index) {
+                //Iterate through the tokens on this page.
                 for (
                     uint256 tokenId = page * pageSize;
                     tokenId < (page + 1) * pageSize;
                     tokenId++
                 ) {
-                    //contine adding to the subTotal, this time just adding the staked amount
-                    //when the subtotal is >= _index, we've found our winner
                     if (subTotal + tokenIdToInfo[tokenId].staked >= _index) {
                         return ownerOf(tokenId);
                     }
                     subTotal += tokenIdToInfo[tokenId].staked;
                 }
             }
-            subTotal += page;
+            subTotal += pages[page];
         }
         //should never get to here
         return address(0);
