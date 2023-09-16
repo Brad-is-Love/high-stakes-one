@@ -14,20 +14,12 @@ let jsonData = {};
 const fs = require("fs");
 const exp = require("constants");
 
+
 before(async function () {
   //load the data from the file
 
   [owner, acc1, acc2, acc3] = await ethers.getSigners();
 });
-//BOTH UNSTAKED ON SUNDAY
-/*jsonData = {
-  sweepstakes: "0x2b71213C928676DC040823f32fe7AEa4e9aAA7bc",
-  lastDraw: 1693710308,
-  stakingHelper: "0x4d01d4181eFE8C81Ec3849f2bDc8a166914392B5",
-  extraFunds: null,
-  acc2UnstakedAtEpoch: 1969,
-};*/
-jsonData = {"sweepstakes":"0x4A4B3B838C9361458bB241123FcF20c8Fb9548b7","lastDraw":1693712459,"stakingHelper":"0xC3C67514F55652bc0dbe378b949DBa660192e0f9","extraFunds":null,"acc2UnstakedAtEpoch":1969};
 
 describe("deploy contracts", function () {
   it("deploy SweepStakesNFTs", async function () {
@@ -47,34 +39,47 @@ describe("deploy staking helper", function () {
       "StakingHelper",
       stakingHelperAddress
     );
-    if (!jsonData.stakingHelper) {
-      saveData("stakingHelper", stakingHelperAddress);
-    }
   });
 });
 
-describe("unstake all", function () {
-  it("unstake owner", async function () {
-    await stakingHelper.unstake(ethers.utils.parseEther("100"));
+// describe("unstake all", function () {
+//   it("get balances", async function () {
+//     ownerBal = (await sweepstakes.tokenIdToInfo(0)).staked;
+//     console.log("ownerBal", ownerBal.toString());
+//     acc1Bal = (await sweepstakes.tokenIdToInfo(1)).staked;
+//     console.log("acc1Bal", acc1Bal.toString());
+//     acc2Bal = (await sweepstakes.tokenIdToInfo(2)).staked;
+//     console.log("acc2Bal", acc2Bal.toString());
+//     const pending = await stakingHelper.pendingDelegation();
+//     console.log("pending", pending.toString());
+//     const totalStaked = await sweepstakes.totalStaked();
+//     console.log("totalStaked", totalStaked.toString());
+//   });
+//   // it("unstake owner", async function () {
+//   //   await stakingHelper.unstake(ownerBal.toString());
+//   // });
+//   it("unstake acc1", async function () {
+//     await stakingHelper.connect(acc1).unstake(acc1Bal.toString());
+//   });
+//   // it("unstake acc2", async function () {
+//   //   await stakingHelper.connect(acc2).unstake(acc2Bal.toString());
+//   // });
+// });
+
+describe("withdraw all", function () {
+  it("withdraw owner", async function () {
+    await sweepstakes.withdraw();
   });
-  it("unstake acc1", async function () {
-    await stakingHelper.connect(acc1).unstake(ethers.utils.parseEther("300"));
+  it("withdraw acc1", async function () {
+    await sweepstakes.connect(acc1).withdraw();
   });
-  it("unstake acc2", async function () {
-    await stakingHelper.connect(acc2).unstake(ethers.utils.parseEther("200"));
+  it("withdraw acc2", async function () {
+    await sweepstakes.connect(acc2).withdraw();
+  });
+  it("withdtaw fees", async function () {
+    await sweepstakes.withdrawFees()
   });
 });
-
-describe("save contract address and balances to a file", function () {
-  it("save contract address and balances to a file", async function () {
-    const jd = JSON.stringify(jsonData);
-    fs.writeFileSync("./ssData.json", jd, "utf-8");
-  });
-});
-
-function saveData(key, value) {
-  jsonData[key] = value;
-}
 
 async function getValidator() {
   try {

@@ -1,4 +1,11 @@
 //Testnet 1: deploy contracts and stake
+//changes:
+/**
+ * changed setValidators to happen at rebalanceEnd
+ * enter, unstake and withdraw added index
+ * address at index to tokenAtIndex
+ * lastWinner changed to uint
+ */
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const {
@@ -10,10 +17,13 @@ const { toBech32 } = require('@harmony-js/crypto');
 
 const validatorAddress = "one198pwc4uq879kjhczvyl9lgt5nst9c5zhwhfrvz";
 const val0xAddress = "0x29c2eC57803f8b695f02613E5FA1749c165c5057";
+const val2one = "one1yp8mw25h0lmm4smjcpdxjj8dw9aydtxg4ywxnr"
+const val20x = "0x204fb72a977FF7BAC372C05A6948Ed717a46ACc8"
 stakingApi = new StakingAPI({ apiUrl: "https://api.stake.hmny.io" });
 let jsonData = {};
 const fs = require("fs");
 const exp = require("constants");
+const { EtherscanProvider } = require("@ethersproject/providers");
 
 before(async function () {
   //load the data from the file
@@ -95,6 +105,7 @@ describe("deploy staking helper", function () {
   it("vars set correctly", async function () {
     expect(await stakingHelper.owner()).to.equal(owner.address);
     expect(await stakingHelper.sweepstakes()).to.equal(sweepstakes.address);
+    expect(await stakingHelper.minDelegation()).to.equal(ethers.utils.parseEther("100"));
   });
 });
 
@@ -138,21 +149,44 @@ describe("variable setters", function () {
   });
   it("reset back to desired state 2", async function () {
     await sweepstakes.setUndelegationPeriod(7);
-    await sweepstakes.setMinStake(100);
+    await sweepstakes.setMinStake(ethers.utils.parseEther("100"));
   });
   it("reset back to desired state 3", async function () {
     await sweepstakes.setBeneficiary(owner.address);
   });
 });
 
-describe("setValidators", function () {
+describe("staking helper setters", function () {
+  it("set minDelegation", async function () {
+    await stakingHelper.setMinDelegation(1000);
+    expect(await stakingHelper.minDelegation()).to.equal(1000);
+    //non-owner fails
+    expect(await expectFail(() => stakingHelper.connect(acc1).setMinDelegation(1000))).to.equal("failed")
+  });
+  it("set sweepstakes", async function () {
+    await stakingHelper.setSweepstakes(acc1.address);
+    expect(await stakingHelper.sweepstakes()).to.equal(acc1.address);
+    //non-owner fails
+    expect(await expectFail(() => stakingHelper.connect(acc1).setSweepstakes(acc1.address))).to.equal("failed")
+  });
+  it("set owner", async function () {
+    //non-owner fails
+    expect(await expectFail(() => stakingHelper.connect(acc1).setOwner(acc1.address))).to.equal("failed")
+    await stakingHelper.setOwner(acc1.address);
+    expect(await stakingHelper.owner()).to.equal(acc1.address);
+  });
+  it("reset back to desired state", async function () {
+    await stakingHelper.connect(acc1).setOwner(owner.address);
+    await stakingHelper.setMinDelegation(ethers.utils.parseEther("100"));
+    await stakingHelper.setSweepstakes(sweepstakes.address);
+  });
   it("add validators array", async function () {
-    await stakingHelper.setValidators([val0xAddress]);
+    await stakingHelper.setValidators([val0xAddress, val20x]);
     console.log("vals set")
     expect(await stakingHelper.isValidator(val0xAddress)).to.equal(true);
+    expect(await stakingHelper.isValidator(val20x)).to.equal(true);
     console.log("isvalidator = true")
     expect(await stakingHelper.validators(0)).to.equal(val0xAddress);
-    console.log("validators(0) = val0xAddress")
   });
   it("non owner fails", async function () {
     expect(await expectFail(() => stakingHelper.connect(acc1).setValidators([val0xAddress]))).to.equal("failed")
@@ -168,15 +202,6 @@ describe("onlyStaking, onlySweepstakes", function () {
   });
 });
 
-describe("juice the Prize Pool", function () {
-  it("stakingHelper accepts 10 ONE", async function () {
-    await stakingHelper.juicePrizePool({value: ethers.utils.parseEther("10")});
-    expect(await ethers.provider.getBalance(stakingHelper.address)).to.equal(ethers.utils.parseEther("10"));
-    expect(await stakingHelper.extraFunds()).to.equal(ethers.utils.parseEther("10"));
-    jsonData["extraFunds"] += 10;
-  });
-});
-
 describe("enter", function () {
   it("wrong amount fails", async function () {
     expect(await expectFail(() => stakingHelper.enter(ethers.utils.parseEther("100"), {value: ethers.utils.parseEther("99")}))).to.equal("failed")
@@ -188,20 +213,22 @@ describe("enter", function () {
     await stakingHelper.enter(ethers.utils.parseEther("100"), {
       value: ethers.utils.parseEther("100"),
     });
-    expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(
+    //won't delegate yet not enough per validator
+    expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(0);
+    expect(await ethers.provider.getBalance(stakingHelper.address)).to.equal(
       ethers.utils.parseEther("100")
     );
-    expect(await ethers.provider.getBalance(stakingHelper.address)).to.equal(
-      ethers.utils.parseEther("10")
-    );
+    expect(await stakingHelper.pendingDelegation()).to.equal(ethers.utils.parseEther("100"));
   });
   it("acc1 enters with 200 ONE", async function () {
     await stakingHelper.connect(acc1).enter(ethers.utils.parseEther("200"), {
       value: ethers.utils.parseEther("200"),
     });
+    expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(ethers.utils.parseEther("150"));
+    expect(await stakingHelper.delegatedToValidator(val20x)).to.equal(ethers.utils.parseEther("150"));
     //expect balance to still be 10 cos rest is staked
     expect(await ethers.provider.getBalance(stakingHelper.address)).to.equal(
-      ethers.utils.parseEther("10")
+      ethers.utils.parseEther("0")
     );
   });
   it("acc2 enters with 300 ONE", async function () {
@@ -209,7 +236,7 @@ describe("enter", function () {
       value: ethers.utils.parseEther("300"),
     });
     expect(await ethers.provider.getBalance(stakingHelper.address)).to.equal(
-      ethers.utils.parseEther("10")
+      ethers.utils.parseEther("0")
     );
   });
 });
@@ -255,10 +282,8 @@ describe("check amounts in sweepstakes", function () {
 
 describe("confirm validator received tokens", function () {
   it("check validator balance", async function () {
-    expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(
-      ethers.utils.parseEther("600")
-    );
-    expect(await getAmountDelegatedBy(stakingHelperOneAddress)).to.equal("600000000000000000000");
+    //this is 300 because it's only querying 1 validator
+    expect(await getAmountDelegatedBy(stakingHelperOneAddress)).to.equal("300000000000000000000");
   });
 });
 
@@ -291,18 +316,21 @@ describe("address at index", function () {
 });
 
 describe("acc 1 stakes 100 more", function () {
-  it("acc1 stakes 100 now has 200", async function () {
+  it("acc1 stakes 100 now has 300", async function () {
     await stakingHelper.connect(acc1).enter(ethers.utils.parseEther("100"), {
       value: ethers.utils.parseEther("100"),
     });
     expect(await sweepstakes.totalStaked()).to.equal(
       ethers.utils.parseEther("700")
     );
+    //this should be in pending delegations
+    expect(await stakingHelper.pendingDelegation()).to.equal(ethers.utils.parseEther("100"));
+    //delegated not changed
+    expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(ethers.utils.parseEther("300"));
+    expect(await stakingHelper.delegatedToValidator(val20x)).to.equal(ethers.utils.parseEther("300"));
     expect(await sweepstakes.pages(0)).to.equal(
       ethers.utils.parseEther("400")
     );
-    expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(ethers.utils.parseEther("700"));
-    expect(await getAmountDelegatedBy(stakingHelperOneAddress)).to.equal("700000000000000000000");
   });
   it("check nft details", async function () {
     const token1 = await sweepstakes.tokenIdToInfo(1);
@@ -325,6 +353,10 @@ describe("unstake", function () {
     expect(await sweepstakes.pages(1)).to.equal(
       ethers.utils.parseEther("200")
     );
+    expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(ethers.utils.parseEther("300"));
+    expect(await stakingHelper.delegatedToValidator(val20x)).to.equal(ethers.utils.parseEther("300"));
+    //pending cleard
+    expect(await stakingHelper.pendingDelegation()).to.equal(0);
     epoch = parseInt(await stakingHelper.epoch());
     console.log("acc 2 unstake 100 at epoch", epoch);
   });
@@ -340,6 +372,36 @@ describe("unstake", function () {
   });
   it("unstake too much fails", async function () {
     expect(await expectFail(() => stakingHelper.connect(acc2).unstake(ethers.utils.parseEther("500")))).to.equal("failed");
+  });
+});
+
+describe("add a non-validator to Validators", function () {
+  it("add validators array", async function () {
+    await stakingHelper.setValidators([val0xAddress, owner.address]);
+    expect(await stakingHelper.isValidator(owner.address)).to.equal(true);
+    expect(await stakingHelper.validators(1)).to.equal(owner.address);
+  });
+  it("stake now fails", async function () {
+    expect(
+      await expectFail(() =>
+        stakingHelper.stake(ethers.utils.parseEther("200"), {
+          value: ethers.utils.parseEther("200"), gasLimit: 1000000
+        })
+      )
+    ).to.equal("failed");
+  });
+  it("unstake now fails", async function () {
+    expect(
+      await expectFail(() =>
+        stakingHelper.unstake(ethers.utils.parseEther("100"))
+      )
+    ).to.equal("failed");
+  });
+  it("reset Validators", async function () {
+    await stakingHelper.setValidators([val0xAddress, val20x]);
+    expect(await stakingHelper.isValidator(owner.address)).to.equal(false);
+    expect(await stakingHelper.isValidator(val0xAddress)).to.equal(true);
+    expect(await stakingHelper.isValidator(val20x)).to.equal(true);
   });
 });
 

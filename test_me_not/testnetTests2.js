@@ -1,17 +1,14 @@
-//we need to wait until tests2 epoch has finished before running this
-//finishes the move and then unstakes acc2 for next tests
+//Testnet 2: Some other tests but don't need to be delayed
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const {
   StakingAPI,
   NETWORK_TYPE,
 } = require("harmony-staking-sdk");
-const { toBech32 } = require('@harmony-js/crypto');
 
+const stakingHelperOneAddress = "one1jy4jej8t9u89px5tm9uty2kt46qcct2eg9773e";
 const validatorAddress = "one198pwc4uq879kjhczvyl9lgt5nst9c5zhwhfrvz";
 const val0xAddress = "0x29c2eC57803f8b695f02613E5FA1749c165c5057";
-const val2one = "one1yp8mw25h0lmm4smjcpdxjj8dw9aydtxg4ywxnr"
-const val20x = "0x204fb72a977FF7BAC372C05A6948Ed717a46ACc8"
 stakingApi = new StakingAPI({ apiUrl: "https://api.stake.hmny.io" });
 let jsonData = {};
 const fs = require("fs");
@@ -35,6 +32,7 @@ describe("get contracts", function () {
       "SweepStakesNFTs",
       jsonData.sweepstakes
     );
+    console.log("SweepStakesNFTs already at:", sweepstakes.address);
   });
 
   it("get StakingHelper: ", async function () {
@@ -43,47 +41,52 @@ describe("get contracts", function () {
       "StakingHelper",
       stakingHelperAddress
     );
-    stakingHelperOneAddress = toBech32(stakingHelperAddress);
   });
 });
 
-describe("move to current validators", function () {
-  it("move to current validators", async function () {
-    const moving = await stakingHelper.moving();
-    await stakingHelper.rebalanceEnd();
-    const val1 = await stakingHelper.delegatedToValidator(val0xAddress)
-    const val2 = await stakingHelper.delegatedToValidator(val20x)
-    //expect val1 + val2 to equal moving
-    expect(val1.add(val2)).to.equal(moving);
-    expect(await stakingHelper.moving()).to.equal(0);
+describe("add a non-validator to Validators", function () {
+  it("add validators array", async function () {
+    await stakingHelper.setValidators([val0xAddress, owner.address]);
+    expect(await stakingHelper.isValidator(owner.address)).to.equal(true);
+    expect(await stakingHelper.validators(1)).to.equal(owner.address);
+  });
+  it("stake now fails", async function () {
+    expect(
+      await expectFail(() =>
+        stakingHelper.stake(ethers.utils.parseEther("200"), {
+          value: ethers.utils.parseEther("200"), gasLimit: 1000000
+        })
+      )
+    ).to.equal("failed");
+  });
+  it("unstake now fails", async function () {
+    expect(
+      await expectFail(() =>
+        stakingHelper.unstake(ethers.utils.parseEther("100"))
+      )
+    ).to.equal("failed");
+  });
+  it("reset Validators", async function () {
+    await stakingHelper.setValidators([val0xAddress]);
+    expect(await stakingHelper.isValidator(owner.address)).to.equal(false);
+    expect(await stakingHelper.isValidator(val0xAddress)).to.equal(true);
   });
 });
 
-describe("acc 2 unstakes", function () {
-  it("get acc2 balances", async function () {
-    const acc2Token = await sweepstakes.tokenOfOwnerByIndex(acc2.address, 0);
-    const token2 = await sweepstakes.tokenIdToInfo(acc2Token);
-    token2Staked = token2.staked;
-    token2Unstaked = token2.unstaked;
-    token2Total = token2Staked.add(token2Unstaked);
+describe("unstake too much", function () {
+  it("unstake 401 fails", async function () {
+    expect(
+      await expectFail(() =>
+        stakingHelper.unstake(ethers.utils.parseEther("801"))
+      )
+    ).to.equal("failed");
   });
+});
 
-  it("unstake too much fails", async function () {
-    expect(await expectFail(() => stakingHelper.unstake(ethers.utils.parseEther("1400")))).to.equal("failed");
-  });
-  it("unstake all and check nft balances", async function () {
-    await stakingHelper.connect(acc2).unstake(token2Staked.toString());
-    expect(await sweepstakes.pages(1)).to.equal(
-      ethers.utils.parseEther("0")
-    );
-    const epoch = await stakingHelper.epoch();
-    const token2 = await sweepstakes.tokenIdToInfo(2);
-    expect(token2.staked).to.equal(0);
-    expect(token2.unstaked).to.equal(token2Total.toString());
-    expect(token2.withdrawEpoch).to.equal(epoch + 7);
-  });
-  it("withdraw fails", async function () {
-    expect(await expectFail(() => sweepstakes.connect(acc2).withdraw())).to.equal("failed");
+describe("save contract address and balances to a file", function () {
+  it("save contract address and balances to a file", async function () {
+    const jd = JSON.stringify(jsonData);
+    fs.writeFileSync("./ssData.json", jd, "utf-8");
   });
 });
 

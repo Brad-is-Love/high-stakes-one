@@ -4,6 +4,12 @@
 pragma solidity ^0.8.9;
 
 contract VRF {
+    Iss public iss;
+
+    constructor(address _iss) {
+        iss = Iss(_iss);
+    }
+
     function vrf() public view returns (uint256 result) {
         uint256[1] memory bn;
         bn[0] = block.number;
@@ -17,7 +23,17 @@ contract VRF {
     }
 
     function rng() external view returns (uint256) {
-        uint256 num = vrf() % 100;
+        uint256 num = vrf() % (iss.totalStaked()-1);
         return num;
     }
+
+    function addressAtRng(uint256 index) external view returns (address) {
+        return iss.addressAtIndex(index);
+    }
+}
+
+interface Iss {
+    function totalStaked() external view returns (uint256);
+
+    function addressAtIndex(uint256 index) external view returns (address);
 }
