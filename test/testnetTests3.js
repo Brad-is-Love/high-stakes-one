@@ -48,12 +48,18 @@ describe("get contracts", function () {
 });
 
 describe("move to current validators", function () {
+  it("Set validators", async function () {
+    await stakingHelper.setValidators([val0xAddress, val20x]);
+    expect(await stakingHelper.validators(0)).to.equal(val0xAddress);
+    expect(await stakingHelper.validators(1)).to.equal(val20x);
+  });
   it("move to current validators", async function () {
     const moving = await stakingHelper.moving();
     await stakingHelper.rebalanceEnd();
     const val1 = await stakingHelper.delegatedToValidator(val0xAddress)
     const val2 = await stakingHelper.delegatedToValidator(val20x)
-    //expect val1 + val2 to equal moving
+
+    console.log("val1+val2", val1.add(val2).toString());
     expect(val1.add(val2)).to.equal(moving);
     expect(await stakingHelper.moving()).to.equal(0);
   });
@@ -69,14 +75,14 @@ describe("acc 2 unstakes", function () {
   });
 
   it("unstake too much fails", async function () {
-    expect(await expectFail(() => stakingHelper.unstake(ethers.utils.parseEther("1400")))).to.equal("failed");
+    expect(await expectFail(() => stakingHelper.unstake(ethers.utils.parseEther("1400"),2))).to.equal("failed");
   });
   it("unstake all and check nft balances", async function () {
-    await stakingHelper.connect(acc2).unstake(token2Staked.toString());
+    await stakingHelper.connect(acc2).unstake(token2Staked.toString(),2);
     expect(await sweepstakes.pages(1)).to.equal(
       ethers.utils.parseEther("0")
     );
-    const epoch = await stakingHelper.epoch();
+    const epoch = (await stakingHelper.epoch()).toNumber();
     const token2 = await sweepstakes.tokenIdToInfo(2);
     expect(token2.staked).to.equal(0);
     expect(token2.unstaked).to.equal(token2Total.toString());

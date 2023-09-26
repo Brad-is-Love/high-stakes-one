@@ -43,20 +43,20 @@ describe("get contracts", function () {
   });
 });
 
-// describe("draw period to 10 mins", function () {
-//   it("set draw period to 10 mins", async function () {
-//     await sweepstakes.setDrawPeriod(600);
-//     expect(await sweepstakes.drawPeriod()).to.equal(600);
-//   });
-// });
+describe("draw period to 10 mins", function () {
+  it("set draw period to 10 mins", async function () {
+    await sweepstakes.setDrawPeriod(600);
+    expect(await sweepstakes.drawPeriod()).to.equal(600);
+  });
+});
 
 // describe("juice the Prize Pool", function () {
-//   it("stakingHelper accepts 150 ONE", async function () {
+//   it("stakingHelper accepts 250 ONE", async function () {
 //     await stakingHelper.juicePrizePool({
-//       value: ethers.utils.parseEther("150"),
+//       value: ethers.utils.parseEther("250"),
 //     });
 //     expect(await stakingHelper.extraFunds()).to.equal(
-//       ethers.utils.parseEther("150")
+//       ethers.utils.parseEther("250")
 //     );
 //   });
 // });
@@ -65,10 +65,14 @@ describe("check draw and compound", function () {
   it("draw winner", async function () {
     console.log("lastDraw", await sweepstakes.lastDrawTime());
     console.log("prizeAssigned", await sweepstakes.prizeAssigned());
-    //draw again
     await sweepstakes.drawWinner();
-    console.log("lastDraw", await sweepstakes.lastDrawTime());
     prizeAssigned = await sweepstakes.prizeAssigned()
+    //draw again if failed
+    if(prizeAssigned) {
+      await sweepstakes.drawWinner();
+    }
+    prizeAssigned = await sweepstakes.prizeAssigned()
+    console.log("lastDraw", await sweepstakes.lastDrawTime());
     console.log("prizeAssigned", prizeAssigned);
   });
   it("check lastDrawTime", async function () {
@@ -77,6 +81,8 @@ describe("check draw and compound", function () {
     saveData("lastDraw", block.timestamp);
   });
   it("assignPrize", async function () {
+    let pendingDelegation = await stakingHelper.pendingDelegation();
+    console.log("pendingDelegation before", pendingDelegation.toString());
     ownerToken = (await sweepstakes.tokenIdToInfo(0)).staked;
     acc1Token = (await sweepstakes.tokenIdToInfo(1)).staked;
     acc2Token = (await sweepstakes.tokenIdToInfo(2)).staked;
@@ -115,63 +121,16 @@ describe("check draw and compound", function () {
       acc2TokenAfter.toString()
     );
   });
+  it("check delegations", async function () {
+    //this should never be over 200
+    const pendingDelegation = await stakingHelper.pendingDelegation();
+    console.log("pendingDelegation after", pendingDelegation.toString());
+  });
 });
 
 describe("draw fails on time", function () {
   it("draw fails", async function () {
     expect(await expectFail(() => sweepstakes.drawWinner())).to.equal("failed");
-  });
-});
-
-describe("change draw period to 30 seconds", function () {
-  it("set draw period to 30 seconds", async function () {
-    await sweepstakes.setDrawPeriod(30);
-    expect(await sweepstakes.drawPeriod()).to.equal(30);
-  });
-  it("sleep 30 seconds", async function () {
-    await new Promise((r) => setTimeout(r, 30000));
-  });
-});
-
-describe("check draw and add to unstaked", function () {
-  it("draw winner", async function () {
-    console.log("lastDraw", await sweepstakes.lastDrawTime());
-    console.log("prizeAssigned", await sweepstakes.prizeAssigned());
-    //draw again
-    await sweepstakes.drawWinner();
-    console.log("lastDraw", await sweepstakes.lastDrawTime());
-    console.log("prizeAssigned", await sweepstakes.prizeAssigned());
-  });
-  it("check lastDrawTime", async function () {
-    expect(await sweepstakes.lastDrawTime()).to.not.equal(jsonData.lastDraw);
-    const block = await ethers.provider.getBlock("latest");
-    saveData("lastDraw", block.timestamp);
-  });
-  it("assignPrize", async function () {
-    const ownerToken = (await sweepstakes.tokenIdToInfo(0)).unstaked;
-    const acc1Token = (await sweepstakes.tokenIdToInfo(1)).unstaked;
-    const acc2Token = (await sweepstakes.tokenIdToInfo(2)).unstaked;
-    await sweepstakes.assignPrize();
-    const fees = await sweepstakes.feesToCollect();
-    console.log("fees", fees.toString());
-    const ownerTokenAfter = (await sweepstakes.tokenIdToInfo(0)).unstaked;
-    const acc1TokenAfter = (await sweepstakes.tokenIdToInfo(1)).unstaked;
-    const acc2TokenAfter = (await sweepstakes.tokenIdToInfo(2)).unstaked;
-    console.log(
-      "owner before, after",
-      ownerToken.toString(),
-      ownerTokenAfter.toString()
-    );
-    console.log(
-      "acc1 before, after",
-      acc1Token.toString(),
-      acc1TokenAfter.toString()
-    );
-    console.log(
-      "acc2 before, after",
-      acc2Token.toString(),
-      acc2TokenAfter.toString()
-    );
   });
 });
 
@@ -193,23 +152,23 @@ describe("owner withdraws fees", function () {
 describe("initiate move", function () {
   it("non owner reverts", async function () {
     expect(
-      await expectFail(() => stakingHelper.connect(acc1).rebalanceStart())
+      await expectFail(() => stakingHelper.connect(acc1).rebalanceStart([val20x]))
     ).to.equal("failed");
   });
-  it("initiate move", async function () {
-    const val1 = await sweepstakes.delegatedToValidator(val0xAddress);
-    const val2 = await sweepstakes.delegatedToValidator(val20x);
+  it("initiate move - all to val2", async function () {
+    const val1 = await stakingHelper.delegatedToValidator(val0xAddress);
+    console.log("val1", val1.toString());
+    const val2 = await stakingHelper.delegatedToValidator(val20x);
+    console.log("val2", val2.toString());
     const toMove = val1.add(val2);
+
     const epoch = await stakingHelper.epoch();
-    await stakingHelper.rebalanceStart();
+    await stakingHelper.rebalanceStart([val20x]);
     expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(0);
+    expect(await stakingHelper.delegatedToValidator(val20x)).to.equal(0);
     expect(await stakingHelper.moving()).to.equal(toMove);
     expect(await stakingHelper.initiateMoveEpoch()).to.equal(epoch);
   });
-  it("reset validator list", async function () {
-    await stakingHelper.setValidators([val20x]);
-  });
-
   it("can't finish move this epoch", async function () {
     expect(
       await expectFail(() => stakingHelper.rebalanceEnd())

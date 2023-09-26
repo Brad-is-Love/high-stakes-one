@@ -9,11 +9,11 @@ const {
 
 const validatorAddress = "one198pwc4uq879kjhczvyl9lgt5nst9c5zhwhfrvz";
 const val0xAddress = "0x29c2eC57803f8b695f02613E5FA1749c165c5057";
+const val20x = "0x204fb72a977FF7BAC372C05A6948Ed717a46ACc8"
 stakingApi = new StakingAPI({ apiUrl: "https://api.stake.hmny.io" });
 let jsonData = {};
 const fs = require("fs");
 const exp = require("constants");
-
 
 before(async function () {
   //load the data from the file
@@ -55,26 +55,26 @@ describe("deploy staking helper", function () {
 //     const totalStaked = await sweepstakes.totalStaked();
 //     console.log("totalStaked", totalStaked.toString());
 //   });
-//   // it("unstake owner", async function () {
-//   //   await stakingHelper.unstake(ownerBal.toString());
-//   // });
-//   it("unstake acc1", async function () {
-//     await stakingHelper.connect(acc1).unstake(acc1Bal.toString());
+//   it("unstake owner", async function () {
+//     await stakingHelper.unstake(ownerBal.toString(),0);
 //   });
-//   // it("unstake acc2", async function () {
-//   //   await stakingHelper.connect(acc2).unstake(acc2Bal.toString());
-//   // });
+//   it("unstake acc1", async function () {
+//     await stakingHelper.connect(acc1).unstake(acc1Bal.toString(),1);
+//   });
+//   it("unstake acc2", async function () {
+//     await stakingHelper.connect(acc2).unstake(acc2Bal.toString(),2);
+//   });
 // });
 
 describe("withdraw all", function () {
   it("withdraw owner", async function () {
-    await sweepstakes.withdraw();
+    await sweepstakes.withdraw(0);
   });
   it("withdraw acc1", async function () {
-    await sweepstakes.connect(acc1).withdraw();
+    await sweepstakes.connect(acc1).withdraw(1);
   });
   it("withdraw acc2", async function () {
-    await sweepstakes.connect(acc2).withdraw();
+    await sweepstakes.connect(acc2).withdraw(2);
   });
   it("withdtaw fees", async function () {
     await sweepstakes.withdrawFees()

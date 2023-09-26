@@ -3,6 +3,8 @@ import { ethers } from "ethers";
 
 import sweepstakesAtrifact from "../contracts/SweepStakesNFTs.json";
 import sweepstakesAddress from "../contracts/SweepStakesNFTs-address.json";
+import stakingHelperAtrifact from "../contracts/StakingHelper.json";
+import stakingHelperAddress from "../contracts/StakingHelper-address.json";
 
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
@@ -13,7 +15,7 @@ import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { Nav } from "./Nav";
 
 
-const HARDHAT_NETWORK_ID = "31337";
+const TESTNET_ID = "1666700000";
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
 export class Dapp extends React.Component {

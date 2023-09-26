@@ -287,37 +287,37 @@ describe("confirm validator received tokens", function () {
   });
 });
 
-describe("address at index", function () {
-  it("get address at index 50 is owner", async function () {
+describe("token at index", function () {
+  it("get token at index 50 is 0", async function () {
     expect(
-      await sweepstakes.addressAtIndex(ethers.utils.parseEther("50"))
-    ).to.equal(owner.address);
+      await sweepstakes.tokenAtIndex(ethers.utils.parseEther("50"))
+    ).to.equal(0);
   });
   it("get address at index 299.999999999999999999 is acc1", async function () {
     expect(
-      await sweepstakes.addressAtIndex(
+      await sweepstakes.tokenAtIndex(
         ethers.utils.parseEther("299.999999999999999999")
       )
-    ).to.equal(acc1.address);
+    ).to.equal(1);
   });
   it("get address at index 300 is acc2", async function () {
     expect(
-      await sweepstakes.addressAtIndex(ethers.utils.parseEther("300"))
-    ).to.equal(acc2.address);
+      await sweepstakes.tokenAtIndex(ethers.utils.parseEther("300"))
+    ).to.equal(2);
   });
   it("get address at index 535.123456 is acc2", async function () {
     expect(
-      await sweepstakes.addressAtIndex(ethers.utils.parseEther("535.123546"))
-    ).to.equal(acc2.address);
+      await sweepstakes.tokenAtIndex(ethers.utils.parseEther("535.123546"))
+    ).to.equal(2);
   });
-  it("address at index 800 fails", async function () {
-    expect(await expectFail(() => sweepstakes.addressAtIndex(ethers.utils.parseEther("800")))).to.equal("failed")
+  it("token at index 800 fails", async function () {
+    expect(await expectFail(() => sweepstakes.tokenAtIndex(ethers.utils.parseEther("800")))).to.equal("failed")
   });
 });
 
 describe("acc 1 stakes 100 more", function () {
   it("acc1 stakes 100 now has 300", async function () {
-    await stakingHelper.connect(acc1).enter(ethers.utils.parseEther("100"), {
+    await stakingHelper.connect(acc1).addToToken(ethers.utils.parseEther("100"),1, {
       value: ethers.utils.parseEther("100"),
     });
     expect(await sweepstakes.totalStaked()).to.equal(
@@ -341,12 +341,17 @@ describe("acc 1 stakes 100 more", function () {
       ethers.utils.parseEther("300")
     );
   });
+  it("add to someone elses fails", async function () {
+    expect(await expectFail(() => stakingHelper.connect(acc2).addToToken(ethers.utils.parseEther("100"),1, {
+      value: ethers.utils.parseEther("100"),
+    }))).to.equal("failed")
+  });
 });
 
 describe("unstake", function () {
   let epoch = 0;
   it("acc2 unstake 100 (200 remains)", async function () {
-    await stakingHelper.connect(acc2).unstake(ethers.utils.parseEther("100"));
+    await stakingHelper.connect(acc2).unstake(ethers.utils.parseEther("100"),2);
     expect(await sweepstakes.totalStaked()).to.equal(
       ethers.utils.parseEther("600")
     );
@@ -355,8 +360,7 @@ describe("unstake", function () {
     );
     expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(ethers.utils.parseEther("300"));
     expect(await stakingHelper.delegatedToValidator(val20x)).to.equal(ethers.utils.parseEther("300"));
-    //pending cleard
-    expect(await stakingHelper.pendingDelegation()).to.equal(0);
+    expect(await stakingHelper.pendingDelegation()).to.equal(ethers.utils.parseEther("0"));
     epoch = parseInt(await stakingHelper.epoch());
     console.log("acc 2 unstake 100 at epoch", epoch);
   });
@@ -371,7 +375,10 @@ describe("unstake", function () {
     expect(await expectFail(() => sweepstakes.connect(acc2).withdraw())).to.equal("failed");
   });
   it("unstake too much fails", async function () {
-    expect(await expectFail(() => stakingHelper.connect(acc2).unstake(ethers.utils.parseEther("500")))).to.equal("failed");
+    expect(await expectFail(() => stakingHelper.connect(acc2).unstake(ethers.utils.parseEther("500"),2))).to.equal("failed");
+  });
+  it("unstake from someone elses token fails", async function () {
+    expect(await expectFail(() => stakingHelper.connect(acc2).unstake(ethers.utils.parseEther("100"),1))).to.equal("failed");
   });
 });
 

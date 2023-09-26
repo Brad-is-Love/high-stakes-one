@@ -11,7 +11,6 @@ import "./lib/StakingContract.sol";
 /// @dev StakingHelper holds the funds, stakes and unstakes etc.
 ///      SweepStakesNFTs is the ERC721, holds the user data and runs draws.
 ///      It stores the amount they've staked and manages unstaking, fees etc.
-///      i.e StakingHelper is the bank, SweepStakesNFTs is the database.
 
 contract SweepStakesNFTs is ERC721Enumerable {
     uint256 public undelegationPeriod = 7; //epochs
@@ -53,9 +52,9 @@ contract SweepStakesNFTs is ERC721Enumerable {
         stakingHelper = address(sh);
     }
 
-    event Enter(address indexed _entrant, uint256 _amount);
-    event Unstake(address indexed _entrant, uint256 _amount);
-    event Withdraw(address indexed _entrant, uint256 _amount);
+    event Enter(uint256 indexed _tokenId, uint256 _amount);
+    event Unstake(uint256 indexed _tokenId, uint256 _amount);
+    event Withdraw(uint256 indexed _tokenId, uint256 _amount);
     event DrawWinner();
     event WinnerAssigned(uint256 indexed _winner, uint256 _amount);
 
@@ -69,80 +68,63 @@ contract SweepStakesNFTs is ERC721Enumerable {
         _;
     }
 
-    // - Users can enter/stake
     function enter(address _entrant, uint256 _amount) external onlyStaking {
         require(_amount >= minStake, "Too low");
-        //check if user owns tokens
-        if (balanceOf(_entrant) == 0) {
-            // if not, mint one
-            mint(_entrant, _amount);
-        } else {
-            // otherwise, add to the existing one
-            // if they enter an index they don't own, it will fail
-            uint256 tokenId = tokenOfOwnerByIndex(_entrant,0);
-            tokenIdToInfo[tokenId].staked += _amount;
-            pages[tokenId / pageSize] += _amount;
-        }
-        // add to totalStaked
-        totalStaked += _amount;
-
-        emit Enter(_entrant, _amount);
-    }
-
-    function mint(address _to, uint256 _value) internal {
+        uint256 tokenId = 0;
         // if there are available tokens, use one
         if (availableTokenIds.length > 0) {
-            uint256 tokenId = availableTokenIds[availableTokenIds.length - 1];
+            tokenId = availableTokenIds[availableTokenIds.length - 1];
             availableTokenIds.pop();
-            _safeMint(_to, tokenId);
-            pages[tokenId / pageSize] += _value;
-            tokenIdToInfo[tokenId] = tokenInfo(_value, 0, 0);
+            _safeMint(_entrant, tokenId);
         } else {
             // otherwise mint a new one
-            _safeMint(_to, tokenCounter);
-            pages[tokenCounter / pageSize] += _value;
-            tokenIdToInfo[tokenCounter] = tokenInfo(_value, 0, 0);
+            tokenId = tokenCounter;
+            _safeMint(_entrant, tokenCounter);
             tokenCounter++;
         }
+
+        addStake(tokenId, _amount);
+        emit Enter(tokenId, _amount);
+    }
+
+    function addToToken(address _entrant, uint256 _amount, uint256 _tokenId) external onlyStaking {
+        require(_amount >= minStake, "Too low");
+        require(_isApprovedOrOwner(_entrant, _tokenId), "Not owner or approved");
+        addStake(_tokenId, _amount);
+
+        emit Enter(_tokenId, _amount);
     }
 
     // unstake - will add an withdrawEpoch to the token, along with the amount to unstake
-    function unstake(address _holder, uint256 _amount) external onlyStaking {
-        uint256 tokenId = tokenOfOwnerByIndex(_holder,0);
-        require(
-            tokenIdToInfo[tokenId].staked >= _amount,
-            "Can't unstake more than you've staked"
-        );
-        tokenIdToInfo[tokenId].staked -= _amount;
-        tokenIdToInfo[tokenId].unstaked += _amount;
-        tokenIdToInfo[tokenId].withdrawEpoch =
+    function unstake(address _holder, uint256 _amount, uint256 _tokenId) external onlyStaking {
+        require(tokenIdToInfo[_tokenId].staked >= _amount,"Can't unstake more than you've staked");
+        require(_isApprovedOrOwner(_holder, _tokenId), "Not owner or approved");
+        tokenIdToInfo[_tokenId].staked -= _amount;
+        tokenIdToInfo[_tokenId].unstaked += _amount;
+        tokenIdToInfo[_tokenId].withdrawEpoch =
             StakingHelper(stakingHelper).epoch() +
             undelegationPeriod;
-        pages[tokenId / pageSize] -= _amount;
+        pages[_tokenId / pageSize] -= _amount;
         totalStaked -= _amount;
 
-        emit Unstake(_holder, _amount);
+        emit Unstake(_tokenId, _amount);
     }
 
     //withdraw - will send the unstaked amount to the user
     //if staked is zero, this will burn the token
-    function withdraw() external {
-        uint256 tokenId = tokenOfOwnerByIndex(msg.sender, 0);
-        require(
-            tokenIdToInfo[tokenId].withdrawEpoch <=
-                StakingHelper(stakingHelper).epoch(),
-            "Must wait until undelegation complete"
-        );
-        uint256 amount = tokenIdToInfo[tokenId].unstaked;
-        tokenIdToInfo[tokenId].unstaked = 0;
-        tokenIdToInfo[tokenId].withdrawEpoch = 0;
+    function withdraw(uint256 _tokenId) external {
+        require(tokenIdToInfo[_tokenId].withdrawEpoch <= StakingHelper(stakingHelper).epoch(), "Must wait until undelegation complete");
+        require(_isApprovedOrOwner(msg.sender, _tokenId), "Not owner or approved");
+        uint256 amount = tokenIdToInfo[_tokenId].unstaked;
+        tokenIdToInfo[_tokenId].unstaked = 0;
+        tokenIdToInfo[_tokenId].withdrawEpoch = 0;
         //will burn the token if staked is zero
-        if (tokenIdToInfo[tokenId].staked == 0) {
-            burn(tokenId);
+        if (tokenIdToInfo[_tokenId].staked == 0) {
+            burn(_tokenId);
         }
         StakingHelper(stakingHelper).payUser(msg.sender, amount);
 
-        emit Withdraw(msg.sender, amount);
+        emit Withdraw(_tokenId, amount);
     }
 
     function burn(uint256 _tokenId) internal {
@@ -175,11 +157,19 @@ contract SweepStakesNFTs is ERC721Enumerable {
         uint amount = (lastPrize * (10000 - prizeFee)) / 10000;
         feesToCollect += (lastPrize * prizeFee) / 10000;
         lastPrize = 0;
-        address winner = ownerOf(lastWinner);
-        StakingHelper(stakingHelper).autoCompound(winner, amount);
+        //auto compound prizes
+        addStake(lastWinner, amount);
+        StakingHelper(stakingHelper).autoCompound(amount);
         
         emit WinnerAssigned(lastWinner, amount);
     }
+
+    function addStake(uint256 _tokenId, uint256 _amount) internal {
+        tokenIdToInfo[_tokenId].staked += _amount;
+        pages[_tokenId / pageSize] += _amount;
+        totalStaked += _amount;
+    }
+
 
     function withdrawFees() external onlyOwner {
         uint256 amount = feesToCollect;
@@ -188,7 +178,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     }
 
     // Iterates through pages first, then through tokens
-    // This is done to save gas: should be able to get 50-100k address in here on harmony
+    // This is done to save gas: should be able to get 50-100k tokens in here on harmony
     function tokenAtIndex(uint256 _index) public view returns (uint256) {
         require(_index < totalStaked, "Index out of range");
         uint256 subTotal = 0;
@@ -298,40 +288,44 @@ contract StakingHelper is StakingContract {
         extraFunds += msg.value;
     }
 
-    function enter(uint256 _amount, uint256 _index) external payable {
+    function enter(uint256 _amount) external payable {
         require(msg.value == _amount, "Wrong Amount");
         spreadStake(_amount);
         SweepStakesNFTs(sweepstakes).enter(msg.sender, _amount);
     }
 
-    function autoCompound(
-        address _winner,
-        uint256 _amount
-    ) external onlySweepstakes {
-        //delegates a spread over all the validators
+    function addToToken(uint256 _amount, uint256 _tokenId) external payable {
+        require(msg.value == _amount, "Wrong Amount");
         spreadStake(_amount);
-        SweepStakesNFTs(sweepstakes).enter(_winner, _amount);
+        SweepStakesNFTs(sweepstakes).addToToken(msg.sender, _amount, _tokenId);
     }
 
-    function unstake(uint256 _amount, uint256 _index) external {
-        //first takes from pending delegations
-        if (pendingDelegation > 0) {
-            if (pendingDelegation >= _amount) {
-                pendingDelegation -= _amount;
-            } else {
-                _amount -= pendingDelegation;
-                pendingDelegation = 0;
+    function autoCompound(uint256 _amount) external onlySweepstakes {
+        //delegates a spread over all the validators
+        spreadStake(_amount);
+    }
+
+    function unstake(uint256 _amount, uint256 _tokenId) external {
+        require(moving == 0, "Can't unstake while moving validators");
+        uint256 toUnstake = _amount;
+        //if unstaking more than in pending:
+        //subtract then zero pending, then unstake
+        if(toUnstake > pendingDelegation){
+            toUnstake -= pendingDelegation;
+            pendingDelegation = 0;
+            //then unstake
+            for (uint256 i = 0; i < validators.length; i++) {
+                require(
+                    _undelegate(validators[i], toUnstake / validators.length),
+                    "Undelegate failed"
+                );
+                delegatedToValidator[validators[i]] -= toUnstake / validators.length;
             }
+        } else {
+            //just subtract from pending
+            pendingDelegation -= toUnstake;
         }
-        //withdraws a spread over all the validators
-        for (uint256 i = 0; i < validators.length; i++) {
-            require(
-                _undelegate(validators[i], _amount / validators.length),
-                "Withdraw failed"
-            );
-            delegatedToValidator[validators[i]] -= _amount / validators.length;
-        }
-        SweepStakesNFTs(sweepstakes).unstake(msg.sender, _amount);
+        SweepStakesNFTs(sweepstakes).unstake(msg.sender, _amount, _tokenId);
     }
 
     //collect is called by the sweepstakes contract to collect rewards and add to the prize pool, extraFunds are also added.
@@ -347,9 +341,11 @@ contract StakingHelper is StakingContract {
         payable(_user).transfer(_amount);
     }
 
-    //this function is to rebalance funds to set validators if one has been removed
-    //NOTE change to rebalance - otherwise can't add a validator
-    function rebalanceStart() external onlyOwner {
+    //this function is to rebalance funds and set the new validators array.
+    //Will first unstake all from the current validators, then update the validators array to the new addresses
+    //This will allow people to continue entering the sweepstakes while the rebalance is happening
+    function rebalanceStart(address[] memory _newValidators) external onlyOwner {
+        require(_newValidators.length > 0, "No validators given");
         require(moving == 0, "Already moving");
         for (uint256 i = 0; i < validators.length; i++) {
             uint256 amount = delegatedToValidator[validators[i]];
@@ -357,17 +353,17 @@ contract StakingHelper is StakingContract {
             require(_undelegate(validators[i], amount), "Undelegate failed");
             moving += amount;
         }
-        uint256 currentEpoch = epoch();
-        initiateMoveEpoch = currentEpoch;
+        initiateMoveEpoch = epoch();
+
+        validators = _newValidators;
 
         emit MoveStarted(moving);
     }
 
-    function rebalanceEnd(address[] memory _validators) external onlyOwner {
+    //anyone can close out the rebalance after the epoch has passed
+    function rebalanceEnd() external {
         require(moving > 0, "Nothing to move");
         require(epoch() > initiateMoveEpoch, "Epoch not passed");
-        require(_validators.length > 0, "No validators given");
-        validators = _validators;
         spreadStake(moving);
         moving = 0;
 
@@ -405,6 +401,10 @@ contract StakingHelper is StakingContract {
 
     function setMinDelegation(uint256 _minDelegation) external onlyOwner {
         minDelegation = _minDelegation;
+    }
+
+    function setValidators(address[] memory _validators) external onlyOwner {
+        validators = _validators;
     }
 
     function isValidator(address _validator) public view returns (bool) {
