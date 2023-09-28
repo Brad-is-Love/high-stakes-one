@@ -1,11 +1,4 @@
 //Testnet 1: deploy contracts and stake
-//changes:
-/**
- * changed setValidators to happen at rebalanceEnd
- * enter, unstake and withdraw added index
- * address at index to tokenAtIndex
- * lastWinner changed to uint
- */
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 const {

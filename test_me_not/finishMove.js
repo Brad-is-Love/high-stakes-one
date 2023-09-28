@@ -43,18 +43,25 @@ describe("get contracts", function () {
   });
 });
 
-describe("get validators, moving", function () {
-  it("get validators", async function () {
-    const validator0 = await stakingHelper.validators(0);
-    console.log(validator0);
-    const validator1 = await stakingHelper.validators(1);
-    console.log(validator1);
-  });
-  it("get moving", async function () {
-    const moving = await stakingHelper.moving();
-    console.log(moving.toString());
+describe("get pending", function () {
+  it("get pending delegation", async function () {
+    pd = await stakingHelper.pendingDelegation()
+    console.log("pending delegation: ", pd.toString())
   });
 });
+
+// describe("get validators, moving", function () {
+//   it("get validators", async function () {
+//     const validator0 = await stakingHelper.validators(0);
+//     console.log(validator0);
+//     const validator1 = await stakingHelper.validators(1);
+//     console.log(validator1);
+//   });
+//   it("get moving", async function () {
+//     const moving = await stakingHelper.moving();
+//     console.log(moving.toString());
+//   });
+// });
 
 
 // describe("finish move", function () {

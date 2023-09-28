@@ -24,10 +24,8 @@ export class Dapp extends React.Component {
 
     this.initialState = {
       tokenData: undefined,
-      
       selectedAddress: undefined,
       balance: undefined,
-
       txBeingSent: undefined,
       transactionError: undefined,
       networkError: undefined,

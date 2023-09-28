@@ -50,16 +50,16 @@ describe("draw period to 10 mins", function () {
   });
 });
 
-// describe("juice the Prize Pool", function () {
-//   it("stakingHelper accepts 250 ONE", async function () {
-//     await stakingHelper.juicePrizePool({
-//       value: ethers.utils.parseEther("250"),
-//     });
-//     expect(await stakingHelper.extraFunds()).to.equal(
-//       ethers.utils.parseEther("250")
-//     );
-//   });
-// });
+describe("juice the Prize Pool", function () {
+  it("stakingHelper accepts 250 ONE", async function () {
+    await stakingHelper.juicePrizePool({
+      value: ethers.utils.parseEther("250"),
+    });
+    expect(await stakingHelper.extraFunds()).to.equal(
+      ethers.utils.parseEther("250")
+    );
+  });
+});
 
 describe("check draw and compound", function () {
   it("draw winner", async function () {
@@ -135,12 +135,12 @@ describe("draw fails on time", function () {
 });
 
 describe("owner withdraws fees", function () {
-  it("non owner reverts", async function () {
+  it("non beneficiary reverts", async function () {
     expect(
       await expectFail(() => sweepstakes.connect(acc1).withdrawFees())
     ).to.equal("failed");
   });
-  it("owner withdraws fees", async function () {
+  it("beneficiary withdraws fees", async function () {
     const balanceBefore = await ethers.provider.getBalance(owner.address);
     await sweepstakes.withdrawFees();
     const balanceAfter = await ethers.provider.getBalance(owner.address);
@@ -161,7 +161,6 @@ describe("initiate move", function () {
     const val2 = await stakingHelper.delegatedToValidator(val20x);
     console.log("val2", val2.toString());
     const toMove = val1.add(val2);
-
     const epoch = await stakingHelper.epoch();
     await stakingHelper.rebalanceStart([val20x]);
     expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(0);

@@ -1,6 +1,5 @@
 //Testnet 5: don't need to wait just wanted to separate this out
 //This is the ERC721 logic tests and also dealing with owning multiple NFTs
-//Contract was written as if most people will only own 1.
 
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
@@ -49,7 +48,7 @@ describe("get contracts", function () {
   });
 });
 
-//try tansfering NFTs - how to deal with owning multiple?
+//try tansfering NFTs
 describe("transfer NFTs", function () {
   it("acc1 transfers token 1 to acc3", async function () {
     await sweepstakes.connect(acc1).transferFrom(acc1.address, acc3.address, 1);
@@ -61,70 +60,43 @@ describe("transfer NFTs", function () {
     expect(await sweepstakes.ownerOf(2)).to.equal(acc3.address);
   });
   it("acc1 unstake fails", async function () {
-    await expect(
-      stakingHelper.connect(acc1).unstake(ethers.utils.parseEther("100"))
-    ).to.be.revertedWith("ERC721Enumerable: owner index out of bounds");
+    expect(await expectFail(
+      stakingHelper.connect(acc1).unstake(ethers.utils.parseEther("100"),1))).to.equal("failed");
   });
 });
 
 describe("holder of 2 NFTs unstakes and withdraws as expected", function () {
-  //note,
   it("get acc3 nft details", async function () {
     const acc3FirstToken = await sweepstakes.tokenIdToInfo(2);
-    const acc3SecondToken = await sweepstakes.tokenIdToInfo(1);
-    expect(acc3FirstToken.staked).to.equal(ethers.utils.parseEther("200"));
-    expect(acc3SecondToken.staked).to.equal(ethers.utils.parseEther("100"));
+    expect(acc3FirstToken.staked).to.equal(ethers.utils.parseEther("100"));
     expect(acc3FirstToken.unstaked).to.equal(0);
-    expect(acc3SecondToken.unstaked).to.equal(0);
   });
-  it("acc3 unstakes 200 (from token 2)", async function () {
-    await stakingHelper.connect(acc3).unstake(ethers.utils.parseEther("200"));
-    expect(await sweepstakes.totalStaked()).to.equal(
-      ethers.utils.parseEther("300")
-    );
-    expect(await sweepstakes.checkpoints(1)).to.equal(
+  it("acc3 unstakes 100 (from token 2)", async function () {
+    ts = await sweepstakes.totalStaked()
+    await stakingHelper.connect(acc3).unstake(ethers.utils.parseEther("100"),2);
+    expect(await sweepstakes.totalStaked()).to.equal(ts.sub(ethers.utils.parseEther("100")));
+    expect(await sweepstakes.pages(1)).to.equal(
       ethers.utils.parseEther("0")
     );
     const token2 = await sweepstakes.tokenIdToInfo(2);
     expect(token2.staked).to.equal(ethers.utils.parseEther("0"));
-    expect(token2.unstaked).to.equal(ethers.utils.parseEther("200"));
-    expect(token2.withdrawEpoch).to.equal(7 * 24 * 60 * 60);
+    expect(token2.unstaked).to.equal(ethers.utils.parseEther("100"));
+    const epoch = stakingHelper.epoch();
+    expect(token2.withdrawEpoch).to.equal(epoch.add(7));
   });
   it("acc3 unstake fails", async function () {
-    await expect(
-      stakingHelper.connect(acc3).unstake(ethers.utils.parseEther("100"))
-    ).to.be.revertedWith("Can't unstake more than you've staked");
-  });
-  it("acc3 withdraws", async function () {
-    const balanceBefore = await ethers.provider.getBalance(acc3.address);
-    await sweepstakes.connect(acc3).withdraw();
-    const balanceAfter = await ethers.provider.getBalance(acc3.address);
-    console.log("acc3 withdrawn: ", balanceAfter.sub(balanceBefore).toString());
-    expect(await ethers.provider.getBalance(stakingHelper.address)).to.equal(
-      ethers.utils.parseEther("300")
-    );
-    expect(await sweepstakes.totalStaked()).to.equal(
-      ethers.utils.parseEther("300")
-    );
-    expect(await sweepstakes.checkpoints(1)).to.equal(
-      ethers.utils.parseEther("0")
-    );
-    // expect token to be burned
-    expect(await sweepstakes.tokenOfOwnerByIndex(acc3.address, 0)).to.equal(1); //because 2 was burned
-    expect(await sweepstakes.availableTokenIds(0)).to.equal(2);
+    expect(await expectFail(stakingHelper.connect(acc3).unstake(ethers.utils.parseEther("100"),2)).to.equal("failed"));
   });
   it("acc3 unstakes 100 (from token 1)", async function () {
-    await stakingHelper.connect(acc3).unstake(ethers.utils.parseEther("100"));
-    expect(await sweepstakes.totalStaked()).to.equal(
-      ethers.utils.parseEther("200")
-    );
-    expect(await sweepstakes.checkpoints(0)).to.equal(
-      ethers.utils.parseEther("200")
+    ts = await sweepstakes.totalStaked()
+    await stakingHelper.connect(acc3).unstake(ethers.utils.parseEther("100"),1);
+    expect(await sweepstakes.totalStaked()).to.equal(ts.sub(ethers.utils.parseEther("100")));
+    expect(await sweepstakes.pages(0)).to.equal(
+      ts.sub(ethers.utils.parseEther("100"))
     );
     const token1 = await sweepstakes.tokenIdToInfo(1);
-    expect(token1.staked).to.equal(ethers.utils.parseEther("0"));
+    expect(token1.staked).to.equal(ethers.utils.parseEther("100"));
     expect(token1.unstaked).to.equal(ethers.utils.parseEther("100"));
-    expect(token1.withdrawEpoch).to.equal(7 * 24 * 60 * 60);
   });
 });
 

@@ -8,27 +8,26 @@ import "./lib/StakingContract.sol";
 
 /// @title SweepStakesNFTs
 /// @notice Users can stake ONE in a pool and receive rewards by lottery
-/// @dev StakingHelper holds the funds, stakes and unstakes etc.
-///      SweepStakesNFTs is the ERC721, holds the user data and runs draws.
-///      It stores the amount they've staked and manages unstaking, fees etc.
+/// @dev StakingHelper holds the funds, manages staking and unstaking.
+/// @dev SweepStakesNFTs is the ERC721, holds the user data and runs draws.
+/// @dev The tokens are stored on 'pages' of 100 tokens per page, so that we can iterate through more tokens without running out of gas.
 
 contract SweepStakesNFTs is ERC721Enumerable {
     uint256 public undelegationPeriod = 7; //epochs
     uint256 public pageSize;
-    // every 100 tokens is a page, with the total up to there. first find the page where the winner is located, then find the token.
     mapping(uint256 => uint256) public pages;
     uint256 public tokenCounter;
-    uint256[] public availableTokenIds;
+    uint256[] public availableTokenIds; //tokens that have been burned and are available for reuse
     uint256 public totalStaked;
     uint256 public drawPeriod;
     uint256 public lastDrawTime;
     uint256 public prizeFee = 500; // 5%
-    uint256 public feesToCollect;
+    uint256 public feesToCollect; //beneficiary can withdraw these
     address public owner;
     address public beneficiary;
     address public stakingHelper;
     uint256 public minStake = 100 ether;
-    uint256 private lastWinner;
+    uint256 private lastWinner; //last winner assigned to private variable on draw and revealed on assignPrize to prevent malicious draws
     uint256 public lastPrize;
     bool public prizeAssigned;
 
@@ -68,6 +67,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         _;
     }
 
+    // enter - will mint a new token and add the stake to the token
     function enter(address _entrant, uint256 _amount) external onlyStaking {
         require(_amount >= minStake, "Too low");
         uint256 tokenId = 0;
@@ -87,6 +87,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         emit Enter(tokenId, _amount);
     }
 
+    // addToToken - will add the stake to the token
     function addToToken(address _entrant, uint256 _amount, uint256 _tokenId) external onlyStaking {
         require(_amount >= minStake, "Too low");
         require(_isApprovedOrOwner(_entrant, _tokenId), "Not owner or approved");
@@ -149,6 +150,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         emit DrawWinner();
     }
 
+    // Assigns the prize to the winner and re-stakes it
     function assignPrize() public {
         require(prizeAssigned == false);
         prizeAssigned = true;
@@ -170,15 +172,16 @@ contract SweepStakesNFTs is ERC721Enumerable {
         totalStaked += _amount;
     }
 
-
-    function withdrawFees() external onlyOwner {
+    //withdrawFees - will send the fees to the beneficiary
+    function withdrawFees() external {
+        require(msg.sender == beneficiary, "Only beneficiary");
         uint256 amount = feesToCollect;
         feesToCollect = 0;
         StakingHelper(stakingHelper).payUser(beneficiary, amount);
     }
 
-    // Iterates through pages first, then through tokens
-    // This is done to save gas: should be able to get 50-100k tokens in here on harmony
+    // Iterates through pages first, then through tokens on that page
+    // This is done to save gas: should be able to get ~100k tokens in here on harmony
     function tokenAtIndex(uint256 _index) public view returns (uint256) {
         require(_index < totalStaked, "Index out of range");
         uint256 subTotal = 0;
@@ -236,6 +239,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         minStake = _minStake;
     }
 
+    //The harmony built-in VRF
     function vrf() internal view returns (uint256 result) {
         uint256[1] memory bn;
         bn[0] = block.number;
@@ -248,6 +252,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         }
     }
 
+    //Allow returning the total value of a token for loans/defi
     function getNFTValue(uint256 _tokenId) external view returns (uint256) {
         return
             tokenIdToInfo[_tokenId].staked + tokenIdToInfo[_tokenId].unstaked;
@@ -283,8 +288,8 @@ contract StakingHelper is StakingContract {
         _;
     }
 
+    // Can add funds to the prize pool for the next draw
     function juicePrizePool() public payable {
-        //extra funds get automatically raffled in the next draw
         extraFunds += msg.value;
     }
 
@@ -301,14 +306,13 @@ contract StakingHelper is StakingContract {
     }
 
     function autoCompound(uint256 _amount) external onlySweepstakes {
-        //delegates a spread over all the validators
         spreadStake(_amount);
     }
 
     function unstake(uint256 _amount, uint256 _tokenId) external {
-        require(moving == 0, "Can't unstake while moving validators");
+        require(moving == 0, "Can't unstake while changing validators");
         uint256 toUnstake = _amount;
-        //if unstaking more than in pending:
+        //if unstaking more than in pendingDelegations:
         //subtract then zero pending, then unstake
         if(toUnstake > pendingDelegation){
             toUnstake -= pendingDelegation;
@@ -344,6 +348,7 @@ contract StakingHelper is StakingContract {
     //this function is to rebalance funds and set the new validators array.
     //Will first unstake all from the current validators, then update the validators array to the new addresses
     //This will allow people to continue entering the sweepstakes while the rebalance is happening
+    //although unstake will have to wait until the rebalance is complete.
     function rebalanceStart(address[] memory _newValidators) external onlyOwner {
         require(_newValidators.length > 0, "No validators given");
         require(moving == 0, "Already moving");
@@ -370,6 +375,7 @@ contract StakingHelper is StakingContract {
         emit MoveCompleted(moving);
     }
 
+    // the helper function to spread the stake over the validators
     function spreadStake(uint256 _amount) internal {
         //add the amount to the pending delegation
         uint256 toStake = pendingDelegation + _amount;

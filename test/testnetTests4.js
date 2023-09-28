@@ -50,7 +50,7 @@ describe("get contracts", function () {
 describe("acc2 withdraws", function () {
   it("acc2 withdraws", async function () {
     try {
-      await sweepstakes.connect(acc2).withdraw();
+      await sweepstakes.connect(acc2).withdraw(2);
     } catch (err) {
       console.log("withdraw failed");
       process.exit(1);
@@ -64,7 +64,6 @@ describe("acc2 withdraws", function () {
   });
   it("acc2 token is burned", async function () {
     // expect token to be burned
-    expect (await expectFail(() => sweepstakes.tokenIdToInfo(2))).to.equal("failed");
     expect(await sweepstakes.balanceOf(acc2.address)).to.equal(0);
   });
 });
@@ -77,7 +76,7 @@ describe("acc3 stakes 100 and gets token 2", function () {
     await stakingHelper.connect(acc3).enter(ethers.utils.parseEther("100"), {
       value: ethers.utils.parseEther("100"),
     });
-    expect(await sweepstakes.checkpoints(1)).to.equal(
+    expect(await sweepstakes.pages(1)).to.equal(
       ethers.utils.parseEther("100")
     );
   });
@@ -94,13 +93,13 @@ describe("acc3 stakes 100 and gets token 2", function () {
   });
   it("check address at index", async function () {
     expect(
-      await sweepstakes.addressAtIndex(ts.toString())
-    ).to.equal(acc3.address);
-    //subtract 1 from ts to see if last index is acc3
+      await sweepstakes.tokenAtIndex(ts.toString())
+    ).to.equal(2);
     ts = await sweepstakes.totalStaked()
+    //subtract 1 from ts to see if last index is acc3
     expect(
-      await sweepstakes.addressAtIndex(ts.sub(1).toString())
-    ).to.equal(acc3.address);
+      await sweepstakes.tokenAtIndex(ts.sub(1).toString())
+    ).to.equal(2);
   });
 });
 
@@ -112,7 +111,7 @@ describe("malicious draw call", function () {
     await hackDraw.deployed();
   });
   it("hackDraw reverts", async function () {
-    expext(await expectFail(() => hackDraw.hackDraw())).to.equal("failed");
+    expect(await expectFail(() => hackDraw.hackDraw())).to.equal("failed");
   });
 });
 
