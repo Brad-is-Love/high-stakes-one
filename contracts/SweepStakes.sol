@@ -162,8 +162,9 @@ contract SweepStakesNFTs is ERC721Enumerable {
         //auto compound prizes
         addStake(lastWinner, amount);
         StakingHelper(stakingHelper).autoCompound(amount);
-        
+
         emit WinnerAssigned(lastWinner, amount);
+        
     }
 
     function addStake(uint256 _tokenId, uint256 _amount) internal {
