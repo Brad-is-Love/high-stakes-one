@@ -1,58 +1,61 @@
 import React, { useState } from "react";
+import { ethers } from "ethers";
+import { TransactionButton } from "./TransactionButton";
 
-export function WithdrawForm({ transferTokens, tokenSymbol }) {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    // Handle form submission logic for Enter option
-    // ...
+export function WithdrawForm({
+  currentEpoch,
+  userUnstaked,
+  userWithdrawable,
+  userWithdrawEpoch,
+  withdraw,
+  txBeingSent,
+}) {
+  React.useEffect(() => {
+    makeReadable();
+  }, [userUnstaked, userWithdrawable]);
+
+  const [readableUnstaked, setReadableUnstaked] = useState(0);
+  const [readableWithdrawable, setReadableWithdrawable] = useState(0);
+  const [withdrawButton, setWithdrawButton] = useState(false);
+
+  const makeReadable = () => {
+    if (userUnstaked !== undefined) {
+      setReadableUnstaked(ethers.utils.formatEther(userUnstaked));
+    }
+    if (userWithdrawable !== undefined) {
+      setReadableWithdrawable(ethers.utils.formatEther(userWithdrawable));
+    }
   };
 
-  const [tickets, setTickets] = useState(0);
-  const refund = 99.7;
-
-  const handleTicketsChange = (event) => {
-    setTickets(event.target.value);
-  };
-
-  const handleMaxClick = () => {
-    setTickets(100);
-  };
+  let msg = "";
+  if (!(parseFloat(readableWithdrawable) > 0)) {
+    if (!(parseFloat(readableUnstaked) > 0)) {
+      msg = "You need to unstake before you can withdraw.";
+    } else {
+      const epochsLeft = userWithdrawEpoch - currentEpoch;
+      msg =
+        "Unstaking now. You need to wait " + epochsLeft + " more epochs to withdraw.";
+    }
+  } else {
+    setWithdrawButton(true);
+    msg = "You can withdraw " + readableWithdrawable + " ONE.";
+  }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <>
       <div className="row">
         <div className="col-12">
-          <div className="form-group">
-            <label htmlFor="tickets">How much would you like to unstake?</label>
-            <div className="input-group">
-              <input
-                type="number"
-                className="form-control"
-                id="tickets"
-                placeholder="Enter no. of tickets"
-                value={tickets}
-                onChange={handleTicketsChange}
-              />
-              <div className="input-group-append">
-                <button
-                  type="button"
-                  className="btn btn-primary"
-                  id="max"
-                  onClick={handleMaxClick}
-                >
-                  Max
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className="col-md-6">
-          <p>Current ticket price: {refund} ONE</p>
+          {msg}
         </div>
       </div>
-      <button type="submit" className="btn btn-primary">
-        Withdraw {Math.round(tickets * refund * 100) / 100} ONE
-      </button>
-    </form>
+        {withdrawButton && (
+        <TransactionButton
+        txBeingSent={txBeingSent}
+        loadingText={"Withdraw"}
+        functionToCall={withdraw} // Remove the parentheses here
+        buttonText={"Withdraw " + readableWithdrawable + " ONE"}
+        />
+        )}
+    </>
   );
 }

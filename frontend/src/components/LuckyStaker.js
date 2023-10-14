@@ -1,26 +1,67 @@
 import React, { useState } from "react";
+import { TransactionButton } from "./TransactionButton";
 import { EnterForm } from "./EnterForm";
+import { UnstakeForm } from "./UnstakeForm";
 import { WithdrawForm } from "./WithdrawForm";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
-// PrizesForm component
-const PrizesForm = ({ transferTokens, tokenSymbol }) => {
-  const handleSubmit = (event) => {
-    event.preventDefault();
-    // Handle form submission logic for Prizes option
-    // ...
-  };
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakeAddress}) {
 
-  return (
-    <form onSubmit={handleSubmit}>
-      {/* Prizes form specific fields and UI */}
-    </form>
-  );
-};
+  //run countdown timer every second
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      calculateCountdown();
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [nextDrawTime, txBeingSent]);
 
-// Transfer component
-export function LuckyStaker({ transferTokens, tokenSymbol }) {
+
   const [selectedOption, setSelectedOption] = useState("enter");
+  //date states
+  const [days, setDays] = useState("");
+  const [hours, setHours] = useState("");
+  const [min, setMin] = useState("");
+  const [sec, setSec] = useState("");
+  const [drawButton, setDrawButton] = useState(false);
+
+  const calculateCountdown = () => {
+    const endDate = nextDrawTime;
+    const now = new Date()
+    const timeLeft = endDate - now;
+
+    if (isNaN(timeLeft) || timeLeft <= 0) {
+      setDays("");
+      setHours("");
+      setMin("");
+      setSec("");
+      setDrawButton(true);
+      return;
+    }
+    setDrawButton(false)
+    const days = Math.floor(timeLeft / (1000 * 60 * 60 * 24));
+    if(days === 0){
+      setDays("");
+    } else {
+      setDays(days + " days");
+    }
+    const hours = Math.floor(
+      (timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+    );
+    if(days === 0 && hours === 0){
+      setHours("");
+    } else {
+      setHours(hours + " hours");
+    }
+    const min = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+    if(days === 0 && hours === 0 && min === 0){
+      setMin("");
+    } else {
+      setMin(min + " min");
+    }
+    const sec = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+    setSec(sec + " sec");
+  }
 
   const handleOptionChange = (option) => {
     setSelectedOption(option);
@@ -30,15 +71,15 @@ export function LuckyStaker({ transferTokens, tokenSymbol }) {
 
   if (selectedOption === "enter") {
     formComponent = (
-      <EnterForm transferTokens={transferTokens} tokenSymbol={tokenSymbol} />
+      <EnterForm balance={balance} stake={stake} txBeingSent={txBeingSent}/>
+    );
+  } else if (selectedOption === "unstake") {
+    formComponent = (
+      <UnstakeForm  userStaked={userStaked} unstake={unstake} txBeingSent={txBeingSent}/>
     );
   } else if (selectedOption === "withdraw") {
     formComponent = (
-      <WithdrawForm transferTokens={transferTokens} tokenSymbol={tokenSymbol} />
-    );
-  } else if (selectedOption === "prizes") {
-    formComponent = (
-      <PrizesForm transferTokens={transferTokens} tokenSymbol={tokenSymbol} />
+      <WithdrawForm currentEpoch={currentEpoch} userStaked={userStaked} withdraw={withdraw} txBeingSent={txBeingSent} userUnstaked={userUnstaked} userWithdrawable={userWithdrawable} userWithdrawEpoch={userWithdrawEpoch}/>
     );
   }
 
@@ -53,11 +94,12 @@ export function LuckyStaker({ transferTokens, tokenSymbol }) {
       </div>
       <div className="row pb-2">
         <div className="col-md-6">
-          <h6>Next draw's prize pool: 789.15 ONE</h6>
+          <h6>Staked on High Stakes: {totalStaked} ONE</h6>
         </div>
         <div className="col-md-6 text-md-right">
-          <h6>Drawn in: 21:51:49</h6>
+          {drawButton ? nextDrawTime==="assignPrize" ? <TransactionButton txBeingSent={txBeingSent} loadingText={"Assign prize"} functionToCall={assignPrize} buttonText={"Reveal Winner"} /> : <TransactionButton txBeingSent={txBeingSent} loadingText={"Draw"} functionToCall={drawFunction} buttonText={"Draw!"}/> : <h6>Next draw in: {days} {hours} {min} {sec}</h6>}
         </div>
+
       </div>
       <div className="btn-group pb-3">
         <button
@@ -72,13 +114,23 @@ export function LuckyStaker({ transferTokens, tokenSymbol }) {
         <button
           type="button"
           className={`btn ${
+            selectedOption === "unstake" ? "btn-primary" : "btn-outline-primary"
+          }`}
+          onClick={() => handleOptionChange("unstake")}
+        >
+          Unstake
+        </button>
+        <button
+          type="button"
+          className={`btn ${
             selectedOption === "withdraw" ? "btn-primary" : "btn-outline-primary"
           }`}
           onClick={() => handleOptionChange("withdraw")}
         >
           Withdraw
         </button>
-        <button
+
+        {/* <button
           type="button"
           className={`btn ${
             selectedOption === "prizes" ? "btn-primary" : "btn-outline-primary"
@@ -86,12 +138,12 @@ export function LuckyStaker({ transferTokens, tokenSymbol }) {
           onClick={() => handleOptionChange("prizes")}
         >
           Prizes
-        </button>
+        </button> */}
       </div>
       {formComponent}
       
     </div>
-    <LuckyStakerRules/>
+    <LuckyStakerRules stakingHelperAddress={stakingHelperAddress} sweepStakeAddress={sweepStakeAddress}/>
     </>
   );
 }

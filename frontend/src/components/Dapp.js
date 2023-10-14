@@ -5,7 +5,6 @@ import sweepstakesAtrifact from "../contracts/SweepStakesNFTs.json";
 import sweepstakesAddress from "../contracts/SweepStakesNFTs-address.json";
 import stakingHelperAtrifact from "../contracts/StakingHelper.json";
 import stakingHelperAddress from "../contracts/StakingHelper-address.json";
-
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
@@ -14,8 +13,32 @@ import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { Nav } from "./Nav";
 
-
-const TESTNET_ID = "1666700000";
+const TESTNET = {
+  ID: 1666700000,
+  chainName: "Harmony Testnet",
+  nativeCurrency: {
+    name: "TEST ONE",
+    symbol: "TONE",
+    decimals: 18,
+  },
+  rpcUrls: ["https://api.s0.b.hmny.io"],
+  blockExplorerUrls: ["https://explorer.testnet.harmony.one/"],
+  sweepstakesAddress: "0xf266cEAd75739dc9f2A1F79d467DeAEC3976F2AF",
+  stakingHelperAddress: "0x4Dd8518F40d949D6D2EEcC859364Ff836DC456fb"
+};
+const MAINNET = {
+  ID: 1666600000,
+  chainName: "Harmony Mainnet",
+  nativeCurrency: {
+    name: "ONE",
+    symbol: "ONE",
+    decimals: 18,
+  },
+  rpcUrls: ["https://api.harmony.one"],
+  blockExplorerUrls: ["https://explorer.harmony.one/"],
+  sweepstakesAddress: sweepstakesAddress.address,
+  stakingHelperAddress: stakingHelperAddress.address
+};
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
 export class Dapp extends React.Component {
@@ -23,7 +46,16 @@ export class Dapp extends React.Component {
     super(props);
 
     this.initialState = {
-      tokenData: undefined,
+      network: MAINNET,
+      nextDrawTime: undefined,
+      currentEpoch: undefined,
+      lastWinner: undefined,
+      totalStaked: undefined,
+      userTokenId: undefined,
+      userStaked: undefined,
+      userUnstaked: undefined,
+      userWithdrawEpoch: undefined,
+      userWithdrawable: undefined,
       selectedAddress: undefined,
       balance: undefined,
       txBeingSent: undefined,
@@ -45,11 +77,12 @@ export class Dapp extends React.Component {
           connectWallet={() => this._connectWallet()}
           networkError={this.state.networkError}
           dismiss={() => this._dismissNetworkError()}
+          switchChain={() => this._switchChain()}
         />
       );
     }
 
-    if (!this.state.tokenData || !this.state.balance) {
+    if (!this.state.balance) {
       return <Loading />;
     }
 
@@ -57,44 +90,68 @@ export class Dapp extends React.Component {
       <>
         <div className="background"></div>
         <Nav selectedAddress={this.state.selectedAddress} />
-        <div className="app bg-light">
-        <div className="container p-3 mt-2">
-        
-          <div className="row my-1">
-            <div className="col-12">
-              {this.state.txBeingSent && (
-                <WaitingForTransactionMessage txHash={this.state.txBeingSent} />
-              )}
+        <div className="app">
 
-              {this.state.transactionError && (
-                <TransactionErrorMessage
-                  message={this._getRpcErrorMessage(
-                    this.state.transactionError
-                  )}
-                  dismiss={() => this._dismissTransactionError()}
-                />
-              )}
+              <div className="chain">
+                {this.state.network===TESTNET ? <button className="btn btn-info btn-sm" onClick={() => this._toggleNetwork()}>Switch to Mainnet</button> : <button className="btn btn-outline-info btn-sm" onClick={() => this._toggleNetwork()}>Switch to Testnet</button>}
+              </div>
+
+          <div className="container p-3 mt-2">
+            <div className="row my-1">
+              <div className="col-12">
+                {this.state.txBeingSent && (
+                  <WaitingForTransactionMessage
+                    txHash={this.state.txBeingSent}
+                  />
+                )}
+
+                {this.state.transactionError && (
+                  <TransactionErrorMessage
+                    message={this._getRpcErrorMessage(
+                      this.state.transactionError
+                    )}
+                    dismiss={() => this._dismissTransactionError()}
+                  />
+                )}
+              </div>
             </div>
-          </div>
-
-          <div className="row ">
-            <div className="col-12">
+            <div className="row ">
+              <div className="col-12">
                 <LuckyStaker
-                  transferTokens={(to, amount) =>
-                    this._transferTokens(to, amount)
-                  }
-                  tokenSymbol={this.state.tokenData.symbol}
+                  balance={this.state.balance}
+                  currentEpoch={this.state.currentEpoch}
+                  totalStaked={this.state.totalStaked}
+                  nextDrawTime={this.state.nextDrawTime}
+                  drawFunction={this._drawWinner}
+                  txBeingSent={this.state.txBeingSent}
+                  assignPrize={this._assignPrize}
+                  stake={this._stake}
+                  unstake={this._unstake}
+                  withdraw={this._withdraw}
+                  userStaked={this.state.userStaked}
+                  userUnstaked={this.state.userUnstaked}
+                  userWithdrawEpoch={this.state.userWithdrawEpoch}
+                  userWithdrawable={this.state.userWithdrawable}
+                  stakingHelperAddress={this.state.network.stakingHelperAddress}
+                  sweepstakesAddress={this.state.network.sweepstakesAddress}
                 />
+              </div>
             </div>
           </div>
-        </div>
         </div>
       </>
     );
   }
 
   async componentDidMount() {
+    await this._checkNetwork();
     this._connectWallet();
+    this._switchChain = this._switchChain.bind(this);
+    this._drawWinner = this._drawWinner.bind(this);
+    this._assignPrize = this._assignPrize.bind(this);
+    this._stake = this._stake.bind(this);
+    this._unstake = this._unstake.bind(this);
+    this._withdraw = this._withdraw.bind(this);
   }
 
   componentWillUnmount() {
@@ -105,59 +162,78 @@ export class Dapp extends React.Component {
     const [selectedAddress] = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
+    
+    if(this.state.networkError === undefined){
+      this._initialize(selectedAddress);
+    }
 
-    await this._checkNetwork();
-
-    this._initialize(selectedAddress);
+    window.ethereum.on('chainChanged', (chainId) => {
+      console.log("chain changed to:", chainId)
+      this._stopPollingData();
+      this._resetState();
+      this._connectWallet();
+    })
 
     window.ethereum.on("accountsChanged", ([newAddress]) => {
       this._stopPollingData();
-
-      if (newAddress === undefined) {
-        return this._resetState();
-      }
-
+      this._resetState();
       this._initialize(newAddress);
-    });
+    });;
   }
 
   async _initialize(userAddress) {
     this.setState({
       selectedAddress: userAddress,
     });
-  
+    this._checkNetwork();
+
     try {
       await this._initializeEthers();
-      console.log("address: ", sweepstakesAddress.address);
-      console.log("abi: ", sweepstakesAtrifact.abi);
-
-      await this._getTokenData();
       this._startPollingData();
     } catch (error) {
       console.error("Error during initialization:", error);
     }
   }
-  
 
   async _initializeEthers() {
     this._provider = new ethers.providers.Web3Provider(window.ethereum);
 
     await this._provider.getNetwork();
 
-    this._sweepstakes= new ethers.Contract(
-      sweepstakesAddress.address,
+    this._sweepstakes = new ethers.Contract(
+      this.state.network.sweepstakesAddress,
       sweepstakesAtrifact.abi,
       this._provider.getSigner(0)
     );
 
-    console.log("sweepstakes: ", this._sweepstakes);
+    this._stakingHelper = new ethers.Contract(
+      this.state.network.stakingHelperAddress,
+      stakingHelperAtrifact.abi,
+      this._provider.getSigner(0)
+    );
   }
 
+  async _toggleNetwork() {
+    if (this.state.network.ID === TESTNET.ID) {
+      this.setState({ network: MAINNET });
+    } else {
+      this.setState({ network: TESTNET });
+    }
+    this._connectWallet();
+  }
 
   _startPollingData() {
-    this._pollDataInterval = setInterval(() => this._updateBalance(), 50000);
+    this._pollDataInterval = setInterval(() => this._updateData(), 50000);
 
-    this._updateBalance();
+    this._updateData();
+  }
+
+  async _updateData() {
+    await this._getNextDrawTime();
+    await this._getTotalStaked();
+    await this._updateBalance();
+    await this._getCurrentEpoch();
+    await this._getUserStaked();
   }
 
   _stopPollingData() {
@@ -165,32 +241,124 @@ export class Dapp extends React.Component {
     this._pollDataInterval = undefined;
   }
 
-  async _getTokenData() {
-    const name = await this._sweepstakes.name();
-    const symbol = await this._sweepstakes.symbol();
+  async _getTotalStaked() {
+    let totalStaked = await this._sweepstakes.totalStaked();
+    totalStaked = ethers.utils.formatEther(totalStaked);
+    totalStaked = parseFloat(totalStaked).toFixed(0);
+    this.setState({ totalStaked });
+  }
 
-    this.setState({ tokenData: { name, symbol } });
+  async _getNextDrawTime() {
+    const prizeAssigned = await this._sweepstakes.prizeAssigned();
+    if (!prizeAssigned) {
+      this.setState({ nextDrawTime: "assignPrize" });
+    } else {
+      const lastDrawTime = await this._sweepstakes.lastDrawTime();
+      const drawPeriod = await this._sweepstakes.drawPeriod();
+      const nextDraw = parseInt(lastDrawTime) + parseInt(drawPeriod);
+
+      //convert to date
+      const nextDrawTime = new Date(nextDraw * 1000).getTime();
+      this.setState({ nextDrawTime: nextDrawTime });
+    }
+  }
+
+  async _getCurrentEpoch() {
+    const epoch = await this._stakingHelper.epoch();
+    const currentEpoch = parseInt(epoch.toString());
+    this.setState({ currentEpoch });
+  }
+
+  async _getUserStaked() {
+    const tokenCount = await this._sweepstakes.balanceOf(
+      this.state.selectedAddress
+    );
+    if (tokenCount.toString() !== "0") {
+      const tokenid = await this._sweepstakes.tokenOfOwnerByIndex(
+        this.state.selectedAddress,
+        0
+      );
+      this.setState({ userTokenId: tokenid.toString() });
+      const token = await this._sweepstakes.tokenIdToInfo(tokenid.toString());
+      const staked = token.staked;
+      const unstaked = token.unstaked;
+      const withdrawEpoch = parseInt(token.withdrawEpoch);
+      if (parseInt(token.withdrawEpoch) < this.state.currentEpoch) {
+        const withdrawable = token.unstaked;
+        this.setState({ userWithdrawable: withdrawable.toString() });
+      }
+      this.setState({ userStaked: staked.toString() });
+      this.setState({ userUnstaked: unstaked.toString() });
+      this.setState({ userWithdrawEpoch: withdrawEpoch });
+    }
   }
 
   async _updateBalance() {
-    const balance = await this._sweepstakes.balanceOf(this.state.selectedAddress);
+    let balance = await this._provider.getBalance(this.state.selectedAddress);
+    balance = ethers.utils.formatEther(balance);
+    balance = parseFloat(balance).toFixed(2);
     this.setState({ balance });
   }
 
-  async _transferTokens(to, amount) {
+  async _drawWinner() {
+    await this._sendTransaction("Draw", async () => {
+      return await this._sweepstakes.drawWinner();
+    });
+  }
+
+  async _assignPrize() {
+    await this._sendTransaction("Assign prize", async () => {
+      return await this._sweepstakes.assignPrize();
+    });
+  }
+
+  async _stake(amount) {
+    const stake = ethers.utils.parseEther(amount.toString());
+    if (this.state.userTokenId === undefined) {
+      //enter the draw and mint a token
+      await this._sendTransaction("Stake", async () => {
+        return await this._stakingHelper.enter(stake, { value: stake });
+      });
+    } else {
+      await this._sendTransaction("Stake", async () => {
+        return await this._stakingHelper.addToToken(stake, this.state.userTokenId, {
+          value: stake,
+        });
+      });
+    }
+  }
+
+  async _unstake(amount, isMax) {
+    let toUnstake = 0
+    if(isMax){
+      toUnstake = this.state.userStaked;
+    } else {
+      toUnstake = ethers.utils.parseEther(amount.toString());
+    } 
+    await this._sendTransaction("Unstake", async () => {
+      return await this._stakingHelper.unstake(toUnstake, this.state.userTokenId);
+    });
+  }
+
+  async _withdraw() {
+    await this._sendTransaction("Withdraw", async () => {
+      return await this._sweepstakes.withdraw(this.state.userTokenId);
+    });
+  }
+
+  async _sendTransaction(name, transaction) {
     try {
       this._dismissTransactionError();
-      const tx = await this._sweepstakes.transfer(to, amount);
-      this.setState({ txBeingSent: tx.hash });
+      const tx = await transaction();
+      this.setState({ txBeingSent: name });
       const receipt = await tx.wait();
 
       if (receipt.status === 0) {
         throw new Error("Transaction failed");
       }
 
-      await this._updateBalance();
+      await this._updateData();
     } catch (error) {
-
       if (error.code === ERROR_CODE_TX_REJECTED_BY_USER) {
         return;
       }
@@ -223,8 +391,25 @@ export class Dapp extends React.Component {
     this.setState(this.initialState);
   }
 
+  async _addChain() {
+    const chainIdHex = `0x${this.state.network.ID.toString(16)}`;
+    await window.ethereum.request({
+      method: "wallet_addEthereumChain",
+      params: [
+        {
+          chainId: chainIdHex,
+          chainName: this.state.network.chainName,
+          nativeCurrency: this.state.network.nativeCurrency,
+          rpcUrls: this.state.network.rpcUrls,
+          blockExplorerUrls: this.state.network.blockExplorerUrls,
+        },
+      ],
+    });
+  }
+
   async _switchChain() {
-    const chainIdHex = `0x${HARDHAT_NETWORK_ID.toString(16)}`;
+    await this._addChain();
+    const chainIdHex = `0x${this.state.network.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: chainIdHex }],
@@ -232,10 +417,17 @@ export class Dapp extends React.Component {
     await this._initialize(this.state.selectedAddress);
   }
 
-  // This method checks if the selected network is Localhost:8545
-  _checkNetwork() {
-    if (window.ethereum.networkVersion !== HARDHAT_NETWORK_ID) {
-      this._switchChain();
+  async _checkNetwork() {
+    if (window.ethereum.networkVersion === TESTNET.ID.toString()){
+      this.setState({ network: TESTNET });
+    // console.log("testy is:",MAINNET.ID)
+
+    } else if (window.ethereum.networkVersion === MAINNET.ID.toString()){
+      this.setState({ network: MAINNET });
+    // console.log("main is:",MAINNET.ID)
+
+    } else {
+      this.setState({ networkError: "Please switch to the Harmony Network" });
     }
   }
 }

@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 
-export function LuckyStakerRules() {
+export function LuckyStakerRules(stakingHelperAddress, sweepStakeAddress) {
   const [isCollapsed, setIsCollapsed] = useState(true);
 
   const toggleCollapse = () => {
@@ -22,15 +22,16 @@ export function LuckyStakerRules() {
                 Winners are chosen randomly, based on Harmony's built-in verified RNG.
               </li>
               <li>
-                High Stakes makes money by a 5% fee on staking rewards.
+                Your prizes are automatically restaked for you.
               </li>
               <li>
-                The losers will not lose their stake, they just won't get any rewards that week.
+                You can unstake at any time, then wait 7 epochs to withdraw.
               </li>
               <li>
-                You can unstake your ONE to exit the lottery. You will receive
-                99.7 ONE per ticket back i.e. There is a 0.3% fee on
-                withdrawals.
+                Users stake is traked by the Sweepstakes NFT contract at {sweepStakeAddress}.
+              </li>
+              <li>
+                The funds, staking and unstaking are managed via the StakingHelper contract at {stakingHelperAddress}.
               </li>
             </ol>
           )}
