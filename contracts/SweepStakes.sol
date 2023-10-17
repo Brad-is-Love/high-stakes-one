@@ -43,10 +43,10 @@ contract SweepStakesNFTs is ERC721Enumerable {
         tokenCounter = 0;
         owner = msg.sender;
         beneficiary = msg.sender;
-        drawPeriod = 4 * 60 * 60; // 4 mins for testing
+        drawPeriod = 24 * 60 * 60;
         lastDrawTime = block.timestamp;
         prizeAssigned = true;
-        pageSize = 2; // 2 tokens per page for tests
+        pageSize = 100;
         StakingHelper sh = new StakingHelper(address(this), owner);
         stakingHelper = address(sh);
     }
