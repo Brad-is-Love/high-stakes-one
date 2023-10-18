@@ -9,27 +9,10 @@ export function UnstakeForm({ userStaked, userUnstaked, userWithdrawable, unstak
     // ...
   };
 
-  React.useEffect(() => {
-    makeReadable();
-  }, [userStaked]);
-
   const [tickets, setTickets] = useState(0);
   const [max, setMax] = useState(false);
-  const [readableStaked, setReadableStaked] = useState(0);
-  const [readableUnstaked, setReadableUnstaked] = useState(0);
-  const [readableWithdrawable, setReadableWithdrawable] = useState(0);
-
-  const makeReadable = () => {
-    if(userStaked !== undefined){
-      setReadableStaked(ethers.utils.formatEther(userStaked));
-    }
-    if(userUnstaked !== undefined){
-      setReadableUnstaked(ethers.utils.formatEther(userUnstaked));
-    }
-    if(userWithdrawable !== undefined){
-      setReadableWithdrawable(ethers.utils.formatEther(userWithdrawable));
-    }
-  }
+  
+  const readableStaked = userStaked ? ethers.utils.formatEther(userStaked) : 0
 
   const handleTicketsChange = (event) => {
     setTickets(event.target.value);
