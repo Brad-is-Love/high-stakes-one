@@ -11,7 +11,6 @@ export function WithdrawForm({
   txBeingSent,
 }) {
 
-  const [, setReadableWithdrawable] = useState(0);
   const [withdrawButton, setWithdrawButton] = useState(false);
 
   const readableUnstaked = userUnstaked ? ethers.utils.formatEther(userUnstaked) : 0
