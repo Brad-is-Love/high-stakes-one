@@ -10,22 +10,12 @@ export function WithdrawForm({
   withdraw,
   txBeingSent,
 }) {
-  React.useEffect(() => {
-    makeReadable();
-  }, [userUnstaked, userWithdrawable]);
 
-  const [readableUnstaked, setReadableUnstaked] = useState(0);
-  const [readableWithdrawable, setReadableWithdrawable] = useState(0);
+  const [, setReadableWithdrawable] = useState(0);
   const [withdrawButton, setWithdrawButton] = useState(false);
 
-  const makeReadable = () => {
-    if (userUnstaked !== undefined) {
-      setReadableUnstaked(ethers.utils.formatEther(userUnstaked));
-    }
-    if (userWithdrawable !== undefined) {
-      setReadableWithdrawable(ethers.utils.formatEther(userWithdrawable));
-    }
-  };
+  const readableUnstaked = userUnstaked ? ethers.utils.formatEther(userUnstaked) : 0
+  const readableWithdrawable = userWithdrawable ? ethers.utils.formatEther(userWithdrawable) : 0
 
   let msg = "";
   if (!(parseFloat(readableWithdrawable) > 0)) {
