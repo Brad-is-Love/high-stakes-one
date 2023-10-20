@@ -10,11 +10,13 @@ export function WithdrawForm({
   withdraw,
   txBeingSent,
 }) {
-
-  const [withdrawButton, setWithdrawButton] = useState(false);
-
-  const readableUnstaked = userUnstaked ? ethers.utils.formatEther(userUnstaked) : 0
-  const readableWithdrawable = userWithdrawable ? ethers.utils.formatEther(userWithdrawable) : 0
+  const readableUnstaked = userUnstaked
+    ? parseFloat(ethers.utils.formatEther(userUnstaked)).toFixed(2)
+    : 0;
+  const readableWithdrawable = userWithdrawable
+    ? parseFloat(ethers.utils.formatEther(userWithdrawable)).toFixed(3)
+    : 0;
+  let withdrawButton = false;
 
   let msg = "";
   if (!(parseFloat(readableWithdrawable) > 0)) {
@@ -23,10 +25,12 @@ export function WithdrawForm({
     } else {
       const epochsLeft = userWithdrawEpoch - currentEpoch;
       msg =
-        "Unstaking now. You need to wait " + epochsLeft + " more epochs to withdraw.";
+        "Unstaking now. You need to wait " +
+        epochsLeft +
+        " more epochs to withdraw.";
     }
   } else {
-    setWithdrawButton(true);
+    withdrawButton = true;
     msg = "You can withdraw " + readableWithdrawable + " ONE.";
   }
 
@@ -34,17 +38,19 @@ export function WithdrawForm({
     <>
       <div className="row">
         <div className="col-12">
-          {msg}
+          <p className="mb-1">{msg}</p>
         </div>
       </div>
-        {withdrawButton && (
-        <TransactionButton
-        txBeingSent={txBeingSent}
-        loadingText={"Withdraw"}
-        functionToCall={withdraw} // Remove the parentheses here
-        buttonText={"Withdraw " + readableWithdrawable + " ONE"}
-        />
-        )}
+      {withdrawButton && (
+        <div className="text-center text-md-left pt-2">
+          <TransactionButton
+            txBeingSent={txBeingSent}
+            loadingText={"Withdraw"}
+            functionToCall={withdraw} // Remove the parentheses here
+            buttonText={"Withdraw " + readableWithdrawable + " ONE"}
+          />
+        </div>
+      )}
     </>
   );
 }

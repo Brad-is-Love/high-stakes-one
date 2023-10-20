@@ -8,7 +8,7 @@ export function EnterForm({ balance, stake, txBeingSent }) {
     // ...
   };
 
-  const [tickets, setTickets] = useState(0);
+  const [tickets, setTickets] = useState("");
   const [msgDisplay, setMsgDisplay] = useState("none");
 
   const handleTicketsChange = (event) => {
@@ -35,8 +35,8 @@ export function EnterForm({ balance, stake, txBeingSent }) {
       <div className="row">
         <div className="col-12">
           <div className="form-group" id="form">
-            <label htmlFor="tickets">How much do you want to stake?</label>
-            <span className="float-right">Balance: {balance} ONE</span>
+            {/* <p>How much do you want to stake?</p> */}
+            <span className="float-right"><p className="mb-1">Balance: {balance} ONE</p></span>
             <div className="input-group">
               <input
                 type="number"
@@ -66,7 +66,10 @@ export function EnterForm({ balance, stake, txBeingSent }) {
           </div>
         </div>
       </div>
-      <TransactionButton txBeingSent={txBeingSent} loadingText={"Stake"} functionToCall={handleStakeClick} buttonText={"Stake " + tickets + " ONE to enter"} />
+      {/* div with centered content */}
+      <div className="text-center text-md-left pt-2">
+          <TransactionButton txBeingSent={txBeingSent} loadingText={"Stake"} functionToCall={handleStakeClick} buttonText={"Stake " + tickets + " ONE to enter"} />
+      </div>
     </form>
   );
 }

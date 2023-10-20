@@ -1,35 +1,22 @@
 import React from "react";
+import { Logo } from "./Logo";
 
 export function Loading() {
   return (
-    <div className="background"
-      style={{
-        position: "fixed",
-        zIndex: 2,
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-      }}
-    >
-      <div
-        style={{
-          position: "absolute",
-          zIndex: 3,
-          top: "50%",
-          left: "50%",
-          width: "100px",
-          height: "50px",
-          marginLeft: "-100px",
-          marginTop: " -13px",
-          textAlign: "center",
-        }}
-      >
-        {/* loading bar */}
-        <div>
-          <span className="loader"></span>
+    <>
+      <div className="background"></div>
+      <div className="landing-page">
+        <div className="container text-center">
+          <div className="row justify-content-center">
+            <Logo />
           </div>
+          <div className="row justify-content-center">
+            <div className="col-12">
+              <div className="slogan">Loading...</div>
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </>        
   );
 }

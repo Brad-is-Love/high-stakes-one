@@ -9,10 +9,10 @@ export function UnstakeForm({ userStaked, userUnstaked, userWithdrawable, unstak
     // ...
   };
 
-  const [tickets, setTickets] = useState(0);
+  const [tickets, setTickets] = useState("");
   const [max, setMax] = useState(false);
   
-  const readableStaked = userStaked ? ethers.utils.formatEther(userStaked) : 0
+  const readableStaked = userStaked ? parseFloat(ethers.utils.formatEther(userStaked)).toFixed(2) : 0
 
   const handleTicketsChange = (event) => {
     setTickets(event.target.value);
@@ -32,8 +32,7 @@ export function UnstakeForm({ userStaked, userUnstaked, userWithdrawable, unstak
       <div className="row">
         <div className="col-12">
           <div className="form-group" id="form">
-            <label htmlFor="tickets">How much do you want to unstake?</label>
-            <span className="float-right">Staked: {readableStaked} ONE</span>
+            <span className="float-right"><p className="mb-1">Staked: {readableStaked} ONE</p></span>
             <div className="input-group">
               <input
                 type="number"
@@ -59,7 +58,9 @@ export function UnstakeForm({ userStaked, userUnstaked, userWithdrawable, unstak
           </div>
         </div>
       </div>
-      <TransactionButton txBeingSent={txBeingSent} loadingText={"Unstake"} functionToCall={handleUnstakeClick} buttonText={"Unstake " + tickets + " ONE"} />
+      <div className="text-center text-md-left pt-2">
+        <TransactionButton txBeingSent={txBeingSent} loadingText={"Unstake"} functionToCall={handleUnstakeClick} buttonText={"Unstake " + tickets + " ONE"} />
+      </div>
     </form>
   );
 }

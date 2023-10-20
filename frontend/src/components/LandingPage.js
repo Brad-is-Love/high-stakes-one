@@ -24,9 +24,10 @@ export class LandingPage extends React.Component {
   }
 
   calculateCountdown = () => {
-    const endDate = new Date("2023-10-21").getTime();
+    const endDate = new Date("2023-10-22").getTime();
     const now = new Date().getTime();
     const timeLeft = endDate - now;
+    
 
     if (timeLeft <= 0) {
       clearInterval(this.interval);

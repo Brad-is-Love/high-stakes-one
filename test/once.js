@@ -27,7 +27,7 @@ before(async function () {
 // jsonData =  {"sweepstakes":"0xb3B0dbdA31deE7d6E824C15cD66dBbE091DFAd5C","lastDraw":1694386946,"stakingHelper":"0xe0E46CF562626530244f10f6D1991e4C1d33d6A7","acc2UnstakedAtEpoch":2011}
 
 //Unstaked Tues Morn
-jsonData =  {"sweepstakes":"0xB68a88B6b7a01aC384892a5514dFDDc31ABB3414","lastDraw":1694417728,"stakingHelper":"0x7F8c36D1428b14bC5Cd6991eEe14AC776FB18e84","acc2UnstakedAtEpoch":2012}
+jsonData =  {"sweepstakes":"0x3eCd6879485B1383bA9F45177f12276325DCdeA9","lastDraw":1694417728,"stakingHelper":"0xc63A79E774Bea523d90Bd6b5432a8B24D98af036","acc2UnstakedAtEpoch":2012}
 
 describe("deploy contracts", function () {
   it("deploy SweepStakesNFTs", async function () {
@@ -50,24 +50,17 @@ describe("deploy staking helper", function () {
   });
 });
 
-describe("check pending", function () {
-  it("get pending delegation", async function () {
-    pd = await stakingHelper.pendingDelegation()
-    console.log("pending delegation: ", pd.toString())
+describe("change vars", function () {
+  it("set draw period to 47 hours", async function () {
+    await sweepstakes.setDrawPeriod(47 * 60 * 60);
+  });
+  it("reduce fee to 1.2%", async function () {
+    await sweepstakes.setPrizeFee(120);
+    expect(await sweepstakes.prizeFee()).to.equal(120);
   });
 });
 
-// describe("withdraw all", function () {
-//   it("withdraw owner", async function () {
-//     await sweepstakes.withdraw();
-//   });
-//   it("withdraw acc1", async function () {
-//     await sweepstakes.connect(acc1).withdraw();
-//   });
-//   it("withdraw acc2", async function () {
-//     await sweepstakes.connect(acc2).withdraw();
-//   });
-// });
+
 
 async function getValidator() {
   try {
