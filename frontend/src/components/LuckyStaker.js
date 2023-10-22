@@ -77,9 +77,6 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
 
   return (
     <>
-      {/* <div className="row">
-        <h6>Staked on High Stakes: {totalStaked} ONE</h6>
-      </div> */}
       <div className="card p-4 mb-5 mt-1">
         <div className="row">
           <div className="col-12">

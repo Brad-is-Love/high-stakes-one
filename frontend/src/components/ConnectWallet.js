@@ -1,5 +1,6 @@
 import React from "react";
 
+
 function ConnectDiv({ connectWallet, networkError, dismiss, switchChain }) {
   if (networkError) {
     return (
@@ -17,6 +18,7 @@ function ConnectDiv({ connectWallet, networkError, dismiss, switchChain }) {
   } else {
     return (
       <div className="col-10 p-4 text-center">
+      <p className="text-md-center alpha-warn">*High Stakes is in Alpha Launch mode, some functionality may be limited, use at your own risk.</p>
       <p>Connect your wallet to enter.</p>
       <button
         className="btn btn-warning"

@@ -9,7 +9,10 @@
   --background-red: #833232aa;
 }
 
-
+.alpha-warn {
+  color: #a00000;
+  font-size: 12px;
+}
 
 .background {
   background-color: #f5f5f5;
