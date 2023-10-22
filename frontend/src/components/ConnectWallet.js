@@ -36,7 +36,7 @@ function ConnectDiv({ connectWallet, networkError, dismiss, switchChain }) {
 export function ConnectWallet({ connectWallet, networkError, dismiss, switchChain }) {
   return (
     <div className="connectWalletBackground d-flex align-items-center justify-content-center">
-      <div className="container bg-white shadow rounded" style={{maxWidth: "500px"}}>
+      <div className="container bg-white shadow rounded mx-4" style={{maxWidth: "500px"}}>
         <div className="row justify-content-center">
             {/* {networkError && (
 
