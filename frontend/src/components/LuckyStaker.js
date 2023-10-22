@@ -7,13 +7,13 @@ import { LuckyStakerRules } from "./LuckyStakerRules";
 
 export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress}) {
 
-  //run countdown timer every second
+//run countdown timer every second
   React.useEffect(() => {
     const interval = setInterval(() => {
       calculateCountdown();
     }, 1000);
     return () => clearInterval(interval);
-  }, [nextDrawTime, txBeingSent]);
+  });
 
 
   const [selectedOption, setSelectedOption] = useState("enter");
