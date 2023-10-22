@@ -408,6 +408,8 @@ export class Dapp extends React.Component {
       console.log("chainId:", chainId)
       if(chainId !== `0x${MAINNET.ID.toString(16)}`){
         this.setState({ networkError: "Please switch to the Harmony Mainnet" });
+      } else {
+        this.setState({ networkError: undefined });
       }
     })
   }
