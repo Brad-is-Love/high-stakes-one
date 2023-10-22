@@ -17,19 +17,22 @@ export function LuckyStakerRules({stakingHelperAddress, sweepStakesAddress}) {
           {!isCollapsed && (
             <>
             <p className="pt-2">
-              Stake ONE to enter the lottery. Every ONE you stake is a chance to win. 
+              Stake ONE to enter the lottery. Every ONE you stake is a chance to win and you can't lose your initial stake.
             </p>
             <p>
-              Winners are chosen randomly, based on Harmony's built-in verified RNG and prizes are automatically restaked for you. You can unstake at any time, then wait 7 epochs to withdraw.
+              Winners are chosen randomly, by Harmony's built-in verified RNG, and prizes are automatically restaked for you. You can unstake at any time, then wait 7 epochs to withdraw.
             </p>
             <p>
-              High Stakes makes money with a 1.2% fee on prizes.
+              The prize money comes from staking rewards. High Stakes makes money with a 3% fee on staking rewards. E.g. if Harmony pays 10% APR, 9.7% goes to the prize pool and 0.3% goes to High Stakes.
             </p> 
             <p>
-              The Sweepstakes NFT contract manages tickets and draws winners: {sweepStakesAddress}.
+              The Sweepstakes contract holds ticket info and draws the winners: {sweepStakesAddress}.
             </p>
             <p>
               Staking and unstaking are managed via the StakingHelper contract: {stakingHelperAddress}.
+            </p>
+            <p className="pt-2">
+              Sweepstakes was inspired by <a href="https://en.wikipedia.org/wiki/Bonus_Bonds" target="_blank" rel="noopener noreferrer">Bonus Bonds</a>, a savings scheme in New Zealand that encouraged saving by giving interest as prizes.
             </p>
             </>
           )}

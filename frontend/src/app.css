@@ -177,6 +177,12 @@
   font-family: "Dancing Script", cursive;
 }
 
+.navbar-brand {
+  font-size: 40px;
+  font-weight: 600;
+  font-family: "Dancing Script", cursive;
+}
+
 .slogan {
   z-index: -1;
   letter-spacing: 6px; 
@@ -200,6 +206,9 @@ p {
   p {
     font-size: 15px;
     line-height: 1.4;
+  }
+  .navbar-brand {
+    font-size: 30px;
   }
 }
 

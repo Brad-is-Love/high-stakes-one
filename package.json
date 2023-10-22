@@ -36,6 +36,7 @@
     "@openzeppelin/contracts": "^4.9.3",
     "dotenv": "^16.3.1",
     "harmony-staking-sdk": "^1.0.6",
+    "react-router-dom": "^6.17.0",
     "tslib": "^2.6.0"
   }
 }

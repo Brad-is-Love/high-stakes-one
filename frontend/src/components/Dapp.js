@@ -178,7 +178,7 @@ export class Dapp extends React.Component {
     this.setState({
       selectedAddress: userAddress,
     });
-    this._checkNetwork();
+    await this._checkNetwork();
 
     try {
       await this._initializeEthers();
@@ -407,7 +407,7 @@ export class Dapp extends React.Component {
     }).then((chainId) => {
       console.log("chainId:", chainId)
       if(chainId !== `0x${MAINNET.ID.toString(16)}`){
-        this.setState({ networkError: true });
+        this.setState({ networkError: "Please switch to the Harmony Mainnet" });
       }
     })
   }

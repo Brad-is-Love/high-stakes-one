@@ -71,7 +71,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
 
   if (selectedOption === "enter") {
     formComponent = (
-      <EnterForm balance={balance} stake={stake} txBeingSent={txBeingSent}/>
+      <EnterForm balance={balance} stake={stake} txBeingSent={txBeingSent} userStaked={userStaked}/>
     );
   } else if (selectedOption === "unstake") {
     formComponent = (

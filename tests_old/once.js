@@ -51,15 +51,14 @@ describe("deploy staking helper", function () {
 });
 
 describe("change vars", function () {
-  it("set draw period to 47 hours", async function () {
-    await sweepstakes.setDrawPeriod(47 * 60 * 60);
-  });
-  it("reduce fee to 1.2%", async function () {
-    await sweepstakes.setPrizeFee(120);
-    expect(await sweepstakes.prizeFee()).to.equal(120);
+  // it("set draw period to 47 hours", async function () {
+  //   await sweepstakes.setDrawPeriod(47 * 60 * 60);
+  // });
+  it("reduce fee to 3%", async function () {
+    await sweepstakes.setPrizeFee(300);
+    expect(await sweepstakes.prizeFee()).to.equal(300);
   });
 });
-
 
 
 async function getValidator() {

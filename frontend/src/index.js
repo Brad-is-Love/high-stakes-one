@@ -1,6 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-// import { Dapp } from "./components/Dapp";
+import { Dapp } from "./components/Dapp";
 import { LandingPage } from "./components/LandingPage";
 
 // We import bootstrap here, but you can remove if you want
@@ -11,10 +11,19 @@ import "./app.css"
 // react component. All of the logic is contained in it.
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
+// if / then LandingPage if /alpha then Dapp
+if (window.location.pathname === "/alpha") {
+  root.render(
+    <React.StrictMode>
+      <Dapp />
+    </React.StrictMode>,
 
-root.render(
-  <React.StrictMode>
-    {/* <Dapp /> */}
-    <LandingPage />
-  </React.StrictMode>
-);
+  );
+} else {
+  root.render(
+    <React.StrictMode>
+      <LandingPage />
+    </React.StrictMode>,
+
+  );
+}
