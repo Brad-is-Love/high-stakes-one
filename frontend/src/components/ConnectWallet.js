@@ -5,7 +5,7 @@ import { NetworkErrorMessage } from "./NetworkErrorMessage";
 function ConnectDiv({ connectWallet, networkError, dismiss, switchChain }) {
   if (networkError) {
     return (
-      <div className="col-12 p-4 text-center">
+      <div className="col-10 p-4 text-center">
         <p className="text-danger">{networkError}</p>
         <button
         className="btn btn-warning"
@@ -18,7 +18,7 @@ function ConnectDiv({ connectWallet, networkError, dismiss, switchChain }) {
     );
   } else {
     return (
-      <div className="col-12 p-4 text-center">
+      <div className="col-10 p-4 text-center">
       <p>Connect your wallet to enter.</p>
       <button
         className="btn btn-warning"

@@ -111,7 +111,7 @@ describe("malicious draw call", function () {
     await hackDraw.deployed();
   });
   it("hackDraw reverts", async function () {
-    expect(await expectFail(() => hackDraw.hackDraw())).to.equal("failed");
+    expect(await expectFail(() => hackDraw.hackDraw(1))).to.equal("failed");
   });
 });
 

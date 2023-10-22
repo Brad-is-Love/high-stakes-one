@@ -9,6 +9,8 @@
   --background-red: #833232aa;
 }
 
+
+
 .background {
   background-color: #f5f5f5;
   height: 100vh;
@@ -24,7 +26,6 @@
 }
 
 .app {
-  height: calc(100vh - 56px);
   width: 100%;
   display: flex;
   flex-direction: column;
@@ -57,37 +58,6 @@
   color: #000000;
 }
 
-.loader {
-  width: 200px;
-  height: 26px;
-  display: inline-block;
-  background-color: #fff;
-  border: 1px solid #fff;
-  border-radius: 4px;
-  background-image: linear-gradient(
-    45deg,
-    rgba(0, 0, 0, 0.25) 25%,
-    transparent 25%,
-    transparent 50%,
-    rgba(0, 0, 0, 0.25) 50%,
-    rgba(0, 0, 0, 0.25) 75%,
-    transparent 75%,
-    transparent
-  );
-  font-size: 50px;
-  background-size: 1em 1em;
-  box-sizing: border-box;
-  animation: barStripe 1s linear infinite;
-}
-
-@keyframes barStripe {
-  0% {
-    background-position: 1em 0;
-  }
-  100% {
-    background-position: 0 0;
-  }
-}
 
 /* btn primary colors with hover changed*/
 .btn-primary {
@@ -171,6 +141,10 @@
   background-color: rgb(48, 48, 48, 0.5);
 }
 
+.below-nav{
+  padding-left: 1rem;
+}
+
 .landing-page {
   min-height: 100vh;
   width: 100vw;
@@ -203,7 +177,38 @@
   font-family: "Dancing Script", cursive;
 }
 
+.navbar-brand {
+  font-size: 40px;
+  font-weight: 600;
+  font-family: "Dancing Script", cursive;
+}
+
 .slogan {
   z-index: -1;
   letter-spacing: 6px; 
 }
+
+.chain {
+  /* position fixed top right */
+  position: fixed;
+  top: 60px;
+  right: 30px;
+  z-index: 100;
+}
+
+p {
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* Styles for screens smaller than 768px */
+@media (max-width: 767px) {
+  p {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+  .navbar-brand {
+    font-size: 30px;
+  }
+}
+

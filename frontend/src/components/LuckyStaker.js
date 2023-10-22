@@ -5,7 +5,7 @@ import { UnstakeForm } from "./UnstakeForm";
 import { WithdrawForm } from "./WithdrawForm";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakeAddress}) {
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress}) {
 
   //run countdown timer every second
   React.useEffect(() => {
@@ -71,7 +71,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
 
   if (selectedOption === "enter") {
     formComponent = (
-      <EnterForm balance={balance} stake={stake} txBeingSent={txBeingSent}/>
+      <EnterForm balance={balance} stake={stake} txBeingSent={txBeingSent} userStaked={userStaked}/>
     );
   } else if (selectedOption === "unstake") {
     formComponent = (
@@ -85,52 +85,81 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
 
   return (
     <>
-    <div className="card p-4 mb-5 mx-5 mt-1">
-      <div className="row">
-        <div className="col-12 text-center">
-          <h4>Sweepstakes</h4>
-          <p>Stake in a pool with other players. A weekly draw determines who gets the rewards!</p>
+      {/* <div className="row">
+        <h6>Staked on High Stakes: {totalStaked} ONE</h6>
+      </div> */}
+      <div className="card p-4 mb-5 mt-1">
+        <div className="row">
+          <div className="col-12">
+            <h4 className="text-center">Sweepstakes</h4>
+            <p className="text-md-center">
+              Stake in a pool with other players. A lucky winner
+              gets the rewards!
+            </p>
+          </div>
         </div>
-      </div>
-      <div className="row pb-2">
-        <div className="col-md-6">
-          <h6>Staked on High Stakes: {totalStaked} ONE</h6>
+        <div className="row pb-2">
+          <div className="col-md-6">
+            <h6>Staked on High Stakes: {totalStaked} ONE</h6>
+          </div>
+          <div className="col-md-6 text-md-right">
+            {drawButton ? (
+              nextDrawTime === "assignPrize" ? (
+                <TransactionButton
+                  txBeingSent={txBeingSent}
+                  loadingText={"Assign prize"}
+                  functionToCall={assignPrize}
+                  buttonText={"Reveal Winner"}
+                />
+              ) : (
+                <TransactionButton
+                  txBeingSent={txBeingSent}
+                  loadingText={"Draw"}
+                  functionToCall={drawFunction}
+                  buttonText={"Draw!"}
+                />
+              )
+            ) : (
+              <h6>
+                Next draw in: {days} {hours} {min} {sec}
+              </h6>
+            )}
+          </div>
         </div>
-        <div className="col-md-6 text-md-right">
-          {drawButton ? nextDrawTime==="assignPrize" ? <TransactionButton txBeingSent={txBeingSent} loadingText={"Assign prize"} functionToCall={assignPrize} buttonText={"Reveal Winner"} /> : <TransactionButton txBeingSent={txBeingSent} loadingText={"Draw"} functionToCall={drawFunction} buttonText={"Draw!"}/> : <h6>Next draw in: {days} {hours} {min} {sec}</h6>}
-        </div>
+        <div className="btn-group pb-3">
+          <button
+            type="button"
+            className={`btn ${
+              selectedOption === "enter" ? "btn-primary" : "btn-outline-primary"
+            }`}
+            onClick={() => handleOptionChange("enter")}
+          >
+            Enter
+          </button>
+          <button
+            type="button"
+            className={`btn ${
+              selectedOption === "unstake"
+                ? "btn-primary"
+                : "btn-outline-primary"
+            }`}
+            onClick={() => handleOptionChange("unstake")}
+          >
+            Unstake
+          </button>
+          <button
+            type="button"
+            className={`btn ${
+              selectedOption === "withdraw"
+                ? "btn-primary"
+                : "btn-outline-primary"
+            }`}
+            onClick={() => handleOptionChange("withdraw")}
+          >
+            Withdraw
+          </button>
 
-      </div>
-      <div className="btn-group pb-3">
-        <button
-          type="button"
-          className={`btn ${
-            selectedOption === "enter" ? "btn-primary" : "btn-outline-primary"
-          }`}
-          onClick={() => handleOptionChange("enter")}
-        >
-          Enter
-        </button>
-        <button
-          type="button"
-          className={`btn ${
-            selectedOption === "unstake" ? "btn-primary" : "btn-outline-primary"
-          }`}
-          onClick={() => handleOptionChange("unstake")}
-        >
-          Unstake
-        </button>
-        <button
-          type="button"
-          className={`btn ${
-            selectedOption === "withdraw" ? "btn-primary" : "btn-outline-primary"
-          }`}
-          onClick={() => handleOptionChange("withdraw")}
-        >
-          Withdraw
-        </button>
-
-        {/* <button
+          {/* <button
           type="button"
           className={`btn ${
             selectedOption === "prizes" ? "btn-primary" : "btn-outline-primary"
@@ -139,11 +168,13 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
         >
           Prizes
         </button> */}
+        </div>
+        {formComponent}
       </div>
-      {formComponent}
-      
-    </div>
-    <LuckyStakerRules stakingHelperAddress={stakingHelperAddress} sweepStakeAddress={sweepStakeAddress}/>
+      <LuckyStakerRules
+        stakingHelperAddress={stakingHelperAddress}
+        sweepStakesAddress={sweepStakesAddress}
+      />
     </>
   );
 }

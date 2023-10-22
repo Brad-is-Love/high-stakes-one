@@ -43,10 +43,10 @@ contract SweepStakesNFTs is ERC721Enumerable {
         tokenCounter = 0;
         owner = msg.sender;
         beneficiary = msg.sender;
-        drawPeriod = 4 * 60 * 60; // 4 mins for testing
+        drawPeriod = 24 * 60 * 60;
         lastDrawTime = block.timestamp;
         prizeAssigned = true;
-        pageSize = 2; // 2 tokens per page for tests
+        pageSize = 100;
         StakingHelper sh = new StakingHelper(address(this), owner);
         stakingHelper = address(sh);
     }
@@ -151,7 +151,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     }
 
     // Assigns the prize to the winner and re-stakes it
-    function assignPrize() public {
+    function assignPrize() public returns (uint256) {
         require(prizeAssigned == false);
         prizeAssigned = true;
         require(block.timestamp > lastDrawTime, "can't execute with draw");
@@ -164,7 +164,8 @@ contract SweepStakesNFTs is ERC721Enumerable {
         StakingHelper(stakingHelper).autoCompound(amount);
 
         emit WinnerAssigned(lastWinner, amount);
-        
+
+        return lastWinner;
     }
 
     function addStake(uint256 _tokenId, uint256 _amount) internal {
@@ -296,14 +297,14 @@ contract StakingHelper is StakingContract {
 
     function enter(uint256 _amount) external payable {
         require(msg.value == _amount, "Wrong Amount");
-        spreadStake(_amount);
         SweepStakesNFTs(sweepstakes).enter(msg.sender, _amount);
+        spreadStake(_amount);
     }
 
     function addToToken(uint256 _amount, uint256 _tokenId) external payable {
         require(msg.value == _amount, "Wrong Amount");
-        spreadStake(_amount);
         SweepStakesNFTs(sweepstakes).addToToken(msg.sender, _amount, _tokenId);
+        spreadStake(_amount);
     }
 
     function autoCompound(uint256 _amount) external onlySweepstakes {
@@ -312,6 +313,7 @@ contract StakingHelper is StakingContract {
 
     function unstake(uint256 _amount, uint256 _tokenId) external {
         require(moving == 0, "Can't unstake while changing validators");
+        SweepStakesNFTs(sweepstakes).unstake(msg.sender, _amount, _tokenId);
         uint256 toUnstake = _amount;
         //if unstaking more than in pendingDelegations:
         //subtract then zero pending, then unstake
@@ -330,7 +332,6 @@ contract StakingHelper is StakingContract {
             //just subtract from pending
             pendingDelegation -= toUnstake;
         }
-        SweepStakesNFTs(sweepstakes).unstake(msg.sender, _amount, _tokenId);
     }
 
     //collect is called by the sweepstakes contract to collect rewards and add to the prize pool, extraFunds are also added.

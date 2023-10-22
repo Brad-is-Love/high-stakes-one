@@ -46,7 +46,6 @@ export class Dapp extends React.Component {
     super(props);
 
     this.initialState = {
-      network: MAINNET,
       nextDrawTime: undefined,
       currentEpoch: undefined,
       lastWinner: undefined,
@@ -71,7 +70,7 @@ export class Dapp extends React.Component {
       return <NoWalletDetected />;
     }
 
-    if (!this.state.selectedAddress) {
+    if (!this.state.selectedAddress || this.state.networkError) {
       return (
         <ConnectWallet
           connectWallet={() => this._connectWallet()}
@@ -89,13 +88,8 @@ export class Dapp extends React.Component {
     return (
       <>
         <div className="background"></div>
-        <Nav selectedAddress={this.state.selectedAddress} />
-        <div className="app">
-
-              <div className="chain">
-                {this.state.network===TESTNET ? <button className="btn btn-info btn-sm" onClick={() => this._toggleNetwork()}>Switch to Mainnet</button> : <button className="btn btn-outline-info btn-sm" onClick={() => this._toggleNetwork()}>Switch to Testnet</button>}
-              </div>
-
+        <Nav selectedAddress={this.state.selectedAddress} userStaked={this.state.userStaked}/>
+        <div className="app mt-md-5">
           <div className="container p-3 mt-2">
             <div className="row my-1">
               <div className="col-12">
@@ -115,7 +109,7 @@ export class Dapp extends React.Component {
                 )}
               </div>
             </div>
-            <div className="row ">
+            <div className="row">
               <div className="col-12">
                 <LuckyStaker
                   balance={this.state.balance}
@@ -132,8 +126,8 @@ export class Dapp extends React.Component {
                   userUnstaked={this.state.userUnstaked}
                   userWithdrawEpoch={this.state.userWithdrawEpoch}
                   userWithdrawable={this.state.userWithdrawable}
-                  stakingHelperAddress={this.state.network.stakingHelperAddress}
-                  sweepstakesAddress={this.state.network.sweepstakesAddress}
+                  stakingHelperAddress={MAINNET.stakingHelperAddress.toString()}
+                  sweepStakesAddress={MAINNET.sweepstakesAddress.toString()}
                 />
               </div>
             </div>
@@ -145,7 +139,6 @@ export class Dapp extends React.Component {
 
   async componentDidMount() {
     await this._checkNetwork();
-    this._connectWallet();
     this._switchChain = this._switchChain.bind(this);
     this._drawWinner = this._drawWinner.bind(this);
     this._assignPrize = this._assignPrize.bind(this);
@@ -185,7 +178,7 @@ export class Dapp extends React.Component {
     this.setState({
       selectedAddress: userAddress,
     });
-    this._checkNetwork();
+    await this._checkNetwork();
 
     try {
       await this._initializeEthers();
@@ -201,25 +194,16 @@ export class Dapp extends React.Component {
     await this._provider.getNetwork();
 
     this._sweepstakes = new ethers.Contract(
-      this.state.network.sweepstakesAddress,
+      MAINNET.sweepstakesAddress,
       sweepstakesAtrifact.abi,
       this._provider.getSigner(0)
     );
 
     this._stakingHelper = new ethers.Contract(
-      this.state.network.stakingHelperAddress,
+      MAINNET.stakingHelperAddress,
       stakingHelperAtrifact.abi,
       this._provider.getSigner(0)
     );
-  }
-
-  async _toggleNetwork() {
-    if (this.state.network.ID === TESTNET.ID) {
-      this.setState({ network: MAINNET });
-    } else {
-      this.setState({ network: TESTNET });
-    }
-    this._connectWallet();
   }
 
   _startPollingData() {
@@ -392,16 +376,16 @@ export class Dapp extends React.Component {
   }
 
   async _addChain() {
-    const chainIdHex = `0x${this.state.network.ID.toString(16)}`;
+    const chainIdHex = `0x${MAINNET.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_addEthereumChain",
       params: [
         {
           chainId: chainIdHex,
-          chainName: this.state.network.chainName,
-          nativeCurrency: this.state.network.nativeCurrency,
-          rpcUrls: this.state.network.rpcUrls,
-          blockExplorerUrls: this.state.network.blockExplorerUrls,
+          chainName: MAINNET.chainName,
+          nativeCurrency: MAINNET.nativeCurrency,
+          rpcUrls: MAINNET.rpcUrls,
+          blockExplorerUrls: MAINNET.blockExplorerUrls,
         },
       ],
     });
@@ -409,7 +393,7 @@ export class Dapp extends React.Component {
 
   async _switchChain() {
     await this._addChain();
-    const chainIdHex = `0x${this.state.network.ID.toString(16)}`;
+    const chainIdHex = `0x${MAINNET.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: chainIdHex }],
@@ -418,16 +402,13 @@ export class Dapp extends React.Component {
   }
 
   async _checkNetwork() {
-    if (window.ethereum.networkVersion === TESTNET.ID.toString()){
-      this.setState({ network: TESTNET });
-    // console.log("testy is:",MAINNET.ID)
-
-    } else if (window.ethereum.networkVersion === MAINNET.ID.toString()){
-      this.setState({ network: MAINNET });
-    // console.log("main is:",MAINNET.ID)
-
-    } else {
-      this.setState({ networkError: "Please switch to the Harmony Network" });
-    }
+    await window.ethereum.request({
+      method: "eth_chainId",
+    }).then((chainId) => {
+      console.log("chainId:", chainId)
+      if(chainId !== `0x${MAINNET.ID.toString(16)}`){
+        this.setState({ networkError: "Please switch to the Harmony Mainnet" });
+      }
+    })
   }
 }

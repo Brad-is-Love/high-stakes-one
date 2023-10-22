@@ -10,22 +10,13 @@ export function WithdrawForm({
   withdraw,
   txBeingSent,
 }) {
-  React.useEffect(() => {
-    makeReadable();
-  }, [userUnstaked, userWithdrawable]);
-
-  const [readableUnstaked, setReadableUnstaked] = useState(0);
-  const [readableWithdrawable, setReadableWithdrawable] = useState(0);
-  const [withdrawButton, setWithdrawButton] = useState(false);
-
-  const makeReadable = () => {
-    if (userUnstaked !== undefined) {
-      setReadableUnstaked(ethers.utils.formatEther(userUnstaked));
-    }
-    if (userWithdrawable !== undefined) {
-      setReadableWithdrawable(ethers.utils.formatEther(userWithdrawable));
-    }
-  };
+  const readableUnstaked = userUnstaked
+    ? parseFloat(ethers.utils.formatEther(userUnstaked)).toFixed(2)
+    : 0;
+  const readableWithdrawable = userWithdrawable
+    ? parseFloat(ethers.utils.formatEther(userWithdrawable)).toFixed(3)
+    : 0;
+  let withdrawButton = false;
 
   let msg = "";
   if (!(parseFloat(readableWithdrawable) > 0)) {
@@ -34,10 +25,12 @@ export function WithdrawForm({
     } else {
       const epochsLeft = userWithdrawEpoch - currentEpoch;
       msg =
-        "Unstaking now. You need to wait " + epochsLeft + " more epochs to withdraw.";
+        "Unstaking now. You need to wait " +
+        epochsLeft +
+        " more epochs to withdraw.";
     }
   } else {
-    setWithdrawButton(true);
+    withdrawButton = true;
     msg = "You can withdraw " + readableWithdrawable + " ONE.";
   }
 
@@ -45,17 +38,19 @@ export function WithdrawForm({
     <>
       <div className="row">
         <div className="col-12">
-          {msg}
+          <p className="mb-1">{msg}</p>
         </div>
       </div>
-        {withdrawButton && (
-        <TransactionButton
-        txBeingSent={txBeingSent}
-        loadingText={"Withdraw"}
-        functionToCall={withdraw} // Remove the parentheses here
-        buttonText={"Withdraw " + readableWithdrawable + " ONE"}
-        />
-        )}
+      {withdrawButton && (
+        <div className="text-center text-md-left pt-2">
+          <TransactionButton
+            txBeingSent={txBeingSent}
+            loadingText={"Withdraw"}
+            functionToCall={withdraw} // Remove the parentheses here
+            buttonText={"Withdraw " + readableWithdrawable + " ONE"}
+          />
+        </div>
+      )}
     </>
   );
 }
