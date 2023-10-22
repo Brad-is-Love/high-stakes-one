@@ -207,7 +207,7 @@ export class Dapp extends React.Component {
   }
 
   _startPollingData() {
-    this._pollDataInterval = setInterval(() => this._updateData(), 2000);
+    this._pollDataInterval = setInterval(() => this._updateData(), 10000);
 
     this._updateData();
   }

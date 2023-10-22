@@ -83,6 +83,13 @@ export class LandingPage extends React.Component {
                   </button>
                 </a>
               </div>
+              <div className="row justify-content-center pb-4">
+                <a href="/alpha">
+                  <button className="btn-success btn-lg mt-3">
+                    Check out the alpha dApp
+                  </button>
+                </a>
+              </div>
               <div className="row justify-content-center">
               <h4>Alpha version launching in</h4>
               </div>

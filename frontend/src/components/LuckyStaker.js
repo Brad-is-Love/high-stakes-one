@@ -9,10 +9,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
 
 //run countdown timer every second
   React.useEffect(() => {
-    const interval = setInterval(() => {
-      calculateCountdown();
-    }, 1000);
-    return () => clearInterval(interval);
+    calculateCountdown();
   });
 
 
@@ -21,7 +18,6 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const [days, setDays] = useState("");
   const [hours, setHours] = useState("");
   const [min, setMin] = useState("");
-  const [sec, setSec] = useState("");
   const [drawButton, setDrawButton] = useState(false);
 
   const calculateCountdown = () => {
@@ -33,7 +29,6 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
       setDays("");
       setHours("");
       setMin("");
-      setSec("");
       setDrawButton(true);
       return;
     }
@@ -58,9 +53,6 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
     } else {
       setMin(min + " min");
     }
-    const sec = Math.floor((timeLeft % (1000 * 60)) / 1000);
-
-    setSec(sec + " sec");
   }
 
   const handleOptionChange = (option) => {
@@ -121,7 +113,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
               )
             ) : (
               <h6>
-                Next draw in: {days} {hours} {min} {sec}
+                Next draw in: {days} {hours} {min}
               </h6>
             )}
           </div>
