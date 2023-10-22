@@ -1,7 +1,5 @@
 import React from "react";
 
-import { NetworkErrorMessage } from "./NetworkErrorMessage";
-
 function ConnectDiv({ connectWallet, networkError, dismiss, switchChain }) {
   if (networkError) {
     return (

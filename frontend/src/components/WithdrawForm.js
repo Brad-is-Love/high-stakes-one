@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import { ethers } from "ethers";
 import { TransactionButton } from "./TransactionButton";
 

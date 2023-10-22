@@ -16,7 +16,7 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
   const stakedByUser = userStaked ? ethers.utils.formatEther(userStaked) : 0;
   const maxAlpha = 110;
   const userMax = balance - 1 < 0 ? 0 : balance - 1;
-  const maxTickets = Math.min(maxAlpha, userMax);
+  const maxTickets = Math.min(maxAlpha - stakedByUser, userMax);
 
   const handleTicketsChange = (event) => {
     setTickets(event.target.value);
@@ -29,8 +29,10 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
   };
 
   const handleMaxClick = () => {
-    if(maxTickets < 100){
-      setMsg("The minimum stake is 100 ONE. Sorry, you don't have enough.")
+    if(userMax < 100){
+      setMsg("You need at least 100 ONE to stake.")
+    } else if (maxTickets < 100){
+      setMsg("You have already staked the maximum for the alpha trial.")
     } else if (maxTickets === 110){
       setTickets(maxTickets);
       setMsg("The maximum stake for the alpha is 110 ONE.")
