@@ -44,6 +44,15 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
   };
 
   const handleStakeClick = () => {
+    if(tickets < 100){
+      setMsg("You need to stake at least 100 ONE.")
+      setMsgDisplay("block");
+      return;
+    } else if (tickets > maxTickets){
+      setMsg("Max stake is " + maxTickets + " for the alpha")
+      setMsgDisplay("block");
+      return;
+    }
     stake(tickets);
   }
 
