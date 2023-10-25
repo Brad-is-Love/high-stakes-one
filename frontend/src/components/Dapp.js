@@ -13,19 +13,19 @@ import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { Nav } from "./Nav";
 
-// const TESTNET = {
-//   ID: 1666700000,
-//   chainName: "Harmony Testnet",
-//   nativeCurrency: {
-//     name: "TEST ONE",
-//     symbol: "TONE",
-//     decimals: 18,
-//   },
-//   rpcUrls: ["https://api.s0.b.hmny.io"],
-//   blockExplorerUrls: ["https://explorer.testnet.harmony.one/"],
-//   sweepstakesAddress: "0xf266cEAd75739dc9f2A1F79d467DeAEC3976F2AF",
-//   stakingHelperAddress: "0x4Dd8518F40d949D6D2EEcC859364Ff836DC456fb"
-// };
+const TESTNET = {
+  ID: 1666700000,
+  chainName: "Harmony Testnet",
+  nativeCurrency: {
+    name: "TEST ONE",
+    symbol: "TONE",
+    decimals: 18,
+  },
+  rpcUrls: ["https://api.s0.b.hmny.io"],
+  blockExplorerUrls: ["https://explorer.testnet.harmony.one/"],
+  sweepstakesAddress: "0xf266cEAd75739dc9f2A1F79d467DeAEC3976F2AF",
+  stakingHelperAddress: "0x4Dd8518F40d949D6D2EEcC859364Ff836DC456fb"
+};
 const MAINNET = {
   ID: 1666600000,
   chainName: "Harmony Mainnet",
@@ -46,9 +46,10 @@ export class Dapp extends React.Component {
     super(props);
 
     this.initialState = {
+      lastWinner: undefined,
+      lastPrize: undefined,
       nextDrawTime: undefined,
       currentEpoch: undefined,
-      lastWinner: undefined,
       totalStaked: undefined,
       userTokenId: undefined,
       userStaked: undefined,
@@ -128,6 +129,9 @@ export class Dapp extends React.Component {
                   userWithdrawable={this.state.userWithdrawable}
                   stakingHelperAddress={MAINNET.stakingHelperAddress.toString()}
                   sweepStakesAddress={MAINNET.sweepstakesAddress.toString()}
+                  selectedAddress={this.state.selectedAddress}
+                  lastWinner={this.state.lastWinner}
+                  lastPrize={this.state.lastPrize}
                 />
               </div>
             </div>
@@ -210,6 +214,8 @@ export class Dapp extends React.Component {
     this._pollDataInterval = setInterval(() => this._updateData(), 10000);
 
     this._updateData();
+    this._getWinnerListener();
+    this._getAllWinners();
   }
 
   async _updateData() {
@@ -351,6 +357,7 @@ export class Dapp extends React.Component {
       this.setState({ transactionError: error });
     } finally {
       this.setState({ txBeingSent: undefined });
+      this._getAllWinners()
     }
   }
 
@@ -413,4 +420,40 @@ export class Dapp extends React.Component {
       }
     })
   }
+
+  async _getWinnerListener() {
+    await this._sweepstakes.on("WinnerAssigned", async (_winner, _ammount, event) => {
+      let data = {
+      winner: _winner,
+      amount: _ammount,
+      event: event
+      }
+    const winnerAddress = await this._sweepstakes.ownerOf(data.winner.toString())
+    this.setState({ lastWinner: winnerAddress })
+    this.setState({ lastPrize: parseInt(ethers.utils.formatEther(data.amount.toString())) });
+    })
+  }
+
+  async _getAllWinners() {
+    console.log("getting winners")
+    const filters = this._sweepstakes.filters.WinnerAssigned();
+    const events = []
+    for(let i = 0; i < 100; i++){
+      const block = await this._sweepstakes.queryFilter(filters, -1000);
+      events.push(block[i])
+    }
+    let winners = []
+    for (let i = 0; i < events.length; i++) {
+      try {
+        const winnerAddress = await this._sweepstakes.ownerOf(events[i].args._winner.toString())
+        winners.push({winner: winnerAddress, amount: parseFloat(ethers.utils.formatEther(events[i].args._amount.toString()))})
+      } catch (error) {
+        // do nothing
+      }
+    }
+    winners.reverse()
+    this.setState({ lastWinner: winners[0].winner })
+    this.setState({ lastPrize: winners[0].amount });
+  }
+
 }
