@@ -13,19 +13,19 @@ import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { Nav } from "./Nav";
 
-// const TESTNET = {
-//   ID: 1666700000,
-//   chainName: "Harmony Testnet",
-//   nativeCurrency: {
-//     name: "TEST ONE",
-//     symbol: "TONE",
-//     decimals: 18,
-//   },
-//   rpcUrls: ["https://api.s0.b.hmny.io"],
-//   blockExplorerUrls: ["https://explorer.testnet.harmony.one/"],
-//   sweepstakesAddress: "0xf266cEAd75739dc9f2A1F79d467DeAEC3976F2AF",
-//   stakingHelperAddress: "0x4Dd8518F40d949D6D2EEcC859364Ff836DC456fb"
-// };
+const TESTNET = {
+  ID: 1666700000,
+  chainName: "Harmony Testnet",
+  nativeCurrency: {
+    name: "TEST ONE",
+    symbol: "TONE",
+    decimals: 18,
+  },
+  rpcUrls: ["https://api.s0.b.hmny.io"],
+  blockExplorerUrls: ["https://explorer.testnet.harmony.one/"],
+  sweepstakesAddress: "0xf266cEAd75739dc9f2A1F79d467DeAEC3976F2AF",
+  stakingHelperAddress: "0x4Dd8518F40d949D6D2EEcC859364Ff836DC456fb"
+};
 const MAINNET = {
   ID: 1666600000,
   chainName: "Harmony Mainnet",
@@ -46,9 +46,10 @@ export class Dapp extends React.Component {
     super(props);
 
     this.initialState = {
+      lastWinner: undefined,
+      lastPrize: undefined,
       nextDrawTime: undefined,
       currentEpoch: undefined,
-      lastWinner: undefined,
       totalStaked: undefined,
       userTokenId: undefined,
       userStaked: undefined,
@@ -126,8 +127,11 @@ export class Dapp extends React.Component {
                   userUnstaked={this.state.userUnstaked}
                   userWithdrawEpoch={this.state.userWithdrawEpoch}
                   userWithdrawable={this.state.userWithdrawable}
-                  stakingHelperAddress={MAINNET.stakingHelperAddress.toString()}
-                  sweepStakesAddress={MAINNET.sweepstakesAddress.toString()}
+                  stakingHelperAddress={TESTNET.stakingHelperAddress.toString()}
+                  sweepStakesAddress={TESTNET.sweepstakesAddress.toString()}
+                  selectedAddress={this.state.selectedAddress}
+                  lastWinner={this.state.lastWinner}
+                  lastPrize={this.state.lastPrize}
                 />
               </div>
             </div>
@@ -194,13 +198,13 @@ export class Dapp extends React.Component {
     await this._provider.getNetwork();
 
     this._sweepstakes = new ethers.Contract(
-      MAINNET.sweepstakesAddress,
+      TESTNET.sweepstakesAddress,
       sweepstakesAtrifact.abi,
       this._provider.getSigner(0)
     );
 
     this._stakingHelper = new ethers.Contract(
-      MAINNET.stakingHelperAddress,
+      TESTNET.stakingHelperAddress,
       stakingHelperAtrifact.abi,
       this._provider.getSigner(0)
     );
@@ -210,6 +214,8 @@ export class Dapp extends React.Component {
     this._pollDataInterval = setInterval(() => this._updateData(), 10000);
 
     this._updateData();
+    this._getWinnerListener();
+    this._getAllWinners();
   }
 
   async _updateData() {
@@ -218,6 +224,7 @@ export class Dapp extends React.Component {
     await this._updateBalance();
     await this._getCurrentEpoch();
     await this._getUserStaked();
+
   }
 
   _stopPollingData() {
@@ -351,6 +358,7 @@ export class Dapp extends React.Component {
       this.setState({ transactionError: error });
     } finally {
       this.setState({ txBeingSent: undefined });
+      this._getAllWinners()
     }
   }
 
@@ -376,16 +384,16 @@ export class Dapp extends React.Component {
   }
 
   async _addChain() {
-    const chainIdHex = `0x${MAINNET.ID.toString(16)}`;
+    const chainIdHex = `0x${TESTNET.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_addEthereumChain",
       params: [
         {
           chainId: chainIdHex,
-          chainName: MAINNET.chainName,
-          nativeCurrency: MAINNET.nativeCurrency,
-          rpcUrls: MAINNET.rpcUrls,
-          blockExplorerUrls: MAINNET.blockExplorerUrls,
+          chainName: TESTNET.chainName,
+          nativeCurrency: TESTNET.nativeCurrency,
+          rpcUrls: TESTNET.rpcUrls,
+          blockExplorerUrls: TESTNET.blockExplorerUrls,
         },
       ],
     });
@@ -393,7 +401,7 @@ export class Dapp extends React.Component {
 
   async _switchChain() {
     await this._addChain();
-    const chainIdHex = `0x${MAINNET.ID.toString(16)}`;
+    const chainIdHex = `0x${TESTNET.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: chainIdHex }],
@@ -406,11 +414,53 @@ export class Dapp extends React.Component {
       method: "eth_chainId",
     }).then((chainId) => {
       console.log("chainId:", chainId)
-      if(chainId !== `0x${MAINNET.ID.toString(16)}`){
+      if(chainId !== `0x${TESTNET.ID.toString(16)}`){
         this.setState({ networkError: "Please switch to the Harmony Mainnet" });
       } else {
         this.setState({ networkError: undefined });
       }
     })
   }
+
+  async _getWinnerListener() {
+    await this._sweepstakes.on("WinnerAssigned", async (_winner, _ammount, event) => {
+      let data = {
+      winner: _winner,
+      amount: _ammount,
+      event: event
+      }
+    const winnerAddress = await this._sweepstakes.ownerOf(data.winner.toString())
+    this.setState({ lastWinner: winnerAddress })
+    this.setState({ lastPrize: parseInt(ethers.utils.formatEther(data.amount.toString())) });
+    })
+  }
+
+  async _getAllWinners() {
+    console.log("getting winners")
+    const filters = this._sweepstakes.filters.WinnerAssigned();
+    const events = []
+    let count = 0
+    let blockNumber = await this._provider.getBlockNumber()
+    console.log("blockNumber:", blockNumber)
+    for(let i = 0; i < 10; i++){
+      const block = await this._sweepstakes.queryFilter(filters, blockNumber - (i+1)*1000, blockNumber - i*1000);
+      events.push(block[i])
+      count++
+    }
+    console.log("count:", count)
+    let winners = []
+    for (let i = 0; i < events.length; i++) {
+      try {
+        const winnerAddress = await this._sweepstakes.ownerOf(events[i].args._winner.toString())
+        winners.push({winner: winnerAddress, amount: parseFloat(ethers.utils.formatEther(events[i].args._amount.toString()))})
+      } catch (error) {
+        // console.log(error)
+      }
+    }
+    winners.reverse()
+    this.setState({ lastWinner: winners[0].winner })
+    this.setState({ lastPrize: winners[0].amount });
+  }
+
 }
+

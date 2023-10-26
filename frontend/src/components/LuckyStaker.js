@@ -3,15 +3,18 @@ import { TransactionButton } from "./TransactionButton";
 import { EnterForm } from "./EnterForm";
 import { UnstakeForm } from "./UnstakeForm";
 import { WithdrawForm } from "./WithdrawForm";
+import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress}) {
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, lastWinner, lastPrize}) {
 
 //run countdown timer every second
   React.useEffect(() => {
     calculateCountdown();
   });
 
+  const readableWinner = lastWinner ? lastWinner : "";
+  const readablePrize = lastPrize ? lastPrize.toFixed(2) : "";
 
   const [selectedOption, setSelectedOption] = useState("enter");
   //date states
@@ -73,6 +76,10 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
     formComponent = (
       <WithdrawForm currentEpoch={currentEpoch} userStaked={userStaked} withdraw={withdraw} txBeingSent={txBeingSent} userUnstaked={userUnstaked} userWithdrawable={userWithdrawable} userWithdrawEpoch={userWithdrawEpoch}/>
     );
+  } else if (selectedOption === "prizes") {
+    formComponent = (
+      <Prizes lastWinner={readableWinner} lastPrize={readablePrize}/>
+    );
   }
 
   return (
@@ -92,7 +99,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
             <h6>Staked on High Stakes: {totalStaked} ONE</h6>
           </div>
           <div className="col-md-6 text-md-right">
-            {drawButton ? (
+            {lastWinner ? (<p><strong>{readableWinner}</strong> won <strong>{readablePrize}</strong></p>) : drawButton ? (
               nextDrawTime === "assignPrize" ? (
                 <TransactionButton
                   txBeingSent={txBeingSent}
@@ -148,7 +155,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
             Withdraw
           </button>
 
-          {/* <button
+          <button
           type="button"
           className={`btn ${
             selectedOption === "prizes" ? "btn-primary" : "btn-outline-primary"
@@ -156,7 +163,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
           onClick={() => handleOptionChange("prizes")}
         >
           Prizes
-        </button> */}
+        </button>
         </div>
         {formComponent}
       </div>
