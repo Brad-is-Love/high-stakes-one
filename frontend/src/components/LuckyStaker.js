@@ -5,6 +5,7 @@ import { EnterForm } from "./EnterForm";
 import { UnstakeForm } from "./UnstakeForm";
 import { WithdrawForm } from "./WithdrawForm";
 import { Prizes } from "./Prizes";
+import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
 
