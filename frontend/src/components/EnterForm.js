@@ -14,7 +14,7 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
   const [msg, setMsg] = useState("");
 
   const stakedByUser = userStaked ? ethers.utils.formatEther(userStaked) : 0;
-  const maxAlpha = 110;
+  const maxAlpha = 500;
   const userMax = balance - 1 < 0 ? 0 : balance - 1;
   const maxTickets = Math.min(maxAlpha - stakedByUser, userMax);
 
@@ -33,9 +33,9 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
       setMsg("You need at least 100 ONE to stake.")
     } else if (maxTickets < 100){
       setMsg("You have already staked the maximum for the alpha trial.")
-    } else if (maxTickets === 110){
+    } else if (maxTickets === maxAlpha){
       setTickets(maxTickets);
-      setMsg("The maximum stake for the alpha is 110 ONE.")
+      setMsg("The maximum stake for the alpha is " + maxAlpha + " ONE.")
     } else {
       setTickets(maxTickets);
       setMsg("We saved you ONE for gas.")
@@ -49,7 +49,7 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
       setMsgDisplay("block");
       return;
     } else if (tickets > maxTickets){
-      setMsg("Max stake is " + maxTickets + " for the alpha")
+      setMsg("Max stake is " + maxAlpha + " for the alpha")
       setMsgDisplay("block");
       return;
     }
