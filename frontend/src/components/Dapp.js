@@ -112,6 +112,12 @@ export class Dapp extends React.Component {
             </div>
             <div className="row">
               <div className="col-12">
+                {/* button to test the API */}
+                <button className="btn btn-primary" onClick={() => this._testAPI()}>Test API</button>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-12">
                 <LuckyStaker
                   balance={this.state.balance}
                   currentEpoch={this.state.currentEpoch}
@@ -127,8 +133,8 @@ export class Dapp extends React.Component {
                   userUnstaked={this.state.userUnstaked}
                   userWithdrawEpoch={this.state.userWithdrawEpoch}
                   userWithdrawable={this.state.userWithdrawable}
-                  stakingHelperAddress={TESTNET.stakingHelperAddress.toString()}
-                  sweepStakesAddress={TESTNET.sweepstakesAddress.toString()}
+                  stakingHelperAddress={MAINNET.stakingHelperAddress.toString()}
+                  sweepStakesAddress={MAINNET.sweepstakesAddress.toString()}
                   selectedAddress={this.state.selectedAddress}
                   lastWinner={this.state.lastWinner}
                   lastPrize={this.state.lastPrize}
@@ -198,13 +204,13 @@ export class Dapp extends React.Component {
     await this._provider.getNetwork();
 
     this._sweepstakes = new ethers.Contract(
-      TESTNET.sweepstakesAddress,
+      MAINNET.sweepstakesAddress,
       sweepstakesAtrifact.abi,
       this._provider.getSigner(0)
     );
 
     this._stakingHelper = new ethers.Contract(
-      TESTNET.stakingHelperAddress,
+      MAINNET.stakingHelperAddress,
       stakingHelperAtrifact.abi,
       this._provider.getSigner(0)
     );
@@ -215,7 +221,7 @@ export class Dapp extends React.Component {
 
     this._updateData();
     this._getWinnerListener();
-    this._getAllWinners();
+    // this._getAllWinners();
   }
 
   async _updateData() {
@@ -358,7 +364,6 @@ export class Dapp extends React.Component {
       this.setState({ transactionError: error });
     } finally {
       this.setState({ txBeingSent: undefined });
-      this._getAllWinners()
     }
   }
 
@@ -384,16 +389,16 @@ export class Dapp extends React.Component {
   }
 
   async _addChain() {
-    const chainIdHex = `0x${TESTNET.ID.toString(16)}`;
+    const chainIdHex = `0x${MAINNET.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_addEthereumChain",
       params: [
         {
           chainId: chainIdHex,
-          chainName: TESTNET.chainName,
-          nativeCurrency: TESTNET.nativeCurrency,
-          rpcUrls: TESTNET.rpcUrls,
-          blockExplorerUrls: TESTNET.blockExplorerUrls,
+          chainName: MAINNET.chainName,
+          nativeCurrency: MAINNET.nativeCurrency,
+          rpcUrls: MAINNET.rpcUrls,
+          blockExplorerUrls: MAINNET.blockExplorerUrls,
         },
       ],
     });
@@ -401,7 +406,7 @@ export class Dapp extends React.Component {
 
   async _switchChain() {
     await this._addChain();
-    const chainIdHex = `0x${TESTNET.ID.toString(16)}`;
+    const chainIdHex = `0x${MAINNET.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: chainIdHex }],
@@ -414,7 +419,7 @@ export class Dapp extends React.Component {
       method: "eth_chainId",
     }).then((chainId) => {
       console.log("chainId:", chainId)
-      if(chainId !== `0x${TESTNET.ID.toString(16)}`){
+      if(chainId !== `0x${MAINNET.ID.toString(16)}`){
         this.setState({ networkError: "Please switch to the Harmony Mainnet" });
       } else {
         this.setState({ networkError: undefined });
@@ -422,45 +427,69 @@ export class Dapp extends React.Component {
     })
   }
 
+  async _testAPI(){
+    let data = {
+      send: "true",
+      winner: "_winner.toString()",
+      amount: "_ammount.toString()",
+      hash: "A1"
+      }
+    const winnerAddress = data.winner
+
+    const url = "https://script.google.com/macros/s/AKfycbzsfTPOPMw0UUAE_1BXvV7dIl6KTvXlXV0NTd6e-YESx7WMHnmrh6AxsBC4u7sLaRQB/exec?"+"winner="+winnerAddress+"&amount="+data.amount+"&hash="+data.hash+"&send="+data.send
+
+    const response = await fetch(url)
+    console.log(response)
+    const text = response.getContentText()
+    console.log(text)
+  }
+
   async _getWinnerListener() {
     await this._sweepstakes.on("WinnerAssigned", async (_winner, _ammount, event) => {
       let data = {
-      winner: _winner,
-      amount: _ammount,
-      event: event
+      send: "true",
+      winner: _winner.toString(),
+      amount: _ammount.toString(),
+      hash: event.transactionHash.toString()
       }
-    const winnerAddress = await this._sweepstakes.ownerOf(data.winner.toString())
+    const winnerAddress = await this._sweepstakes.ownerOf(data.winner)
+
+    const url = "https://script.google.com/macros/s/AKfycbzsfTPOPMw0UUAE_1BXvV7dIl6KTvXlXV0NTd6e-YESx7WMHnmrh6AxsBC4u7sLaRQB/exec?"+"winner="+winnerAddress+"&amount="+data.amount+"&hash="+data.hash+"&send="+data.send
+
+    const response = await fetch(url)
+    // const text = response.getContentText()
+    // console.log(text)
     this.setState({ lastWinner: winnerAddress })
     this.setState({ lastPrize: parseInt(ethers.utils.formatEther(data.amount.toString())) });
     })
   }
 
-  async _getAllWinners() {
-    console.log("getting winners")
-    const filters = this._sweepstakes.filters.WinnerAssigned();
-    const events = []
-    let count = 0
-    let blockNumber = await this._provider.getBlockNumber()
-    console.log("blockNumber:", blockNumber)
-    for(let i = 0; i < 10; i++){
-      const block = await this._sweepstakes.queryFilter(filters, blockNumber - (i+1)*1000, blockNumber - i*1000);
-      events.push(block[i])
-      count++
-    }
-    console.log("count:", count)
-    let winners = []
-    for (let i = 0; i < events.length; i++) {
-      try {
-        const winnerAddress = await this._sweepstakes.ownerOf(events[i].args._winner.toString())
-        winners.push({winner: winnerAddress, amount: parseFloat(ethers.utils.formatEther(events[i].args._amount.toString()))})
-      } catch (error) {
-        // console.log(error)
-      }
-    }
-    winners.reverse()
-    this.setState({ lastWinner: winners[0].winner })
-    this.setState({ lastPrize: winners[0].amount });
-  }
+  // async _getAllWinners() {
+  //   console.log("getting winners")
+  //   const filters = this._sweepstakes.filters.WinnerAssigned();
+  //   const events = []
+  //   let count = 0
+  //   let blockNumber = await this._provider.getBlockNumber()
+  //   console.log("blockNumber:", blockNumber)
+  //   for(let i = 0; i < 10; i++){
+  //     const block = await this._sweepstakes.queryFilter(filters, blockNumber - (i+1)*1000, blockNumber - i*1000);
+  //     events.push(block[i])
+  //     count++
+  //   }
+  //   console.log("count:", count)
+  //   let winners = []
+  //   for (let i = 0; i < events.length; i++) {
+  //     try {
+  //       const winnerAddress = await this._sweepstakes.ownerOf(events[i].args._winner.toString())
+  //       winners.push({winner: winnerAddress, amount: parseFloat(ethers.utils.formatEther(events[i].args._amount.toString()))})
+  //     } catch (error) {
+  //       // console.log(error)
+  //     }
+  //   }
+  //   winners.reverse()
+  //   this.setState({ lastWinner: winners[0].winner })
+  //   this.setState({ lastPrize: winners[0].amount });
+  // }
 
 }
 

@@ -90,14 +90,7 @@ describe("check draw and compound", function () {
     console.log("acc1 before", acc1Token.toString());
     console.log("acc2 before", acc2Token.toString());
     if(!prizeAssigned) {
-      tx = await sweepstakes.assignPrize();
-      const receipt = await tx.wait()
-      for (const event of receipt.events) {
-        if (event.event === "WinnerAssigned") {
-          console.log("WinnerDrawn", event.args);
-        }
-      }
-      console.log("gas used",receipt.gasUsed.toString())
+      await sweepstakes.assignPrize();
     } else {
       //something has gone wrong with drawWinner. 
       process.exit(0);
@@ -156,31 +149,31 @@ describe("owner withdraws fees", function () {
   });
 });
 
-// describe("initiate move", function () {
-//   it("non owner reverts", async function () {
-//     expect(
-//       await expectFail(() => stakingHelper.connect(acc1).rebalanceStart([val20x]))
-//     ).to.equal("failed");
-//   });
-//   it("initiate move - all to val2", async function () {
-//     const val1 = await stakingHelper.delegatedToValidator(val0xAddress);
-//     console.log("val1", val1.toString());
-//     const val2 = await stakingHelper.delegatedToValidator(val20x);
-//     console.log("val2", val2.toString());
-//     const toMove = val1.add(val2);
-//     const epoch = await stakingHelper.epoch();
-//     await stakingHelper.rebalanceStart([val20x]);
-//     expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(0);
-//     expect(await stakingHelper.delegatedToValidator(val20x)).to.equal(0);
-//     expect(await stakingHelper.moving()).to.equal(toMove);
-//     expect(await stakingHelper.initiateMoveEpoch()).to.equal(epoch);
-//   });
-//   it("can't finish move this epoch", async function () {
-//     expect(
-//       await expectFail(() => stakingHelper.rebalanceEnd())
-//     ).to.equal("failed");
-//   });
-// });
+describe("initiate move", function () {
+  it("non owner reverts", async function () {
+    expect(
+      await expectFail(() => stakingHelper.connect(acc1).rebalanceStart([val20x]))
+    ).to.equal("failed");
+  });
+  it("initiate move - all to val2", async function () {
+    const val1 = await stakingHelper.delegatedToValidator(val0xAddress);
+    console.log("val1", val1.toString());
+    const val2 = await stakingHelper.delegatedToValidator(val20x);
+    console.log("val2", val2.toString());
+    const toMove = val1.add(val2);
+    const epoch = await stakingHelper.epoch();
+    await stakingHelper.rebalanceStart([val20x]);
+    expect(await stakingHelper.delegatedToValidator(val0xAddress)).to.equal(0);
+    expect(await stakingHelper.delegatedToValidator(val20x)).to.equal(0);
+    expect(await stakingHelper.moving()).to.equal(toMove);
+    expect(await stakingHelper.initiateMoveEpoch()).to.equal(epoch);
+  });
+  it("can't finish move this epoch", async function () {
+    expect(
+      await expectFail(() => stakingHelper.rebalanceEnd())
+    ).to.equal("failed");
+  });
+});
 
 function saveData(key, value) {
   jsonData[key] = value;

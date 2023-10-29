@@ -4,19 +4,23 @@ const { ethers } = require("hardhat");
 
 const ssAbi = require("../frontend/src/contracts/SweepStakesNFTs.json").abi;
 const shAbi = require("../frontend/src/contracts/StakingHelper.json").abi;
+
 // mainnent
 // let jsonData = {"sweepstakes":"0x3eCd6879485B1383bA9F45177f12276325DCdeA9","lastDraw":1695598669,"stakingHelper":"0xc63A79E774Bea523d90Bd6b5432a8B24D98af036","acc2UnstakedAtEpoch":2084}
 // testnet
-let jsonData = {"sweepstakes":"0xf266cEAd75739dc9f2A1F79d467DeAEC3976F2AF","lastDraw":1695598669,"stakingHelper":"0x4Dd8518F40d949D6D2EEcC859364Ff836DC456fb","acc2UnstakedAtEpoch":2084}
+let jsonData = {
+  sweepstakes: "0x058DCD4FcB02d0cD2df9E8Be992bfB89998A6Bbd",
+  lastDraw: 1698460661,
+  stakingHelper: "0x6eB221b1654BA536784029ce2fd34BA813Cf3261",
+  acc2UnstakedAtEpoch: 2259,
+};
 
 before(async function () {
-  //load the data from the file
-
   [owner, acc1, acc2, acc3] = await ethers.getSigners();
 });
 
-describe("deploy contracts", function () {
-  it("deploy SweepStakesNFTs", async function () {
+describe("get contracts", function () {
+  it("get SweepStakesNFTs", async function () {
     sweepstakes = await ethers.getContractAt(
       "SweepStakesNFTs",
       jsonData.sweepstakes
@@ -30,24 +34,44 @@ describe("deploy contracts", function () {
   });
 });
 
-// describe("draw period to 20 sec", function () {
-//   it("set draw period to 20 sec", async function () {
+// describe("draw period to 20s", function () {
+//   it("set draw period to 20s", async function () {
 //     await sweepstakes.setDrawPeriod(20);
 //     expect(await sweepstakes.drawPeriod()).to.equal(20);
 //   });
 // });
 
 describe("run many draws to see if we get a relatively even spread", function () {
-  for(let i=0;i<50;i++) {
+  let count = 0;
+  winners = [];
+  for (let i = 0; i < 10; i++) {
     it("draws", async function () {
-      await new Promise(r => setTimeout(r, 40000));
       await sweepstakes.drawWinner();
-      await stakingHelper.juicePrizePool({
-        value: ethers.utils.parseEther("1"),
-      });
+    });
+    it("assigns", async function () {
+      await new Promise((r) => setTimeout(r, 90000));
+      const tx = await sweepstakes.assignPrize();
+      const receipt = await tx.wait();
+
+      //log gas used
+      console.log("gas used", receipt.gasUsed.toString());
+
+      for (const event of receipt.events) {
+        if (event.event === "WinnerAssigned") {
+          console.log("WinnerDrawn", event.args);
+          winners.push(event.args);
+        }
+      }
+      count++;
+      console.log("count", count);
     });
   }
 });
 
+describe("log winners", function () {
+  it("log winners", async function () {
+    console.log("winners", winners);
+  });
+});
 
 // npx hardhat test test/checkVRF.js --network testnet
