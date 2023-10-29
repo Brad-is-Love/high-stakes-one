@@ -140,6 +140,12 @@ export class Dapp extends React.Component {
             </div>
             <div className="row">
               <div className="col-12">
+                {/* button to test the API */}
+                <button className="btn btn-primary" onClick={() => this._testAPI()}>Test API</button>
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-12">
                 <LuckyStaker
                   balance={this.state.balance}
                   currentEpoch={this.state.currentEpoch}
@@ -228,13 +234,13 @@ export class Dapp extends React.Component {
     await this._provider.getNetwork();
 
     this._sweepstakes = new ethers.Contract(
-      TESTNET.sweepstakesAddress,
+      MAINNET.sweepstakesAddress,
       sweepstakesAtrifact.abi,
       this._provider.getSigner(0)
     );
 
     this._stakingHelper = new ethers.Contract(
-      TESTNET.stakingHelperAddress,
+      MAINNET.stakingHelperAddress,
       stakingHelperAtrifact.abi,
       this._provider.getSigner(0)
     );
@@ -245,7 +251,7 @@ export class Dapp extends React.Component {
 
     this._updateData();
     this._getWinnerListener();
-    this._getAllWinners();
+    // this._getAllWinners();
   }
 
   async _updateData() {
@@ -400,7 +406,6 @@ export class Dapp extends React.Component {
       this.setState({ transactionError: error });
     } finally {
       this.setState({ txBeingSent: undefined });
-      this._getAllWinners()
     }
   }
 
@@ -426,16 +431,16 @@ export class Dapp extends React.Component {
   }
 
   async _addChain() {
-    const chainIdHex = `0x${TESTNET.ID.toString(16)}`;
+    const chainIdHex = `0x${MAINNET.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_addEthereumChain",
       params: [
         {
           chainId: chainIdHex,
-          chainName: TESTNET.chainName,
-          nativeCurrency: TESTNET.nativeCurrency,
-          rpcUrls: TESTNET.rpcUrls,
-          blockExplorerUrls: TESTNET.blockExplorerUrls,
+          chainName: MAINNET.chainName,
+          nativeCurrency: MAINNET.nativeCurrency,
+          rpcUrls: MAINNET.rpcUrls,
+          blockExplorerUrls: MAINNET.blockExplorerUrls,
         },
       ],
     });
@@ -443,7 +448,7 @@ export class Dapp extends React.Component {
 
   async _switchChain() {
     await this._addChain();
-    const chainIdHex = `0x${TESTNET.ID.toString(16)}`;
+    const chainIdHex = `0x${MAINNET.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: chainIdHex }],
