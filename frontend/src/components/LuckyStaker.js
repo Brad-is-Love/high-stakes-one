@@ -78,7 +78,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
     );
   } else if (selectedOption === "prizes") {
     formComponent = (
-      <Prizes lastWinner={readableWinner} lastPrize={readablePrize}/>
+      <Prizes selectedAddress={selectedAddress} sweepstakesAddress={sweepStakesAddress} />
     );
   }
 
