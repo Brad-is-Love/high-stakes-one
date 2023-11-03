@@ -6,7 +6,7 @@ export function Prizes({ selectedAddress, sweepstakesAddress }) {
   });
 
   let headers = new Headers();
-  headers.set("Authorization", "Bearer cqt_rQWwWcRTh4PD8MF7tCW8wFXxvvVJ");
+  headers.set("Authorization", "Bearer "+process.env.COVALENT_API_KEY);
 
   fetch(
     `https://api.covalenthq.com/v1/harmony-mainnet/address/${sweepstakesAddress}/transactions_v3/page/1/?`,
