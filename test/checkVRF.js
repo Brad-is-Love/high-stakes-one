@@ -34,17 +34,19 @@ describe("get contracts", function () {
   });
 });
 
-// describe("draw period to 20s", function () {
-//   it("set draw period to 20s", async function () {
-//     await sweepstakes.setDrawPeriod(20);
-//     expect(await sweepstakes.drawPeriod()).to.equal(20);
-//   });
-// });
+describe("get owner of token#7 and get it's val", function () {
+  it("get owner of token#7 and val", async function () {
+    const ownerOf7 = await sweepstakes.ownerOf(7);
+    console.log("ownerOf7", ownerOf7);
+    const valOf7 = await sweepstakes.getNFTValue(7);
+    console.log("valOf7", valOf7.toString());
+  });
+});
 
 describe("run many draws to see if we get a relatively even spread", function () {
   let count = 0;
   winners = [];
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 1; i++) {
     it("draws", async function () {
       await sweepstakes.drawWinner();
     });
@@ -71,6 +73,13 @@ describe("run many draws to see if we get a relatively even spread", function ()
 describe("log winners", function () {
   it("log winners", async function () {
     console.log("winners", winners);
+  });
+});
+
+describe("draw period to 23h", function () {
+  it("set draw period to 23h", async function () {
+    await sweepstakes.setDrawPeriod(20);
+    expect(await sweepstakes.drawPeriod()).to.equal(23 * 60 * 60);
   });
 });
 
