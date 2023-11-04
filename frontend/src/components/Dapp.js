@@ -12,6 +12,7 @@ import { LuckyStaker } from "./LuckyStaker";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { Nav } from "./Nav";
+import { Description } from "./Description";
 
 // const TESTNET = {
 //   ID: 1666700000,
@@ -37,9 +38,25 @@ const MAINNET = {
   rpcUrls: ["https://api.harmony.one"],
   blockExplorerUrls: ["https://explorer.harmony.one/"],
   sweepstakesAddress: sweepstakesAddress.address,
-  stakingHelperAddress: stakingHelperAddress.address
+  stakingHelperAddress: stakingHelperAddress.address,
 };
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
+
+const whitelistedAddresses = [
+  "0x7188cc2282c105dfce5249e6a909db71b914b25b",
+  "0x815e2d7607cea807622130e85309385ed3bb814b",
+  "0x095cc788b688167a7ac0fea5ca56948e9f9c5f83",
+  "0x7a504f7b53f639cc7f76828622915757c335cb7a",
+  "0xfc49b14da27a9d6054a12460a15d1587f48ff712",
+  "0xac85ec193e534cd5de30a56dcebbcf9325911e17",
+  "0x8065e83469c2ad5ad61349652fe9cd016bce0f8f",
+  "0x7e8dcfcb5f028dfe60aed91f6f3dfdcafc75ffb4",
+  "0x40565fd80adb60da9747780a2d0b237fdf776f19",
+  "0x106bbe5ab25afb431c0f2231b33e1eac61d1253d",
+  "0xd3460a59a029d176d389ae64caa1354567f69f56",
+  "0x591a6748b47564b91715352bd2e9d028102de7c7",
+  "0xd76d5e2e8acf75ca91d87f4b3bbc3e3a9137ec18",
+];
 
 export class Dapp extends React.Component {
   constructor(props) {
@@ -82,6 +99,17 @@ export class Dapp extends React.Component {
       );
     }
 
+    if (!whitelistedAddresses.includes(this.state.selectedAddress.toLowerCase())) {
+      return (
+        <>
+        <div className="connectWalletBackground"></div>
+          <div className="d-flex align-items-center justify-content-center flex-column p-3">
+          <Description displayMessage={true} />
+        </div>
+        </>
+      );
+    }
+
     if (!this.state.balance) {
       return <Loading />;
     }
@@ -89,7 +117,10 @@ export class Dapp extends React.Component {
     return (
       <>
         <div className="background"></div>
-        <Nav selectedAddress={this.state.selectedAddress} userStaked={this.state.userStaked}/>
+        <Nav
+          selectedAddress={this.state.selectedAddress}
+          userStaked={this.state.userStaked}
+        />
         <div className="app mt-md-5">
           <div className="container p-3 mt-2">
             <div className="row my-1">
@@ -161,23 +192,23 @@ export class Dapp extends React.Component {
     const [selectedAddress] = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-    
-    if(this.state.networkError === undefined){
+
+    if (this.state.networkError === undefined) {
       this._initialize(selectedAddress);
     }
 
-    window.ethereum.on('chainChanged', (chainId) => {
-      console.log("chain changed to:", chainId)
+    window.ethereum.on("chainChanged", (chainId) => {
+      console.log("chain changed to:", chainId);
       this._stopPollingData();
       this._resetState();
       this._connectWallet();
-    })
+    });
 
     window.ethereum.on("accountsChanged", ([newAddress]) => {
       this._stopPollingData();
       this._resetState();
       this._initialize(newAddress);
-    });;
+    });
   }
 
   async _initialize(userAddress) {
@@ -317,22 +348,29 @@ export class Dapp extends React.Component {
       });
     } else {
       await this._sendTransaction("Stake", async () => {
-        return await this._stakingHelper.addToToken(stake, this.state.userTokenId, {
-          value: stake,
-        });
+        return await this._stakingHelper.addToToken(
+          stake,
+          this.state.userTokenId,
+          {
+            value: stake,
+          }
+        );
       });
     }
   }
 
   async _unstake(amount, isMax) {
-    let toUnstake = 0
-    if(isMax){
+    let toUnstake = 0;
+    if (isMax) {
       toUnstake = this.state.userStaked;
     } else {
       toUnstake = ethers.utils.parseEther(amount.toString());
-    } 
+    }
     await this._sendTransaction("Unstake", async () => {
-      return await this._stakingHelper.unstake(toUnstake, this.state.userTokenId);
+      return await this._stakingHelper.unstake(
+        toUnstake,
+        this.state.userTokenId
+      );
     });
   }
 
@@ -414,15 +452,19 @@ export class Dapp extends React.Component {
   }
 
   async _checkNetwork() {
-    await window.ethereum.request({
-      method: "eth_chainId",
-    }).then((chainId) => {
-      console.log("chainId:", chainId)
-      if(chainId !== `0x${MAINNET.ID.toString(16)}`){
-        this.setState({ networkError: "Please switch to the Harmony Mainnet" });
-      } else {
-        this.setState({ networkError: undefined });
-      }
-    })
+    await window.ethereum
+      .request({
+        method: "eth_chainId",
+      })
+      .then((chainId) => {
+        console.log("chainId:", chainId);
+        if (chainId !== `0x${MAINNET.ID.toString(16)}`) {
+          this.setState({
+            networkError: "Please switch to the Harmony Mainnet",
+          });
+        } else {
+          this.setState({ networkError: undefined });
+        }
+      });
   }
 }
