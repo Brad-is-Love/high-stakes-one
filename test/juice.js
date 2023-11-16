@@ -42,15 +42,15 @@ describe("draw time to 30s", function () {
 });
 
 describe("juice the Prize Pool", function () {
-  it("stakingHelper accepts 206 ONE", async function () {
+  it("stakingHelper accepts 515 ONE", async function () {
     expect(await stakingHelper.extraFunds()).to.equal(
       ethers.utils.parseEther("0")
     );
     await stakingHelper.juicePrizePool({
-      value: ethers.utils.parseEther("206"),
+      value: ethers.utils.parseEther("515"),
     });
     expect(await stakingHelper.extraFunds()).to.equal(
-      ethers.utils.parseEther("206")
+      ethers.utils.parseEther("515")
     );
   });
 });
@@ -58,6 +58,8 @@ describe("juice the Prize Pool", function () {
 describe("run draw", function () {
   it("draws", async function () {
     await sweepstakes.drawWinner();
+    //wait 5s
+    await new Promise((r) => setTimeout(r, 5000));
   });
   it("assigns", async function () {
     const tx = await sweepstakes.assignPrize();

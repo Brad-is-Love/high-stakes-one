@@ -112,12 +112,6 @@ export class Dapp extends React.Component {
             </div>
             <div className="row">
               <div className="col-12">
-                {/* button to test the API */}
-                <button className="btn btn-primary" onClick={() => this._testAPI()}>Test API</button>
-              </div>
-            </div>
-            <div className="row">
-              <div className="col-12">
                 <LuckyStaker
                   balance={this.state.balance}
                   currentEpoch={this.state.currentEpoch}
@@ -138,6 +132,7 @@ export class Dapp extends React.Component {
                   selectedAddress={this.state.selectedAddress}
                   lastWinner={this.state.lastWinner}
                   lastPrize={this.state.lastPrize}
+                  ownerOf={this._ownerOf}
                 />
               </div>
             </div>
@@ -155,6 +150,7 @@ export class Dapp extends React.Component {
     this._stake = this._stake.bind(this);
     this._unstake = this._unstake.bind(this);
     this._withdraw = this._withdraw.bind(this);
+    this._ownerOf = this._ownerOf.bind(this);
   }
 
   componentWillUnmount() {
@@ -295,6 +291,11 @@ export class Dapp extends React.Component {
     balance = ethers.utils.formatEther(balance);
     balance = parseFloat(balance).toFixed(2);
     this.setState({ balance });
+  }
+
+  async _ownerOf(tokenId) {
+    const owner = await this._sweepstakes.ownerOf(tokenId);
+    return owner;
   }
 
   async _drawWinner() {
@@ -463,33 +464,4 @@ export class Dapp extends React.Component {
     this.setState({ lastPrize: parseInt(ethers.utils.formatEther(data.amount.toString())) });
     })
   }
-
-  // async _getAllWinners() {
-  //   console.log("getting winners")
-  //   const filters = this._sweepstakes.filters.WinnerAssigned();
-  //   const events = []
-  //   let count = 0
-  //   let blockNumber = await this._provider.getBlockNumber()
-  //   console.log("blockNumber:", blockNumber)
-  //   for(let i = 0; i < 10; i++){
-  //     const block = await this._sweepstakes.queryFilter(filters, blockNumber - (i+1)*1000, blockNumber - i*1000);
-  //     events.push(block[i])
-  //     count++
-  //   }
-  //   console.log("count:", count)
-  //   let winners = []
-  //   for (let i = 0; i < events.length; i++) {
-  //     try {
-  //       const winnerAddress = await this._sweepstakes.ownerOf(events[i].args._winner.toString())
-  //       winners.push({winner: winnerAddress, amount: parseFloat(ethers.utils.formatEther(events[i].args._amount.toString()))})
-  //     } catch (error) {
-  //       // console.log(error)
-  //     }
-  //   }
-  //   winners.reverse()
-  //   this.setState({ lastWinner: winners[0].winner })
-  //   this.setState({ lastPrize: winners[0].amount });
-  // }
-
 }
-

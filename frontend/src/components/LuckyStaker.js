@@ -6,7 +6,7 @@ import { WithdrawForm } from "./WithdrawForm";
 import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, lastWinner, lastPrize}) {
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, lastWinner, lastPrize, ownerOf}) {
 
 //run countdown timer every second
   React.useEffect(() => {
@@ -78,18 +78,9 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
     );
   } else if (selectedOption === "prizes") {
     formComponent = (
-      <Prizes selectedAddress={selectedAddress} sweepstakesAddress={sweepStakesAddress} />
+      <Prizes selectedAddress={selectedAddress} sweepstakesAddress={sweepStakesAddress} ownerOf={ownerOf} />
     );
   }
-
-  const data = {
-    winner: "me",
-    amount: "100",
-    hash: "123",
-    send: "true"
-  }
-
-  const url = 'https://script.google.com/macros/s/AKfycbzsfTPOPMw0UUAE_1BXvV7dIl6KTvXlXV0NTd6e-YESx7WMHnmrh6AxsBC4u7sLaRQB/exec?'+'winner='+data.winner+'&amount='+data.amount+'&hash='+data.hash+'&send='+data.send
 
   return (
     <>
@@ -97,7 +88,6 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
         <div className="row">
           <div className="col-12">
             <h4 className="text-center">Sweepstakes</h4>
-            <a href={url}>test api</a>
             <p className="text-md-center">
               Stake in a pool with other players. A lucky winner
               gets the rewards!

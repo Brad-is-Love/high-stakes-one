@@ -247,7 +247,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         minStake = _minStake;
     }
 
-    //The harmony built-in VRF
+    //The harmony built-in VRF https://docs.harmony.one/home/developers/harmony-specifics/tools/harmony-vrf
     function vrf() internal view returns (uint256 result) {
         uint256[1] memory bn;
         bn[0] = block.number;
