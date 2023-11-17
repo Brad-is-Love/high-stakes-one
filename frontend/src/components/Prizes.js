@@ -4,6 +4,7 @@ import { ethers } from "ethers";
 export function Prizes({ selectedAddress, sweepstakesAddress, ownerOf }) {
   React.useEffect(() => {
     getLatestBlock();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const winnerABI = [
@@ -37,7 +38,7 @@ export function Prizes({ selectedAddress, sweepstakesAddress, ownerOf }) {
 
   const getData = async (initialBlock) => {
     let latest = initialBlock || latestBlock;
-    let startBlock = latest - 500000;
+    let startBlock = latest - 700000;
   
     try {
       const response = await fetch(
@@ -58,7 +59,8 @@ export function Prizes({ selectedAddress, sweepstakesAddress, ownerOf }) {
         );
         const date = event.block_signed_at.slice(0, 10);
         const winningToken = decoded._winner.toString();
-        const winner = await ownerOf(winningToken);
+        const winnerFullAddress = await ownerOf(winningToken);
+        const winner = winnerFullAddress.slice(0, 4) + "..." + winnerFullAddress.slice(-4);
         const amount = parseFloat(ethers.utils.formatEther(decoded._amount)).toFixed(2);
         
         dates.push(date);
@@ -96,9 +98,9 @@ export function Prizes({ selectedAddress, sweepstakesAddress, ownerOf }) {
                 {winners.map((winner, index) => {
                   return (
                     <tr key={index}>
-                      <td>{winner.date}</td>
-                      <td>{winner.winner}</td>
-                      <td>{winner.amount}</td>
+                      <td><p>{winner.date}</p></td>
+                      <td><p>{winner.winner}</p></td>
+                      <td><p>{winner.amount}</p></td>
                     </tr>
                   );
                 })}

@@ -13,19 +13,19 @@ import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { Nav } from "./Nav";
 
-const TESTNET = {
-  ID: 1666700000,
-  chainName: "Harmony Testnet",
-  nativeCurrency: {
-    name: "TEST ONE",
-    symbol: "TONE",
-    decimals: 18,
-  },
-  rpcUrls: ["https://api.s0.b.hmny.io"],
-  blockExplorerUrls: ["https://explorer.testnet.harmony.one/"],
-  sweepstakesAddress: "0xf266cEAd75739dc9f2A1F79d467DeAEC3976F2AF",
-  stakingHelperAddress: "0x4Dd8518F40d949D6D2EEcC859364Ff836DC456fb"
-};
+// const TESTNET = {
+//   ID: 1666700000,
+//   chainName: "Harmony Testnet",
+//   nativeCurrency: {
+//     name: "TEST ONE",
+//     symbol: "TONE",
+//     decimals: 18,
+//   },
+//   rpcUrls: ["https://api.s0.b.hmny.io"],
+//   blockExplorerUrls: ["https://explorer.testnet.harmony.one/"],
+//   sweepstakesAddress: "0xf266cEAd75739dc9f2A1F79d467DeAEC3976F2AF",
+//   stakingHelperAddress: "0x4Dd8518F40d949D6D2EEcC859364Ff836DC456fb"
+// };
 const MAINNET = {
   ID: 1666600000,
   chainName: "Harmony Mainnet",
@@ -425,43 +425,6 @@ export class Dapp extends React.Component {
       } else {
         this.setState({ networkError: undefined });
       }
-    })
-  }
-
-  async _testAPI(){
-    let data = {
-      send: "true",
-      winner: "_winner.toString()",
-      amount: "_ammount.toString()",
-      hash: "A1"
-      }
-    const winnerAddress = data.winner
-
-    const url = "https://script.google.com/macros/s/AKfycbzsfTPOPMw0UUAE_1BXvV7dIl6KTvXlXV0NTd6e-YESx7WMHnmrh6AxsBC4u7sLaRQB/exec?"+"winner="+winnerAddress+"&amount="+data.amount+"&hash="+data.hash+"&send="+data.send
-
-    const response = await fetch(url)
-    console.log(response)
-    const text = response.getContentText()
-    console.log(text)
-  }
-
-  async _getWinnerListener() {
-    await this._sweepstakes.on("WinnerAssigned", async (_winner, _ammount, event) => {
-      let data = {
-      send: "true",
-      winner: _winner.toString(),
-      amount: _ammount.toString(),
-      hash: event.transactionHash.toString()
-      }
-    const winnerAddress = await this._sweepstakes.ownerOf(data.winner)
-
-    const url = "https://script.google.com/macros/s/AKfycbzsfTPOPMw0UUAE_1BXvV7dIl6KTvXlXV0NTd6e-YESx7WMHnmrh6AxsBC4u7sLaRQB/exec?"+"winner="+winnerAddress+"&amount="+data.amount+"&hash="+data.hash+"&send="+data.send
-
-    const response = await fetch(url)
-    // const text = response.getContentText()
-    // console.log(text)
-    this.setState({ lastWinner: winnerAddress })
-    this.setState({ lastPrize: parseInt(ethers.utils.formatEther(data.amount.toString())) });
     })
   }
 }
