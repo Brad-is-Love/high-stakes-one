@@ -1,6 +1,6 @@
 import React from "react";
 
-export function Prizes({ selectedAddress, winners, loading, latestBlock, lowestBlock, getData }) {
+export function Prizes({ winners, loading, latestBlock, lowestBlock, getData }) {
 
   return (
     <>
