@@ -216,8 +216,6 @@ export class Dapp extends React.Component {
     this._pollDataInterval = setInterval(() => this._updateData(), 10000);
 
     this._updateData();
-    this._getWinnerListener();
-    // this._getAllWinners();
   }
 
   async _updateData() {
