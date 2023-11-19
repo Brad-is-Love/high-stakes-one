@@ -1,5 +1,4 @@
-import React, { useState } from "react";
-import { ethers } from "ethers";
+import React from "react";
 
 export function Prizes({ selectedAddress, winners, loading, latestBlock, lowestBlock, getData }) {
 
