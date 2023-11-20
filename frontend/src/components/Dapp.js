@@ -38,7 +38,7 @@ const MAINNET = {
   rpcUrls: ["https://api.harmony.one"],
   blockExplorerUrls: ["https://explorer.harmony.one/"],
   sweepstakesAddress: sweepstakesAddress.address,
-  stakingHelperAddress: stakingHelperAddress.address
+  stakingHelperAddress: stakingHelperAddress.address,
 };
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
@@ -117,7 +117,10 @@ export class Dapp extends React.Component {
     return (
       <>
         <div className="background"></div>
-        <Nav selectedAddress={this.state.selectedAddress} userStaked={this.state.userStaked}/>
+        <Nav
+          selectedAddress={this.state.selectedAddress}
+          userStaked={this.state.userStaked}
+        />
         <div className="app mt-md-5">
           <div className="container p-3 mt-2">
             <div className="row my-1">
@@ -136,6 +139,12 @@ export class Dapp extends React.Component {
                     dismiss={() => this._dismissTransactionError()}
                   />
                 )}
+              </div>
+            </div>
+            <div className="row">
+              <div className="col-12">
+                {/* button to test the API */}
+                <button className="btn btn-primary" onClick={() => this._testAPI()}>Test API</button>
               </div>
             </div>
             <div className="row">
@@ -189,23 +198,23 @@ export class Dapp extends React.Component {
     const [selectedAddress] = await window.ethereum.request({
       method: "eth_requestAccounts",
     });
-    
-    if(this.state.networkError === undefined){
+
+    if (this.state.networkError === undefined) {
       this._initialize(selectedAddress);
     }
 
-    window.ethereum.on('chainChanged', (chainId) => {
-      console.log("chain changed to:", chainId)
+    window.ethereum.on("chainChanged", (chainId) => {
+      console.log("chain changed to:", chainId);
       this._stopPollingData();
       this._resetState();
       this._connectWallet();
-    })
+    });
 
     window.ethereum.on("accountsChanged", ([newAddress]) => {
       this._stopPollingData();
       this._resetState();
       this._initialize(newAddress);
-    });;
+    });
   }
 
   async _initialize(userAddress) {
@@ -244,6 +253,8 @@ export class Dapp extends React.Component {
     this._pollDataInterval = setInterval(() => this._updateData(), 10000);
 
     this._updateData();
+    this._getWinnerListener();
+    // this._getAllWinners();
   }
 
   async _updateData() {
@@ -345,22 +356,29 @@ export class Dapp extends React.Component {
       });
     } else {
       await this._sendTransaction("Stake", async () => {
-        return await this._stakingHelper.addToToken(stake, this.state.userTokenId, {
-          value: stake,
-        });
+        return await this._stakingHelper.addToToken(
+          stake,
+          this.state.userTokenId,
+          {
+            value: stake,
+          }
+        );
       });
     }
   }
 
   async _unstake(amount, isMax) {
-    let toUnstake = 0
-    if(isMax){
+    let toUnstake = 0;
+    if (isMax) {
       toUnstake = this.state.userStaked;
     } else {
       toUnstake = ethers.utils.parseEther(amount.toString());
-    } 
+    }
     await this._sendTransaction("Unstake", async () => {
-      return await this._stakingHelper.unstake(toUnstake, this.state.userTokenId);
+      return await this._stakingHelper.unstake(
+        toUnstake,
+        this.state.userTokenId
+      );
     });
   }
 
@@ -442,15 +460,19 @@ export class Dapp extends React.Component {
   }
 
   async _checkNetwork() {
-    await window.ethereum.request({
-      method: "eth_chainId",
-    }).then((chainId) => {
-      console.log("chainId:", chainId)
-      if(chainId !== `0x${MAINNET.ID.toString(16)}`){
-        this.setState({ networkError: "Please switch to the Harmony Mainnet" });
-      } else {
-        this.setState({ networkError: undefined });
-      }
-    })
+    await window.ethereum
+      .request({
+        method: "eth_chainId",
+      })
+      .then((chainId) => {
+        console.log("chainId:", chainId);
+        if (chainId !== `0x${MAINNET.ID.toString(16)}`) {
+          this.setState({
+            networkError: "Please switch to the Harmony Mainnet",
+          });
+        } else {
+          this.setState({ networkError: undefined });
+        }
+      });
   }
 }

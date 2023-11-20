@@ -23,6 +23,7 @@ export function Prizes({ winners, loading, latestBlock, lowestBlock, getData }) 
                       <td><p>{winner.date}</p></td>
                       <td><p>{winner.winner}</p></td>
                       <td><p>{winner.amount}</p></td>
+
                     </tr>
                   );
                 })}
@@ -35,6 +36,7 @@ export function Prizes({ winners, loading, latestBlock, lowestBlock, getData }) 
             Load More
           </button> : <p>No more winners</p>
           }
+
         </div>
       </div>
       {/* div with centered content */}

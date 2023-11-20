@@ -1,12 +1,3 @@
 
-go through the code to see all comments
-go through with a pen and paper to check everything has been tested
-test events are working as expected
+add maxTokens
 
-need to do testnetTests3
-
-600 staked, 600 unstaked by acc 2 at 1847
-{"sweepstakes":"0x6945d5f317f088f7e1504F79D1d1FF4b33893DF4","lastDraw":1691709191,"stakingHelper":"0x0A46B5Ee21f9a5C25f2896E4fe93B76fB6f2FaF3","extraFunds":null}
-
-add beneficiary
-test that plus claimPrizes()

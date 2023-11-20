@@ -46,9 +46,11 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const lowestBlock = 49165773; // The block where the first winner was drawn
 
   const getLatestBlock = () => {
+
     if(winners.length !== 0){
       return;
     }
+
     setLoading(true);
     fetch(`https://api.covalenthq.com/v1/harmony-mainnet/block_v2/latest/?`, {
       method: "GET",
@@ -174,12 +176,22 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
     );
   }
 
+  const data = {
+    winner: "me",
+    amount: "100",
+    hash: "123",
+    send: "true"
+  }
+
+  const url = 'https://script.google.com/macros/s/AKfycbzsfTPOPMw0UUAE_1BXvV7dIl6KTvXlXV0NTd6e-YESx7WMHnmrh6AxsBC4u7sLaRQB/exec?'+'winner='+data.winner+'&amount='+data.amount+'&hash='+data.hash+'&send='+data.send
+
   return (
     <>
       <div className="card p-4 mb-5 mt-1">
         <div className="row">
           <div className="col-12">
             <h4 className="text-center">Sweepstakes</h4>
+            <a href={url}>test api</a>
             <p className="text-md-center">
               Stake in a pool with other players. A lucky winner
               gets the rewards!
