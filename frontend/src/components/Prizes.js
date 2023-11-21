@@ -6,9 +6,8 @@ export function Prizes({ winners, loading, latestBlock, lowestBlock, getData }) 
     <>
       <div className="row">
         <div className="col-12">
-          <h4>Last Winners</h4>
           <div className="table-responsive">
-            <table className="table table-sm">
+            <table className="table table-striped table-sm">
               <thead>
                 <tr>
                   <th>Date</th>
@@ -35,8 +34,8 @@ export function Prizes({ winners, loading, latestBlock, lowestBlock, getData }) 
             Load More
           </button> : <p>No more winners</p>
           }
+          </div>
         </div>
-      </div>
       {/* div with centered content */}
     </>
   );
