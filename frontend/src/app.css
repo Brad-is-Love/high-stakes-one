@@ -213,6 +213,9 @@ p {
   .navbar-brand {
     font-size: 30px;
   }
+  .logo-header {
+    font-size: 50px;
+  }
   .btn {
     font-size: 14px;
     padding: 5px;
