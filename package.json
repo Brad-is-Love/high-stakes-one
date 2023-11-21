@@ -30,6 +30,7 @@
     "solidity-coverage": "^0.8.2"
   },
   "dependencies": {
+    "@covalenthq/client-sdk": "^0.6.0",
     "@harmony-js/core": "^0.1.58",
     "@harmony-js/crypto": "^0.1.58",
     "@harmony-js/staking": "^0.1.58",

@@ -13,7 +13,7 @@ const root = ReactDOM.createRoot(document.getElementById("root"));
 // if / then LandingPage if /alpha then Dapp
 
 root.render(
-  <React.StrictMode>
+  // <React.StrictMode>
     <Dapp />
-  </React.StrictMode>
+  // </React.StrictMode>
 );

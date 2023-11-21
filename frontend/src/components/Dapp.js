@@ -63,9 +63,10 @@ export class Dapp extends React.Component {
     super(props);
 
     this.initialState = {
+      lastWinner: undefined,
+      lastPrize: undefined,
       nextDrawTime: undefined,
       currentEpoch: undefined,
-      lastWinner: undefined,
       totalStaked: undefined,
       userTokenId: undefined,
       userStaked: undefined,
@@ -159,6 +160,10 @@ export class Dapp extends React.Component {
                   userWithdrawable={this.state.userWithdrawable}
                   stakingHelperAddress={MAINNET.stakingHelperAddress.toString()}
                   sweepStakesAddress={MAINNET.sweepstakesAddress.toString()}
+                  selectedAddress={this.state.selectedAddress}
+                  lastWinner={this.state.lastWinner}
+                  lastPrize={this.state.lastPrize}
+                  ownerOf={this._ownerOf}
                 />
               </div>
             </div>
@@ -176,6 +181,7 @@ export class Dapp extends React.Component {
     this._stake = this._stake.bind(this);
     this._unstake = this._unstake.bind(this);
     this._withdraw = this._withdraw.bind(this);
+    this._ownerOf = this._ownerOf.bind(this);
   }
 
   componentWillUnmount() {
@@ -249,6 +255,7 @@ export class Dapp extends React.Component {
     await this._updateBalance();
     await this._getCurrentEpoch();
     await this._getUserStaked();
+
   }
 
   _stopPollingData() {
@@ -313,6 +320,11 @@ export class Dapp extends React.Component {
     balance = ethers.utils.formatEther(balance);
     balance = parseFloat(balance).toFixed(2);
     this.setState({ balance });
+  }
+
+  async _ownerOf(tokenId) {
+    const owner = await this._sweepstakes.ownerOf(tokenId);
+    return owner;
   }
 
   async _drawWinner() {
