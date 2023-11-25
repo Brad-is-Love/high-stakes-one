@@ -41,7 +41,7 @@ export function ConnectWallet({
     <>
       <div className="connectWalletBackground d-flex flex-column align-items-center justify-content-center px-3">
         <div
-          className="container bg-white shadow rounded mx-4"
+          className="card"
           style={{ maxWidth: "500px" }}
         >
           <div className="row justify-content-center">

@@ -1,42 +1,45 @@
 import React from "react";
 
-export function Prizes({ winners, loading, latestBlock, lowestBlock, getData }) {
-
+export function Prizes({
+  winners,
+  loading,
+  latestBlock,
+  lowestBlock,
+  getData,
+}) {
   return (
     <>
+      <div className="row text-center border-bottom">
+        <div className="col-4">
+          <h5>Date</h5>
+        </div>
+        <div className="col-4">
+          <h5>Winner</h5>
+        </div>
+        <div className="col-4">
+          <h5>Amount</h5>
+        </div>
+      </div>
+        {winners.map((winner, index) => {
+          return (
+            <div key={index} className="row text-center py-2 border-bottom">
+              <div className="col-4"><p>{winner.date}</p></div>
+              <div className="col-4"><p>{winner.winner}</p></div>
+              <div className="col-4"><p>{winner.amount}</p></div>
+            </div>
+          );
+        })}
       <div className="row">
-        <div className="col-12">
-          <div className="table-responsive">
-            <table className="table table-striped table-sm">
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Winner</th>
-                  <th>Prize</th>
-                </tr>
-              </thead>
-              <tbody>
-                {winners.map((winner, index) => {
-                  return (
-                    <tr key={index}>
-                      <td><p>{winner.date}</p></td>
-                      <td><p>{winner.winner}</p></td>
-                      <td><p>{winner.amount}</p></td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
-          {loading ? <p>Loading...</p> : 
-          latestBlock > lowestBlock ?
+        {loading ? (
+          <p>Loading...</p>
+        ) : latestBlock > lowestBlock ? (
           <button className="btn btn-primary" onClick={getData}>
             Load More
-          </button> : <p>No more winners</p>
-          }
-          </div>
-        </div>
-      {/* div with centered content */}
+          </button>
+        ) : (
+          <p>No more winners</p>
+        )}
+      </div>
     </>
   );
 }

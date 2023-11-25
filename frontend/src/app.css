@@ -199,6 +199,10 @@
   );
 }
 
+.form-group {
+  padding: 8px 0;
+}
+
 
 .card {
   color: #434343;
@@ -207,7 +211,7 @@
   box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.7);
   padding: 20px;
   margin-bottom: 20px;
-  border: #0b5a10 2px solid;
+  border: #0b5a10 1px solid;
 }
 
 .chain {
@@ -230,6 +234,9 @@ p {
 
 /* Styles for screens smaller than 768px */
 @media (max-width: 767px) {
+  .form-group {
+    padding: 0;
+  }
   .staker-headers {
     font-size: 15px;
     line-height: 1.4;

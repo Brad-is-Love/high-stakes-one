@@ -186,9 +186,9 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
             </div>
           </div>
           <div className="col-md-6  pb-4 text-md-right">
-          <div className="staker-headers">Staked on High Stakes: {totalStaked} ONE</div>
-          <div className="staker-headers">Your Stake: {staked} ONE</div>
-          {<div className="staker-headers">Your Chance of Winning: {userStaked > 0 ? yourOdds : "0"}</div>}
+          <div className="staker-headers">Staked on High Stakes: <strong>{totalStaked} ONE</strong></div>
+          <div className="staker-headers">Your Stake: <strong>{staked} ONE</strong></div>
+          {<div className="staker-headers">Your Chance of Winning: <strong>{userStaked > 0 ? yourOdds : "zero"}</strong></div>}
             {drawButton ? (
               nextDrawTime === "assignPrize" ? (
                 <TransactionButton
@@ -207,7 +207,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
               )
             ) : (
               <div className="staker-headers">
-                Next draw in: {days} {hours} {min}
+                Next draw in: <strong>{days} {hours} {min}</strong>
               </div>
             )}
           </div>

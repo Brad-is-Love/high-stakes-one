@@ -4,7 +4,7 @@ import { Logo } from "./Logo";
 export function Description({displayMessage}) {
 let addressMessage = " and your address has not been whitelisted"
   return (
-    <div className="container bg-white shadow rounded mx-3">
+    <div className="card m-5">
       <div className="col-12 p-3 text-center">
         <div className="row justify-content-center">
           <Logo />
