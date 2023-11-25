@@ -8,7 +8,7 @@ import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, lastWinner, lastPrize, ownerOf}) {
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
 
 //run countdown timer every second
   React.useEffect(() => {
@@ -16,9 +16,6 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
     getLatestBlock();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
-
-  const readableWinner = lastWinner ? lastWinner : "";
-  const readablePrize = lastPrize ? lastPrize.toFixed(2) : "";
 
   const [selectedOption, setSelectedOption] = useState("enter");
   //date states
@@ -37,6 +34,11 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const [latestBlock, setLatestBlock] = useState(0);
   const [loading, setLoading] = useState(false);
   const API_KEY = process.env.REACT_APP_COVALENT_API_KEY;
+
+  const staked = userStaked ? parseFloat(ethers.utils.formatEther(userStaked)) : 0;
+  const yourOddsInverted = totalStaked/staked;
+  const yourOdds = "1/" + yourOddsInverted.toFixed(0);
+
 
   let headers = new Headers();
   headers.set("Authorization", "Bearer " + API_KEY);
@@ -100,7 +102,6 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
       setWinners(prevWinners => [...prevWinners, ...newWinners]);
       setLatestBlock(prevBlock => {
         let newLatestBlock = startBlock;
-        console.log("newLatestBlock", newLatestBlock); // This should now log the updated value
     
         // Return the new state
         return newLatestBlock;
@@ -175,20 +176,20 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
     <>
       <div className="card p-4 mb-5 mt-1">
         <div className="row">
-          <div className="col-12">
-            <h4 className="text-center">Sweepstakes</h4>
-            <p className="text-md-center">
-              Stake in a pool with other players. A lucky winner
-              gets the rewards!
-            </p>
+          <div className="col-md-6 pb-4">
+            <h3>Sweepstakes</h3>
+            <div className="staker-headers">
+              Stake your ONE in a pool.
+            </div>
+            <div className="staker-headers"> 
+              A weekly winner scoops the rewards!
+            </div>
           </div>
-        </div>
-        <div className="row pb-2">
-          <div className="col-md-6">
-            <h6>Staked on High Stakes: {totalStaked} ONE</h6>
-          </div>
-          <div className="col-md-6 text-md-right">
-            {lastWinner ? (<p><strong>{readableWinner}</strong> won <strong>{readablePrize}</strong></p>) : drawButton ? (
+          <div className="col-md-6  pb-4 text-md-right">
+          <div className="staker-headers">Staked on High Stakes: {totalStaked} ONE</div>
+          <div className="staker-headers">Your Stake: {staked} ONE</div>
+          {<div className="staker-headers">Your Chance of Winning: {userStaked > 0 ? yourOdds : "0"}</div>}
+            {drawButton ? (
               nextDrawTime === "assignPrize" ? (
                 <TransactionButton
                   txBeingSent={txBeingSent}
@@ -205,9 +206,9 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
                 />
               )
             ) : (
-              <h6>
+              <div className="staker-headers">
                 Next draw in: {days} {hours} {min}
-              </h6>
+              </div>
             )}
           </div>
         </div>

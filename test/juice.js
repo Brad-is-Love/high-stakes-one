@@ -42,15 +42,15 @@ describe("draw time to 30s", function () {
 });
 
 describe("juice the Prize Pool", function () {
-  it("stakingHelper accepts 515 ONE", async function () {
+  it("stakingHelper accepts 1031 ONE", async function () {
     expect(await stakingHelper.extraFunds()).to.equal(
       ethers.utils.parseEther("0")
     );
     await stakingHelper.juicePrizePool({
-      value: ethers.utils.parseEther("515"),
+      value: ethers.utils.parseEther("1031"),
     });
     expect(await stakingHelper.extraFunds()).to.equal(
-      ethers.utils.parseEther("515")
+      ethers.utils.parseEther("1031")
     );
   });
 });

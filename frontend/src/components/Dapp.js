@@ -13,6 +13,7 @@ import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { Nav } from "./Nav";
 import { Description } from "./Description";
+import { Socials } from "./Socials";
 
 // const TESTNET = {
 //   ID: 1666700000,
@@ -85,17 +86,24 @@ export class Dapp extends React.Component {
 
   render() {
     if (window.ethereum === undefined) {
-      return <NoWalletDetected />;
+      return (
+        <>
+          <NoWalletDetected />
+          <Socials />        
+        </>
+      )
     }
 
     if (!this.state.selectedAddress || this.state.networkError) {
       return (
-        <ConnectWallet
-          connectWallet={() => this._connectWallet()}
-          networkError={this.state.networkError}
-          dismiss={() => this._dismissNetworkError()}
-          switchChain={() => this._switchChain()}
-        />
+        <>
+          <ConnectWallet
+            connectWallet={() => this._connectWallet()}
+            networkError={this.state.networkError}
+            dismiss={() => this._dismissNetworkError()}
+            switchChain={() => this._switchChain()}
+          />       
+        </>
       );
     }
 
@@ -105,7 +113,9 @@ export class Dapp extends React.Component {
         <div className="connectWalletBackground"></div>
           <div className="d-flex align-items-center justify-content-center flex-column p-3">
           <Description displayMessage={true} />
+          <Socials />
         </div>
+        
         </>
       );
     }
@@ -119,7 +129,6 @@ export class Dapp extends React.Component {
         <div className="background"></div>
         <Nav
           selectedAddress={this.state.selectedAddress}
-          userStaked={this.state.userStaked}
         />
         <div className="app mt-md-5">
           <div className="container p-3 mt-2">
@@ -168,7 +177,9 @@ export class Dapp extends React.Component {
               </div>
             </div>
           </div>
+          <Socials />
         </div>
+
       </>
     );
   }
@@ -198,7 +209,6 @@ export class Dapp extends React.Component {
     }
 
     window.ethereum.on("chainChanged", (chainId) => {
-      console.log("chain changed to:", chainId);
       this._stopPollingData();
       this._resetState();
       this._connectWallet();
@@ -457,7 +467,6 @@ export class Dapp extends React.Component {
         method: "eth_chainId",
       })
       .then((chainId) => {
-        console.log("chainId:", chainId);
         if (chainId !== `0x${MAINNET.ID.toString(16)}`) {
           this.setState({
             networkError: "Please switch to the Harmony Mainnet",

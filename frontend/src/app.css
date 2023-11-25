@@ -38,6 +38,7 @@
 
 .container {
   margin-top: 56px;
+  margin-bottom: 56px;
 }
 
 .connectWalletBackground {
@@ -186,9 +187,27 @@
   font-family: "Dancing Script", cursive;
 }
 
-.slogan {
-  z-index: -1;
-  letter-spacing: 6px; 
+.social {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  background: linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.5) 0%,
+    rgba(255, 255, 255, 0) 100%
+  );
+}
+
+
+.card {
+  color: #434343;
+  background-color: #ffffff;
+  border-radius: 15px;
+  box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.7);
+  padding: 20px;
+  margin-bottom: 20px;
+  border: #0b5a10 2px solid;
 }
 
 .chain {
@@ -204,8 +223,17 @@ p {
   line-height: 1.5;
 }
 
+.staker-headers {
+  font-size: 17px;
+  line-height: 1.5;
+}
+
 /* Styles for screens smaller than 768px */
 @media (max-width: 767px) {
+  .staker-headers {
+    font-size: 15px;
+    line-height: 1.4;
+  }
   p {
     font-size: 15px;
     line-height: 1.4;

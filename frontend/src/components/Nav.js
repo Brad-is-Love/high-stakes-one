@@ -1,8 +1,6 @@
 import React from "react";
-import { ethers } from "ethers";
 
 export function Nav(props) {
-  const readableStaked = props.userStaked ? parseInt(ethers.utils.formatEther(props.userStaked)) : 0
   return (
     <>
       <div className="navbar navbar-expand-lg navbar-dark custom-nav-bg">
@@ -15,9 +13,6 @@ export function Nav(props) {
               {props.selectedAddress.slice(0, 4)}...
               {props.selectedAddress.slice(-4)}
             </b>
-
-          <br/>
-          Your stake: {readableStaked} ONE
           </span>
         </div>
       </div>
