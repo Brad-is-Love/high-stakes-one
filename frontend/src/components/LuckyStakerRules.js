@@ -24,6 +24,18 @@ export function LuckyStakerRules({ stakingHelperAddress, sweepStakesAddress }) {
           {!isCollapsed && (
             <>
               <p className="pt-2">
+                Sweepstakes is a no-loss savings lottery inspired by{" "}
+                <a
+                  href="https://en.wikipedia.org/wiki/Bonus_Bonds"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Bonus Bonds
+                </a>
+                , a savings scheme in New Zealand that encouraged saving by
+                giving interest as prizes.
+              </p>
+              <p className="pt-2">
                 Stake ONE to enter the lottery. Every ONE you stake is a chance
                 to win.
               </p>
@@ -68,18 +80,6 @@ export function LuckyStakerRules({ stakingHelperAddress, sweepStakesAddress }) {
                     </a>
                   </li>
                 </ul>
-              </p>
-              <p className="pt-2">
-                Sweepstakes is a no-loss savings lottery inspired by{" "}
-                <a
-                  href="https://en.wikipedia.org/wiki/Bonus_Bonds"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Bonus Bonds
-                </a>
-                , a savings scheme in New Zealand that encouraged saving by
-                giving interest as prizes.
               </p>
               <p>
                 The Sweepstakes contract holds ticket info and draws the

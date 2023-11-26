@@ -227,6 +227,27 @@ p {
   line-height: 1.5;
 }
 
+.prize-table{
+  margin-top: 3px;
+  background-color: #fff;
+  border-bottom: #000000 1px solid;
+  border-top: #0b5a10;
+}
+
+.prize-container {
+  padding: 0 20px 20px 20px;
+}
+
+.prize-headers{
+  font-size: 40px;
+  color: #fff;
+  background-color: #303030;
+  font-weight: 600;
+  font-family: "Dancing Script", cursive;
+  border-radius: 15px 15px 0 0;
+  padding-top: 15px;
+}
+
 .staker-headers {
   font-size: 17px;
   line-height: 1.5;
@@ -235,6 +256,9 @@ p {
 /* Styles for screens smaller than 768px */
 @media (max-width: 767px) {
   .form-group {
+    padding: 0;
+  }
+  .prize-container {
     padding: 0;
   }
   .staker-headers {
