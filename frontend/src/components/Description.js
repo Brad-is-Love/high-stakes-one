@@ -3,14 +3,14 @@ import { Logo } from "./Logo";
 
 export function Description() {
   return (
-    <div className="card m-5">
+    <div className="card m-sm-5">
       <div className="col-12 p-3 text-center">
         <div className="row justify-content-center">
           <Logo />
         </div>
         <div className="row justify-content-center">
           <div className="col-12">
-            <h4 className="pb-5">High Stakes has just launched on Harmony Mainnet!</h4>
+            <h4 className="pb-4">High Stakes has just launched on Harmony Mainnet!</h4>
 
             <p>
               Our first game, Sweepstakes, is a no-loss savings lottery inspired

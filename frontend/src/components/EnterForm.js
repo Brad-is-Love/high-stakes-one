@@ -1,8 +1,7 @@
 import React, { useState } from "react";
 import { TransactionButton } from "./TransactionButton";
-import { ethers } from "ethers";
 
-export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
+export function EnterForm({ balance, stake, txBeingSent }) {
   const handleSubmit = (event) => {
     event.preventDefault();
     // Handle form submission logic for Enter option
@@ -13,7 +12,6 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
   const [msgDisplay, setMsgDisplay] = useState("none");
   const [msg, setMsg] = useState("");
 
-  const stakedByUser = userStaked ? ethers.utils.formatEther(userStaked) : 0;
   const userMax = balance - 1
   const maxTickets = userMax
 
@@ -82,7 +80,6 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
           </div>
         </div>
       </div>
-      {/* div with centered content */}
       <div className="text-center text-md-left pt-2">
           <TransactionButton txBeingSent={txBeingSent} loadingText={"Stake"} functionToCall={handleStakeClick} buttonText={"Stake " + tickets + " ONE to enter"} />
       </div>

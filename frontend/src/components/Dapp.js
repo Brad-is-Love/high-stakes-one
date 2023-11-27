@@ -12,7 +12,6 @@ import { LuckyStaker } from "./LuckyStaker";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { Nav } from "./Nav";
-import { Description } from "./Description";
 import { Socials } from "./Socials";
 
 // const TESTNET = {

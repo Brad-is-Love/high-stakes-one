@@ -7,7 +7,7 @@ export function NoWalletDetected() {
       <div className="connectWalletBackground"></div>
       <div className="container">
       <Description />
-      <div className="card m-5">
+      <div className="card m-sm-5">
         <div className="col-12 text-center">
           <p>
             No wallet was detected. <br />
