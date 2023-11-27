@@ -42,15 +42,15 @@ describe("draw time to 30s", function () {
 });
 
 describe("juice the Prize Pool", function () {
-  it("stakingHelper accepts 1031 ONE", async function () {
+  it("stakingHelper accepts 15463 ONE", async function () {
     expect(await stakingHelper.extraFunds()).to.equal(
       ethers.utils.parseEther("0")
     );
     await stakingHelper.juicePrizePool({
-      value: ethers.utils.parseEther("1031"),
+      value: ethers.utils.parseEther("15463"),
     });
     expect(await stakingHelper.extraFunds()).to.equal(
-      ethers.utils.parseEther("1031")
+      ethers.utils.parseEther("15463")
     );
   });
 });
@@ -87,10 +87,17 @@ describe("owner collects fees", function () {
   });
 });
 
-describe("draw time to 23h", function () {
-  it("set draw period to 23h", async function () {
-    await sweepstakes.setDrawPeriod(23*60*60);
-    expect(await sweepstakes.drawPeriod()).to.equal(23*60*60);
+describe("draw time to 6d+23h+30m", function () {
+  it("set draw period to 6d+23h+30m", async function () {
+    await sweepstakes.setDrawPeriod(6*24*60*60+23*60*60+30*60);
+    expect(await sweepstakes.drawPeriod()).to.equal(603000);
+  });
+});
+
+describe("set minstake to 20 ONE", function () {
+  it("set minstake to 20 ONE", async function () {
+    await sweepstakes.setMinStake(20);
+    expect(await sweepstakes.minStake()).to.equal(20);
   });
 });
 

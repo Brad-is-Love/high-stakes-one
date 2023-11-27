@@ -9,17 +9,6 @@ export function Prizes({
 }) {
   return (
     <div className=" prize-container">
-      {/* <div className="row text-center border-bottom prize-headers">
-        <div className="col-4 px-0">
-          <h5>Date</h5>
-        </div>
-        <div className="col-4 px-0">
-          <h5>Winner</h5>
-        </div>
-        <div className="col-4 px-0">
-          <h5>Amount</h5>
-        </div>
-      </div> */}
         {winners.map((winner, index) => {
           return (
             <div key={index} className="row text-center py-2 prize-table border-top">

@@ -14,9 +14,8 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
   const [msg, setMsg] = useState("");
 
   const stakedByUser = userStaked ? ethers.utils.formatEther(userStaked) : 0;
-  const maxAlpha = 500;
-  const userMax = balance - 1 < 0 ? 0 : balance - 1;
-  const maxTickets = Math.min(maxAlpha - stakedByUser, userMax);
+  const userMax = balance - 1
+  const maxTickets = userMax
 
   const handleTicketsChange = (event) => {
     setTickets(event.target.value);
@@ -29,13 +28,8 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
   };
 
   const handleMaxClick = () => {
-    if(userMax < 100){
-      setMsg("You need at least 100 ONE to stake.")
-    } else if (maxTickets < 100){
-      setMsg("You have already staked the maximum for the alpha trial.")
-    } else if (maxTickets === maxAlpha){
-      setTickets(maxTickets);
-      setMsg("The maximum stake for the alpha is " + maxAlpha + " ONE.")
+    if(userMax < 20){
+      setMsg("You need at least 20 ONE to stake.")
     } else {
       setTickets(maxTickets);
       setMsg("We saved you ONE for gas.")
@@ -44,12 +38,8 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
   };
 
   const handleStakeClick = () => {
-    if(tickets < 100){
-      setMsg("You need to stake at least 100 ONE.")
-      setMsgDisplay("block");
-      return;
-    } else if (tickets > maxTickets){
-      setMsg("Max stake is " + maxAlpha + " for the alpha")
+    if(tickets < 20){
+      setMsg("You need to stake at least 20 ONE.")
       setMsgDisplay("block");
       return;
     }
@@ -68,10 +58,10 @@ export function EnterForm({ balance, stake, txBeingSent, userStaked }) {
                 type="number"
                 className="form-control"
                 id="tickets"
-                min={100}
+                min={20}
                 max={maxTickets}
                 step="any"
-                placeholder="Min 100 ONE"
+                placeholder="Min 20 ONE"
                 value={tickets}
                 onChange={handleTicketsChange}
               />

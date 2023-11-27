@@ -43,22 +43,6 @@ const MAINNET = {
 };
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
-const whitelistedAddresses = [
-  "0x7188cc2282c105dfce5249e6a909db71b914b25b",
-  "0x815e2d7607cea807622130e85309385ed3bb814b",
-  "0x095cc788b688167a7ac0fea5ca56948e9f9c5f83",
-  "0x7a504f7b53f639cc7f76828622915757c335cb7a",
-  "0xfc49b14da27a9d6054a12460a15d1587f48ff712",
-  "0xac85ec193e534cd5de30a56dcebbcf9325911e17",
-  "0x8065e83469c2ad5ad61349652fe9cd016bce0f8f",
-  "0x7e8dcfcb5f028dfe60aed91f6f3dfdcafc75ffb4",
-  "0x40565fd80adb60da9747780a2d0b237fdf776f19",
-  "0x106bbe5ab25afb431c0f2231b33e1eac61d1253d",
-  "0xd3460a59a029d176d389ae64caa1354567f69f56",
-  "0x591a6748b47564b91715352bd2e9d028102de7c7",
-  "0xd76d5e2e8acf75ca91d87f4b3bbc3e3a9137ec18",
-];
-
 export class Dapp extends React.Component {
   constructor(props) {
     super(props);
@@ -103,19 +87,6 @@ export class Dapp extends React.Component {
             dismiss={() => this._dismissNetworkError()}
             switchChain={() => this._switchChain()}
           />       
-        </>
-      );
-    }
-
-    if (!whitelistedAddresses.includes(this.state.selectedAddress.toLowerCase())) {
-      return (
-        <>
-        <div className="connectWalletBackground"></div>
-          <div className="d-flex align-items-center justify-content-center flex-column p-3">
-          <Description displayMessage={true} />
-          <Socials />
-        </div>
-        
         </>
       );
     }
