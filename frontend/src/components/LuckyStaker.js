@@ -8,7 +8,7 @@ import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, extraFunds, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
 
 //run countdown timer every second
   React.useEffect(() => {
@@ -38,7 +38,9 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const staked = userStaked ? parseFloat(ethers.utils.formatEther(userStaked)) : 0;
   const yourOddsInverted = totalStaked/staked;
   const yourOdds = "1/" + yourOddsInverted.toFixed(0);
-
+  //get the next prize amount
+  const secondsInAYear = 24*60*60*365;
+  const nextPrize = (drawPeriod/secondsInAYear) * (0.075 * totalStaked) + extraFunds;
 
   let headers = new Headers();
   headers.set("Authorization", "Bearer " + API_KEY);
@@ -184,11 +186,12 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
             <div className="staker-headers"> 
               A weekly winner scoops the rewards!
             </div>
+            <div className="staker-headers">Staked on High Stakes: <strong>{totalStaked} ONE</strong></div>
           </div>
           <div className="col-md-6  pb-4 text-md-right">
-          <div className="staker-headers">Staked on High Stakes: <strong>{totalStaked} ONE</strong></div>
           <div className="staker-headers">Your Stake: <strong>{staked} ONE</strong></div>
-          {<div className="staker-headers">Your Chance of Winning: <strong>{userStaked > 0 ? yourOdds : "zero"}</strong></div>}
+          {<div className="staker-headers">Your Chances: <strong>{userStaked > 0 ? yourOdds : "Gotta be in to win!"}</strong></div>}
+          <div className="staker-headers">Next Prize: ~<strong>{nextPrize.toFixed(0)} ONE</strong></div>
             {drawButton ? (
               nextDrawTime === "assignPrize" ? (
                 <TransactionButton
