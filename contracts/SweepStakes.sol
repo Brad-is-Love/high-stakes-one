@@ -267,6 +267,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     }
 }
 
+//StakingHelper uses the staking precompiles from here: https://github.com/MaxMustermann2/harmony-staking-precompiles
 contract StakingHelper is StakingContract {
     address[] public validators;
     address public owner;
