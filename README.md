@@ -1,6 +1,6 @@
 # High Stakes
 
-A staking lottery contract system and dAapp. Developed first for Harmony One, but can be used on any EVM compatible chain.
+A no-loss staking lottery contract system and dAapp. Developed first for Harmony One, but can be used on any EVM compatible chain.
 Forked from Hardhat Boilerplate.
 
 ## Quick start
