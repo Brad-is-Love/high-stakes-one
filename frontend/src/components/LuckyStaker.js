@@ -87,8 +87,13 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
         );
         const date = event.block_signed_at.slice(0, 10);
         const winningToken = decoded._winner.toString();
-        const winnerFullAddress = await ownerOf(winningToken);
-        const winner = winnerFullAddress.toLowerCase() === selectedAddress.toLowerCase() ? "YOU!" : winnerFullAddress.slice(0, 4) + "..." + winnerFullAddress.slice(-4);
+        let winner = 'not found';
+        try {
+          const winnerFullAddress = await ownerOf(winningToken);
+          winner = winnerFullAddress.toLowerCase() === selectedAddress.toLowerCase() ? "YOU!" : winnerFullAddress.slice(0, 4) + "..." + winnerFullAddress.slice(-4);
+        } catch (error) {
+          console.error('Error fetching data:', error);
+        }
         const amount = parseFloat(ethers.utils.formatEther(decoded._amount)).toFixed(2);
         
         dates.push(date);
