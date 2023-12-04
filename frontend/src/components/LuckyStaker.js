@@ -40,7 +40,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const yourOdds = "1/" + yourOddsInverted.toFixed(0);
   //get the next prize amount
   const secondsInAYear = 24*60*60*365;
-  const nextPrize = (drawPeriod/secondsInAYear) * (0.075 * totalStaked) + extraFunds;
+  const nextPrize = ((drawPeriod/secondsInAYear) * (0.075 * totalStaked) + extraFunds)*0.96;
 
   let headers = new Headers();
   headers.set("Authorization", "Bearer " + API_KEY);
