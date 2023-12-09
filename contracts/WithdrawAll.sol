@@ -16,11 +16,11 @@ contract WithdrawAll {
     address public owner;
     address public stakingHelper;
     uint256 public totalStaked;
+    address [] public zeros;
 
 // add inputs to map existing tokens values
-    constructor(uint256 _totalStaked, address _stakingHelper) {
+    constructor(address _stakingHelper) {
         owner = msg.sender;
-        totalStaked = _totalStaked;
         stakingHelper = _stakingHelper;
     }
 
@@ -35,11 +35,15 @@ contract WithdrawAll {
     }
 
     function unstake(address _holder, uint256 _amount, uint256 _tokenId) external onlyStaking {
-        totalStaked -= _amount;
+        totalStaked += _amount;
+        totalStaked += _tokenId;
+        zeros.push(_holder);
+        StakingHelperInterface(stakingHelper).collect();
     }
 
     function withdraw(uint256 _tokenId) onlyOwner external {
         //amount is eth balance of stakingHelper
+        totalStaked += _tokenId;
         uint256 amount = stakingHelper.balance;
         StakingHelperInterface(stakingHelper).payUser(msg.sender, amount);
     }
@@ -54,7 +58,7 @@ contract WithdrawAll {
 }
 
 interface StakingHelperInterface {
-    function unstake(uint256 _amount, uint256 _tokenId) external;
-
     function payUser(address _user, uint256 _amount) external;
+
+    function collect() external;
 }

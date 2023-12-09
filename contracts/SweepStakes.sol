@@ -30,7 +30,6 @@ contract SweepStakesNFTs is ERC721Enumerable {
     uint256 private lastWinner; //last winner assigned to private variable on draw and revealed on assignPrize to prevent malicious draws
     uint256 public lastPrize;
     bool public prizeAssigned;
-    bool internal locked;
 
     struct tokenInfo {
         uint256 staked;
@@ -40,8 +39,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
 
     mapping(uint256 => tokenInfo) public tokenIdToInfo;
 
-// add inputs to map existing tokens values
-    constructor(address[] memory _holders, uint256[] memory _holdings) ERC721("Sweepstakes NFTs", "SSN") {
+    constructor() ERC721("Sweepstakes NFTs", "SSN") {
         tokenCounter = 0;
         owner = msg.sender;
         beneficiary = msg.sender;
@@ -49,18 +47,15 @@ contract SweepStakesNFTs is ERC721Enumerable {
         lastDrawTime = block.timestamp;
         prizeAssigned = true;
         pageSize = 100;
-        for(uint256 i = 0; i < _holders.length; i++){
-            _safeMint(_holders[i], tokenCounter);
-            addStake(tokenCounter, _holdings[i]);
-            tokenCounter++;
-        }
+        StakingHelper sh = new StakingHelper(address(this), owner);
+        stakingHelper = address(sh);
     }
 
     event Enter(uint256 indexed _tokenId, uint256 _amount);
     event Unstake(uint256 indexed _tokenId, uint256 _amount);
     event Withdraw(uint256 indexed _tokenId, uint256 _amount);
     event DrawWinner();
-    event WinnerAssigned(uint256 winningTicket, uint256 indexed _winner, uint256 _amount);
+    event WinnerAssigned(uint256 indexed _winner, uint256 _amount);
 
     modifier onlyOwner() {
         require(msg.sender == owner, "Only owner");
@@ -119,8 +114,6 @@ contract SweepStakesNFTs is ERC721Enumerable {
     //withdraw - will send the unstaked amount to the user
     //if staked is zero, this will burn the token
     function withdraw(uint256 _tokenId) external {
-        require(locked == false, "No reentrancy");
-        locked = true;
         require(tokenIdToInfo[_tokenId].withdrawEpoch <= StakingHelper(stakingHelper).epoch(), "Must wait until undelegation complete");
         require(_isApprovedOrOwner(msg.sender, _tokenId), "Not owner or approved");
         uint256 amount = tokenIdToInfo[_tokenId].unstaked;
@@ -133,7 +126,6 @@ contract SweepStakesNFTs is ERC721Enumerable {
         StakingHelper(stakingHelper).payUser(msg.sender, amount);
 
         emit Withdraw(_tokenId, amount);
-        locked = false;
     }
 
     function burn(uint256 _tokenId) internal {
@@ -146,8 +138,12 @@ contract SweepStakesNFTs is ERC721Enumerable {
     // We draw the winner and assign to a private variable to prevent malicious draws
     function drawWinner() external {
         require(block.timestamp > lastDrawTime + drawPeriod, "Too soon");
-        require(prizeAssigned == true, "Prize not assigned");
-        lastWinner = vrf() % (totalStaked - 1);
+        if (!prizeAssigned) {
+            assignPrize();
+        }
+        uint256 index = vrf() % (totalStaked - 1);
+        lastWinner = tokenAtIndex(index);
+        lastPrize = StakingHelper(stakingHelper).collect();
         lastDrawTime = block.timestamp;
         prizeAssigned = false;
 
@@ -155,23 +151,21 @@ contract SweepStakesNFTs is ERC721Enumerable {
     }
 
     // Assigns the prize to the winner and re-stakes it
-    function assignPrize() public {
+    function assignPrize() public returns (uint256) {
         require(prizeAssigned == false);
         prizeAssigned = true;
         require(block.timestamp > lastDrawTime, "can't execute with draw");
-        lastPrize = StakingHelper(stakingHelper).collect();
-        if(lastWinner > totalStaked-1){
-            lastWinner = lastWinner % (totalStaked - 1);
-        }
-        uint256 amount = (lastPrize * (10000 - prizeFee)) / 10000;
-        uint256 winningToken = tokenAtIndex(lastWinner);
+        //auto compound prizes
+        uint amount = (lastPrize * (10000 - prizeFee)) / 10000;
         feesToCollect += (lastPrize * prizeFee) / 10000;
         lastPrize = 0;
         //auto compound prizes
-        addStake(winningToken, amount);
+        addStake(lastWinner, amount);
         StakingHelper(stakingHelper).autoCompound(amount);
 
-        emit WinnerAssigned(lastWinner, winningToken, amount);
+        emit WinnerAssigned(lastWinner, amount);
+
+        return lastWinner;
     }
 
     function addStake(uint256 _tokenId, uint256 _amount) internal {
@@ -247,7 +241,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         minStake = _minStake;
     }
 
-    //The harmony built-in VRF https://docs.harmony.one/home/developers/harmony-specifics/tools/harmony-vrf
+    //The harmony built-in VRF
     function vrf() internal view returns (uint256 result) {
         uint256[1] memory bn;
         bn[0] = block.number;
@@ -276,14 +270,11 @@ contract StakingHelper is StakingContract {
     uint256 public minDelegation = 100 ether;
     uint256 public moving;
     uint256 public extraFunds;
-    bool internal locked;
     mapping(address => uint256) public delegatedToValidator;
 
-    constructor(address _sweepstakes, address _owner, uint256 _stake, address[] memory _validators) StakingContract() payable {
+    constructor(address _sweepstakes, address _owner) StakingContract() {
         owner = _owner;
         sweepstakes = _sweepstakes;
-        validators = _validators;
-        spreadStake(_stake);
     }
 
     event MoveStarted(uint256 _amount);
@@ -299,25 +290,18 @@ contract StakingHelper is StakingContract {
         _;
     }
 
-    modifier noReentrancy() {
-        require(!locked, "No reentrancy");
-        locked = true;
-        _;
-        locked = false;
-    }
-
     // Can add funds to the prize pool for the next draw
     function juicePrizePool() public payable {
         extraFunds += msg.value;
     }
 
-    function enter(uint256 _amount) external payable noReentrancy {
+    function enter(uint256 _amount) external payable {
         require(msg.value == _amount, "Wrong Amount");
         SweepStakesNFTs(sweepstakes).enter(msg.sender, _amount);
         spreadStake(_amount);
     }
 
-    function addToToken(uint256 _amount, uint256 _tokenId) external payable noReentrancy {
+    function addToToken(uint256 _amount, uint256 _tokenId) external payable {
         require(msg.value == _amount, "Wrong Amount");
         SweepStakesNFTs(sweepstakes).addToToken(msg.sender, _amount, _tokenId);
         spreadStake(_amount);
@@ -327,7 +311,7 @@ contract StakingHelper is StakingContract {
         spreadStake(_amount);
     }
 
-    function unstake(uint256 _amount, uint256 _tokenId) external noReentrancy {
+    function unstake(uint256 _amount, uint256 _tokenId) external {
         require(moving == 0, "Can't unstake while changing validators");
         SweepStakesNFTs(sweepstakes).unstake(msg.sender, _amount, _tokenId);
         uint256 toUnstake = _amount;
@@ -384,7 +368,7 @@ contract StakingHelper is StakingContract {
     }
 
     //anyone can close out the rebalance after the epoch has passed
-    function rebalanceEnd() external noReentrancy {
+    function rebalanceEnd() external {
         require(moving > 0, "Nothing to move");
         require(epoch() > initiateMoveEpoch, "Epoch not passed");
         spreadStake(moving);
