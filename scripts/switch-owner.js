@@ -60,4 +60,4 @@ describe("try onlyOwner functions with previous owner", function () {
 
 
 
-// npx hardhat test test/switch-owner.js --network mainnet
+// npx hardhat run scripts/switch-owner.js --network mainnet

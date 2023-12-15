@@ -56,4 +56,4 @@ describe("owner collects fees", function () {
   });
 });
 
-// npx hardhat test test/juice.js --network mainnet
+// deploy with npx hardhat run scripts/juice.js --network mainnet

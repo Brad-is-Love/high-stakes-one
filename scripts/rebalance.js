@@ -58,4 +58,4 @@ describe("finish rebalance", function () {
 
 
 
-// npx hardhat test test/rebalance.js --network mainnet
+// npx hardhat run scripts/rebalance.js --network mainnet

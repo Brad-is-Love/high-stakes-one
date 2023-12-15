@@ -143,4 +143,4 @@ describe("remove the old sh from sweepstakes", function () {
 });
 
 
-// // npx hardhat test test/redeploy.js --network testnet
+// // npx hardhat run scripts/juice.js --network mainnet
