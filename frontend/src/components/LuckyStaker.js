@@ -66,7 +66,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const getData = async (initialBlock) => {
     setLoading(true);
     let latest = !isNaN(initialBlock) ? initialBlock : latestBlock;
-    let startBlock = Math.max(latest - 500000, lowestBlock);
+    let startBlock = Math.max(latest - 900000, lowestBlock);
   
     try {
       const response = await fetch(

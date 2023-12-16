@@ -1,7 +1,7 @@
 import React from "react";
 import { Socials } from "./Socials";
 
-function ConnectDiv({ connectWallet, networkError, dismiss, switchChain }) {
+function ConnectDiv({ connectWallet, networkError, switchChain }) {
   if (networkError) {
     return (
       <div className="col-10 p-4 text-center">

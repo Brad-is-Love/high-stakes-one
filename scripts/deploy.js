@@ -1,5 +1,5 @@
 // This is a script for deploying your contracts. You can adapt it to deploy
-// deploy with npx hardhat run scripts/deploy.js --network localhost
+// deploy with npx hardhat run scripts/deploy.js --network mainnet
 
 /* on mainnet here with wrong params:
 SweepStakesNFTs address: 0x7491CC5da0336f6a88A8a4e82278Fabc84a02114
