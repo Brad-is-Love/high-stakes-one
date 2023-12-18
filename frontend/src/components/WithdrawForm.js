@@ -41,6 +41,15 @@ export function WithdrawForm({
           <p className="mb-1">{msg}</p>
         </div>
       </div>
+      {/* Instant withdraw via HSONE */}
+      <div className="row">
+        <div className="col-6">
+          <p className="mb-1">Instant withdraw via High Stakes ONE</p>
+        </div>
+      </div>
+      {/* Get XXX HSONE right now */}
+      {/* Or XXX ONE right now */}
+      {/* replace this with a form that says: Or, Unstake to withdraw 100% in ~7 days */}
       {withdrawButton && (
         <div className="text-center text-md-left pt-2">
           <TransactionButton
