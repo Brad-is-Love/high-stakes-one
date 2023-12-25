@@ -1,4 +1,4 @@
-//Testnet 1: deploy contracts and stake
+//Adds ONE from wallet to the next draw
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
@@ -34,15 +34,15 @@ describe("deploy staking helper", function () {
 });
 
 describe("juice the Prize Pool", function () {
-  it("stakingHelper accepts 2000 ONE", async function () {
+  it("stakingHelper accepts 1000 ONE", async function () {
     expect(await stakingHelper.extraFunds()).to.equal(
       ethers.utils.parseEther("0")
     );
     await stakingHelper.juicePrizePool({
-      value: ethers.utils.parseEther("2000"),
+      value: ethers.utils.parseEther("1000"),
     });
     expect(await stakingHelper.extraFunds()).to.equal(
-      ethers.utils.parseEther("2000")
+      ethers.utils.parseEther("1000")
     );
   });
 });
@@ -56,4 +56,4 @@ describe("owner collects fees", function () {
   });
 });
 
-// deploy with npx hardhat run scripts/juice.js --network mainnet
+// npx hardhat test scripts/juice.js --network mainnet

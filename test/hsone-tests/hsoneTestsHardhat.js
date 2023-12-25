@@ -2,7 +2,7 @@
 // We can run the tests on hardhat to make things easier, then duplicate on the testnet.
 
 // run with:
-// npx hardhat test test/hsone-tests/hsoneTests.js
+// npx hardhat test test/hsone-tests/hsoneTestsHardhat.js
 
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
