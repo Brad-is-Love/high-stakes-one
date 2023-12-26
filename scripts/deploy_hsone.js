@@ -1,6 +1,6 @@
 
-// deploy with npx hardhat run scripts/deploy.js --network mainnet
-
+// deploy with npx hardhat run scripts/deploy_hsone.js --network mainnet
+const sweepstakesAddress = require("../frontend/src/contracts/SweepStakesNFTs-address.json");
 const path = require("path");
 
 async function main() {
@@ -12,7 +12,7 @@ async function main() {
   );
 
   const HighStakesONE = await ethers.getContractFactory("HighStakesONE");
-  const highStakesONE = await HighStakesONE.deploy();
+  const highStakesONE = await HighStakesONE.deploy(sweepstakesAddress.address);
   await highStakesONE.deployed();
 
 

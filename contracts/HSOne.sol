@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 // That NFT can be purchased by other users for the same amount of HSONE.
 // Made Pausable in case we need to upgrade the SweepstakesNFTs contract.
 
-contract HighStakesONE is ERC20Pausable, IERC721Receiver {
+contract HighStakesONE is ERC20Pausable {
     address public sweepStakesNFTs;
     mapping (uint256 => uint256) public stakedNFTsToPrice;
     address public owner;
@@ -35,22 +35,14 @@ contract HighStakesONE is ERC20Pausable, IERC721Receiver {
         _;
     }
 
-    function onERC721Received (
-        address operator,
-        address from,
-        uint256 tokenId,
-        bytes calldata data
-    ) external pure override returns (bytes4) {
-        return this.onERC721Received.selector;
-    }
-
     // Stake an NFT from SweepstakesNFTs and receive the equal value in HSONE.
+    // Used transferFrom instead of safeTransferFrom and not make this contract an ERC721Receiver because we're not safe to receive NFTs in any other way and we're only interacting with the sweepstakesNFTs contract.
     function stakeNFT(uint256 _tokenId) external {
         uint256 price = iSweepstakesNFTs(sweepStakesNFTs).getNFTValue(_tokenId);
         require(stakedNFTsToPrice[_tokenId] == 0, "NFT is already staked");
         require(price > 0, "NFT has no value");
         uint256 tax = price * fee / FEE_DENOMINATOR;
-        iSweepstakesNFTs(sweepStakesNFTs).safeTransferFrom(msg.sender, address(this), _tokenId);
+        iSweepstakesNFTs(sweepStakesNFTs).transferFrom(msg.sender, address(this), _tokenId);
         stakedNFTsToPrice[_tokenId] = price;
         _mint(msg.sender, price-tax);
         _mint(beneficiary, tax);
@@ -59,12 +51,13 @@ contract HighStakesONE is ERC20Pausable, IERC721Receiver {
     }
 
     // Burn HSONE to receive an NFT
+    // In this case we do use safeTransferFrom to make sure the NFT is can be received by the unstaker.
     function unstakeNFT(uint256 _tokenId) external {
         uint256 price = stakedNFTsToPrice[_tokenId];
         require(price > 0, "NFT is not staked");
         stakedNFTsToPrice[_tokenId] = 0;
         _burn(msg.sender, price);
-        iSweepstakesNFTs(sweepStakesNFTs).transferFrom(address(this), msg.sender, _tokenId);
+        iSweepstakesNFTs(sweepStakesNFTs).safeTransferFrom(address(this), msg.sender, _tokenId);
 
         emit UnstakeNFT(_tokenId, price);
     }

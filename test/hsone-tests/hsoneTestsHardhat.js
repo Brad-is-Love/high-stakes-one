@@ -15,7 +15,7 @@ describe("deploy contracts", function () {
     it("deploy SweepStakesNFTs", async function () {
         SweepStakesNFTs = await ethers.getContractFactory("SweepStakesNFTs");
         // need to pass in holders and holdings here so we have some nfts to test on acc1 has 100ONE
-        sweepStakesNFTs = await SweepStakesNFTs.deploy([acc1.address, acc2.address, acc3.address],[ethers.utils.parseEther("100"), "0", ethers.utils.parseEther("300")]);
+        sweepStakesNFTs = await SweepStakesNFTs.deploy([acc1.address, acc2.address, acc3.address, acc1.address],[ethers.utils.parseEther("100"), "0", ethers.utils.parseEther("300"),ethers.utils.parseEther("100")]);
         await sweepStakesNFTs.deployed();
     });
     it("deploy HighStakesONE", async function () {
@@ -27,7 +27,7 @@ describe("deploy contracts", function () {
 
 describe("check acc1 has 100ONE nft", function () {
     it("check acc1 has an nft", async function () {
-        expect(await sweepStakesNFTs.balanceOf(acc1.address)).to.equal(1);
+        expect(await sweepStakesNFTs.balanceOf(acc1.address)).to.equal(2);
     });
     it("check it has 100ONE", async function () {
         expect(await sweepStakesNFTs.getNFTValue(0)).to.equal(ethers.utils.parseEther("100"));
@@ -99,7 +99,7 @@ describe("check HSONE set up", function () {
     it("can stake", async function () {
         await sweepStakesNFTs.connect(acc1).approve(highStakesONE.address, 0);
         await highStakesONE.connect(acc1).stakeNFT(0);
-        expect(await sweepStakesNFTs.balanceOf(acc1.address)).to.equal(0);
+        expect(await sweepStakesNFTs.balanceOf(acc1.address)).to.equal(1);
         expect(await sweepStakesNFTs.balanceOf(highStakesONE.address)).to.equal(1);
         expect(await sweepStakesNFTs.ownerOf(0)).to.equal(highStakesONE.address);
         expect(await highStakesONE.totalSupply()).to.equal(ethers.utils.parseEther("100"));
@@ -190,3 +190,15 @@ describe("check HSONE set up", function () {
         expect(await highStakesONE.balanceOf(acc3.address)).to.equal(ethers.utils.parseEther("298.8"));
     });
  });
+
+ describe("deploy another NFT and try to send it", function () {
+    it("deploy SSN", async function () {
+        SSN = await ethers.getContractFactory("SweepStakesNFTs");
+        // need to pass in holders and holdings here so we have some nfts to test on acc1 has 100ONE
+        sSN = await SSN.deploy([owner.address],[ethers.utils.parseEther("100")]);
+        await sSN.deployed();
+    });
+    it("can't send different NFT to HSONE", async function () {
+        await expect(sSN["safeTransferFrom(address,address,uint256)"](owner.address, highStakesONE.address, 0)).to.be.revertedWith("ERC721: transfer to non ERC721Receiver implementer");
+    });
+});
