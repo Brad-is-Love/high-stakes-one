@@ -33,19 +33,19 @@ describe("deploy staking helper", function () {
   });
 });
 
-describe("juice the Prize Pool", function () {
-  it("stakingHelper accepts 2000 ONE", async function () {
-    expect(await stakingHelper.extraFunds()).to.equal(
-      ethers.utils.parseEther("0")
-    );
-    await stakingHelper.juicePrizePool({
-      value: ethers.utils.parseEther("2000"),
-    });
-    expect(await stakingHelper.extraFunds()).to.equal(
-      ethers.utils.parseEther("2000")
-    );
-  });
-});
+// describe("juice the Prize Pool", function () {
+//   it("stakingHelper accepts 2000 ONE", async function () {
+//     expect(await stakingHelper.extraFunds()).to.equal(
+//       ethers.utils.parseEther("0")
+//     );
+//     await stakingHelper.juicePrizePool({
+//       value: ethers.utils.parseEther("2000"),
+//     });
+//     expect(await stakingHelper.extraFunds()).to.equal(
+//       ethers.utils.parseEther("2000")
+//     );
+//   });
+// });
 
 describe("owner collects fees", function () {
   it("owner collects fees", async function () {
@@ -56,4 +56,4 @@ describe("owner collects fees", function () {
   });
 });
 
-// deploy with npx hardhat run scripts/juice.js --network mainnet
+// deploy with npx hardhat test scripts/juice.js --network mainnet
