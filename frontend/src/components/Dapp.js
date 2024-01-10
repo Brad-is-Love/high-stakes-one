@@ -5,6 +5,8 @@ import sweepstakesAtrifact from "../contracts/SweepStakesNFTs.json";
 import sweepstakesAddress from "../contracts/SweepStakesNFTs-address.json";
 import stakingHelperAtrifact from "../contracts/StakingHelper.json";
 import stakingHelperAddress from "../contracts/StakingHelper-address.json";
+import HighStakesONE from "../contracts/HighStakesONE.json";
+import HighStakesONEAddress from "../contracts/HighStakesONE-address.json";
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
@@ -39,6 +41,7 @@ const MAINNET = {
   blockExplorerUrls: ["https://explorer.harmony.one/"],
   sweepstakesAddress: sweepstakesAddress.address,
   stakingHelperAddress: stakingHelperAddress.address,
+  hsoneAddress: HighStakesONEAddress.address,
 };
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
@@ -57,6 +60,7 @@ export class Dapp extends React.Component {
       userUnstaked: undefined,
       userWithdrawEpoch: undefined,
       userWithdrawable: undefined,
+      approved: undefined,
       selectedAddress: undefined,
       balance: undefined,
       txBeingSent: undefined,
@@ -72,9 +76,9 @@ export class Dapp extends React.Component {
       return (
         <>
           <NoWalletDetected />
-          <Socials />        
+          <Socials />
         </>
-      )
+      );
     }
 
     if (!this.state.selectedAddress || this.state.networkError) {
@@ -85,7 +89,7 @@ export class Dapp extends React.Component {
             networkError={this.state.networkError}
             dismiss={() => this._dismissNetworkError()}
             switchChain={() => this._switchChain()}
-          />       
+          />
         </>
       );
     }
@@ -97,9 +101,7 @@ export class Dapp extends React.Component {
     return (
       <>
         <div className="background"></div>
-        <Nav
-          selectedAddress={this.state.selectedAddress}
-        />
+        <Nav selectedAddress={this.state.selectedAddress} />
         <div className="app mt-md-5">
           <div className="container p-3 mt-2">
             <div className="row my-1">
@@ -135,6 +137,9 @@ export class Dapp extends React.Component {
                   stake={this._stake}
                   unstake={this._unstake}
                   withdraw={this._withdraw}
+                  approveHSOne={this._approveHSOne}
+                  approved={this.state.approved}
+                  instantWithdraw={this._instantWithdraw}
                   userStaked={this.state.userStaked}
                   userUnstaked={this.state.userUnstaked}
                   userWithdrawEpoch={this.state.userWithdrawEpoch}
@@ -151,7 +156,6 @@ export class Dapp extends React.Component {
           </div>
           <Socials />
         </div>
-
       </>
     );
   }
@@ -164,6 +168,8 @@ export class Dapp extends React.Component {
     this._stake = this._stake.bind(this);
     this._unstake = this._unstake.bind(this);
     this._withdraw = this._withdraw.bind(this);
+    this._approveHSOne = this._approveHSOne.bind(this);
+    this._instantWithdraw = this._instantWithdraw.bind(this);
     this._ownerOf = this._ownerOf.bind(this);
   }
 
@@ -223,6 +229,12 @@ export class Dapp extends React.Component {
       stakingHelperAtrifact.abi,
       this._provider.getSigner(0)
     );
+
+    this._hsone = new ethers.Contract(
+      MAINNET.hsoneAddress,
+      HighStakesONE.abi,
+      this._provider.getSigner(0)
+    );
   }
 
   _startPollingData() {
@@ -238,7 +250,7 @@ export class Dapp extends React.Component {
     await this._updateBalance();
     await this._getCurrentEpoch();
     await this._getUserStaked();
-
+    await this._getUserApproved();
   }
 
   _stopPollingData() {
@@ -312,6 +324,16 @@ export class Dapp extends React.Component {
     this.setState({ balance });
   }
 
+  async _getUserApproved() {
+    const approved = await this._sweepstakes.getApproved(this.state.userTokenId);
+    console.log("approved", approved);
+    if (approved === MAINNET.hsoneAddress) {
+      this.setState({ approved: true });
+    } else {
+      this.setState({ approved: false });
+    }
+  }
+
   async _ownerOf(tokenId) {
     const owner = await this._sweepstakes.ownerOf(tokenId);
     return owner;
@@ -367,6 +389,21 @@ export class Dapp extends React.Component {
   async _withdraw() {
     await this._sendTransaction("Withdraw", async () => {
       return await this._sweepstakes.withdraw(this.state.userTokenId);
+    });
+  }
+
+  async _approveHSOne() {
+    await this._sendTransaction("Approve HSOne", async () => {
+      return await this._sweepstakes.approve(
+        MAINNET.hsoneAddress,
+        this.state.userTokenId
+      );
+    });
+  }
+
+  async _instantWithdraw() {
+    await this._sendTransaction("Instant Withdraw", async () => {
+      return await this._hsone.stakeNFT(this.state.userTokenId);
     });
   }
 

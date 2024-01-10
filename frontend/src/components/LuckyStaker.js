@@ -8,7 +8,7 @@ import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, extraFunds, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, extraFunds, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, approveHSOne, approved, instantWithdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
 
 //run countdown timer every second
   React.useEffect(() => {
@@ -171,7 +171,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
     );
   } else if (selectedOption === "withdraw") {
     formComponent = (
-      <WithdrawForm currentEpoch={currentEpoch} userStaked={userStaked} withdraw={withdraw} txBeingSent={txBeingSent} userUnstaked={userUnstaked} userWithdrawable={userWithdrawable} userWithdrawEpoch={userWithdrawEpoch}/>
+      <WithdrawForm currentEpoch={currentEpoch} userStaked={userStaked} withdraw={withdraw} approveHSOne={approveHSOne} apporoved={approved} instantWithdraw={instantWithdraw} txBeingSent={txBeingSent} userUnstaked={userUnstaked} userWithdrawable={userWithdrawable} userWithdrawEpoch={userWithdrawEpoch}/>
     );
   } else if (selectedOption === "prizes") {
     formComponent = (
