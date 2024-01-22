@@ -20,6 +20,8 @@ contract SweepStakesNFTs is ERC721Enumerable {
     uint256[] public availableTokenIds; //tokens that have been burned and are available for reuse
     uint256 public totalStaked;
     uint256 public drawPeriod;
+    uint256[] public prizeSchedule; //array of prize %s
+    uint256 public prizeScheduleIndex; //where we are in the prize schedule
     uint256 public lastDrawTime;
     uint256 public prizeFee = 500; // 5%
     uint256 public feesToCollect; //beneficiary can withdraw these
@@ -28,7 +30,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     address public stakingHelper;
     uint256 public minStake = 100 ether;
     uint256 private lastWinner; //last winner assigned to private variable on draw and revealed on assignPrize to prevent malicious draws
-    uint256 public lastPrize;
+    uint256 public prizePool;
     bool public prizeAssigned;
     bool internal locked;
 
@@ -159,19 +161,21 @@ contract SweepStakesNFTs is ERC721Enumerable {
         require(prizeAssigned == false);
         prizeAssigned = true;
         require(block.timestamp > lastDrawTime, "can't execute with draw");
-        lastPrize = StakingHelper(stakingHelper).collect();
+        prizePool += StakingHelper(stakingHelper).collect();
+        
         if(lastWinner > totalStaked-1){
             lastWinner = lastWinner % (totalStaked - 1);
         }
-        uint256 amount = (lastPrize * (10000 - prizeFee)) / 10000;
+        uint256 prize = prizePool * (prizeSchedule[prizeScheduleIndex] / 100); 
+        uint256 fees = (prize * prizeFee) / 10000;
+        feesToCollect += fees;
         uint256 winningToken = tokenAtIndex(lastWinner);
-        feesToCollect += (lastPrize * prizeFee) / 10000;
-        lastPrize = 0;
+        prizePool -= prize;
         //auto compound prizes
-        addStake(winningToken, amount);
-        StakingHelper(stakingHelper).autoCompound(amount);
+        addStake(winningToken, prize-fees);
+        StakingHelper(stakingHelper).autoCompound(prize-fees);
 
-        emit WinnerAssigned(lastWinner, winningToken, amount);
+        emit WinnerAssigned(lastWinner, winningToken, prize-fees);
     }
 
     function addStake(uint256 _tokenId, uint256 _amount) internal {
@@ -241,6 +245,16 @@ contract SweepStakesNFTs is ERC721Enumerable {
 
     function setPrizeFee(uint256 _prizeFee) external onlyOwner {
         prizeFee = _prizeFee;
+    }
+
+    function setPrizeSchedule(uint256[] memory _prizeSchedule) external onlyOwner {
+        require(_prizeSchedule.length > 0, "No prize schedule");
+        uint256 total = 0;
+        for (uint256 i = 0; i < _prizeSchedule.length; i++) {
+            total += _prizeSchedule[i];
+        }
+        require(total == 100, "Prize schedule must add up to 100");
+        prizeSchedule = _prizeSchedule;
     }
 
     function setMinStake(uint256 _minStake) external onlyOwner {
