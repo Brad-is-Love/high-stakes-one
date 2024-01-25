@@ -166,16 +166,27 @@ contract SweepStakesNFTs is ERC721Enumerable {
         if(lastWinner > totalStaked-1){
             lastWinner = lastWinner % (totalStaked - 1);
         }
-        uint256 prize = prizePool * (prizeSchedule[prizeScheduleIndex] / 100); 
-        uint256 fees = (prize * prizeFee) / 10000;
-        feesToCollect += fees;
-        uint256 winningToken = tokenAtIndex(lastWinner);
+        uint256 prize = prizePool * prizeSchedule[prizeScheduleIndex] / 100; 
         prizePool -= prize;
-        //auto compound prizes
-        addStake(winningToken, prize-fees);
-        StakingHelper(stakingHelper).autoCompound(prize-fees);
 
-        emit WinnerAssigned(lastWinner, winningToken, prize-fees);
+        uint256 fees = (prize * prizeFee) / 10000;
+
+        if(prizeScheduleIndex < prizeSchedule.length - 1){
+            prizeScheduleIndex++;
+        } else {
+            prizeScheduleIndex = 0;
+        }
+
+        feesToCollect += fees;
+        prize -= fees;
+        
+        uint256 winningToken = tokenAtIndex(lastWinner);
+        
+        //auto compound prizes
+        addStake(winningToken, prize);
+        StakingHelper(stakingHelper).autoCompound(prize);
+
+        emit WinnerAssigned(lastWinner, winningToken, prize);
     }
 
     function addStake(uint256 _tokenId, uint256 _amount) internal {
@@ -249,11 +260,9 @@ contract SweepStakesNFTs is ERC721Enumerable {
 
     function setPrizeSchedule(uint256[] memory _prizeSchedule) external onlyOwner {
         require(_prizeSchedule.length > 0, "No prize schedule");
-        uint256 total = 0;
         for (uint256 i = 0; i < _prizeSchedule.length; i++) {
-            total += _prizeSchedule[i];
+            require(_prizeSchedule[i]<=100, "Cant be more than 100% of prizepool");
         }
-        require(total == 100, "Prize schedule must add up to 100");
         prizeSchedule = _prizeSchedule;
     }
 
