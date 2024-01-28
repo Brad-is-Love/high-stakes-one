@@ -103,6 +103,7 @@ export class Dapp extends React.Component {
         <div className="app mt-md-5">
           <div className="container p-3 mt-2">
             <div className="row my-1">
+            <button className="btn btn-primary" onClick={() => this._postToDiscord("0xTEST",12345,100)}>Test post</button>
               <div className="col-12">
                 {this.state.txBeingSent && (
                   <WaitingForTransactionMessage
@@ -456,4 +457,36 @@ export class Dapp extends React.Component {
         }
       });
   }
+  
+  async _getWinnerListener() {
+    await this._sweepstakes.on("WinnerAssigned", async (winningTicket, _winner, _ammount, event) => {
+      let data = {
+      numberDrawn: winningTicket,
+      winner: _winner,
+      amount: _ammount,
+      event: event
+      }
+
+    const winnerAddress = await this._sweepstakes.ownerOf(data.winner.toString())
+    const winningNumber = await this._sweepstakes.tokenIdToInfo(data.winner.toString())
+    const amount = ethers.utils.formatEther(data.amount)
+    this._postToDiscord(winnerAddress, winningNumber, amount)
+    })
+  }
+
+  _postToDiscord(winnerAddress, winningNumber, amount) {
+    //https://discord.com/developers/docs/resources/webhook#execute-webhook
+    const url = "https://discord.com/api/webhooks/1181074754636107796/w9UeIMHTeEIAA57poOfA0q04sbCNuritj8nMm4Nx4-XrjtKovAKqmTyzM_4yN3Dr3g6v"
+    const message = {
+      content : "Number " + winningNumber + " was drawn and we have a new winner! Congratulations to " + winnerAddress +  " for winning " + amount + "ONE!"
+    }
+    fetch(url, {
+      method: "POST",
+      body: JSON.stringify(message),
+      headers: {
+        "Content-Type": "application/json"
+      }
+    })
+  }
 }
+
