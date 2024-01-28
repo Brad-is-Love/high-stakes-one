@@ -36,7 +36,7 @@ contract HighStakesONE is ERC20Pausable {
     }
 
     // Stake an NFT from SweepstakesNFTs and receive the equal value in HSONE.
-    // Used transferFrom instead of safeTransferFrom and not make this contract an ERC721Receiver because we're not safe to receive NFTs in any other way and we're only interacting with the sweepstakesNFTs contract.
+    // NEED TO MAKE THIS CONTRACT AN ERC721Receiver
     function stakeNFT(uint256 _tokenId) external {
         uint256 price = iSweepstakesNFTs(sweepStakesNFTs).getNFTValue(_tokenId);
         require(stakedNFTsToPrice[_tokenId] == 0, "NFT is already staked");
