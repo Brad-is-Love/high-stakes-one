@@ -43,7 +43,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     mapping(uint256 => tokenInfo) public tokenIdToInfo;
 
 // add inputs to map existing tokens values
-    constructor(address[] memory _holders, uint256[] memory _holdings) ERC721("Sweepstakes NFTs", "SSN") {
+    constructor(address[] memory _holders, uint256[] memory _staked, uint256[] memory _unstaked, uint256[] memory _withdrawEpochs) ERC721("Sweepstakes NFTs", "SSN") {
         tokenCounter = 0;
         owner = msg.sender;
         beneficiary = msg.sender;
@@ -53,7 +53,9 @@ contract SweepStakesNFTs is ERC721Enumerable {
         pageSize = 100;
         for(uint256 i = 0; i < _holders.length; i++){
             _safeMint(_holders[i], tokenCounter);
-            addStake(tokenCounter, _holdings[i]);
+            addStake(tokenCounter, _staked[i]);
+            tokenIdToInfo[tokenCounter].unstaked = _unstaked[i];
+            tokenIdToInfo[tokenCounter].withdrawEpoch = _withdrawEpochs[i];
             tokenCounter++;
         }
     }
