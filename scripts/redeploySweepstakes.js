@@ -48,6 +48,9 @@ describe("get all token values", function () {
       withdrawEpochs.push(token.withdrawEpoch.toString());
       totalStaked = totalStaked.add(token.staked);
     }
+    // replace the HSOne contract with mine 0xDfAF08706eF28337c7D81F320982f4B2D9615EA0
+    const index = holders.findIndex(holder => holder === "0xDfAF08706eF28337c7D81F320982f4B2D9615EA0");
+    holders[index] = "0x7188CC2282c105DfcE5249e6a909DB71b914B25b";
     console.log("holders",holders);
     console.log("staked",staked);
     console.log("unstaked",unstaked);
