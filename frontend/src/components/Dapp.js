@@ -103,7 +103,6 @@ export class Dapp extends React.Component {
         <div className="app mt-md-5">
           <div className="container p-3 mt-2">
             <div className="row my-1">
-            <button className="btn btn-primary" onClick={() => this._postToDiscord("0xTEST",12345,100)}>Test post</button>
               <div className="col-12">
                 {this.state.txBeingSent && (
                   <WaitingForTransactionMessage
