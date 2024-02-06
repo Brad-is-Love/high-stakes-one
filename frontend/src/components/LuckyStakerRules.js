@@ -40,6 +40,9 @@ export function LuckyStakerRules({ stakingHelperAddress, sweepStakesAddress }) {
                 to win.
               </p>
               <p>
+                Winners are drawn daily, with smaller prizes every day and a larger draw on Sunday Evening, UTC.
+              </p>
+              <p>
                 Winners are chosen randomly, by Harmony's built-in verified RNG,
                 and prizes are automatically restaked for you. You can unstake
                 at any time, then wait 7 epochs to withdraw.
@@ -49,8 +52,8 @@ export function LuckyStakerRules({ stakingHelperAddress, sweepStakesAddress }) {
                 money with a 3% fee on staking rewards. E.g. if Harmony pays 10%
                 APR, 9.7% goes to the prize pool and 0.3% goes to High Stakes.
               </p>
-              <p>
-                We are currently staked with three validators:
+              <div>
+                <p>We are currently staked with three validators:</p>
                 <ul>
                   <li>
                     <a
@@ -80,14 +83,28 @@ export function LuckyStakerRules({ stakingHelperAddress, sweepStakesAddress }) {
                     </a>
                   </li>
                 </ul>
-              </p>
+              </div>
               <p>
                 The Sweepstakes contract holds ticket info and draws the
-                winners: {sweepStakesAddress}.
+                winners: {' '}
+                <a
+                  href={`https://explorer.harmony.one/address/${sweepStakesAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {sweepStakesAddress}
+                </a>
               </p>
               <p>
                 Staking and unstaking are managed via the StakingHelper
-                contract: {stakingHelperAddress}.
+                contract:  {' '}
+                <a
+                  href={`https://explorer.harmony.one/address/${stakingHelperAddress}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {stakingHelperAddress}
+                </a>
               </p>
             </>
           )}

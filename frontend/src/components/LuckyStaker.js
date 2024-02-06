@@ -8,7 +8,7 @@ import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, extraFunds, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, nextPrize, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
 
 //run countdown timer every second
   React.useEffect(() => {
@@ -40,7 +40,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const yourOdds = "1/" + yourOddsInverted.toFixed(0);
   //get the next prize amount
   const secondsInAYear = 24*60*60*365;
-  const nextPrize = ((drawPeriod/secondsInAYear) * (0.075 * totalStaked) + extraFunds)*0.96;
+  const nextPrizeCalc = ((drawPeriod/secondsInAYear) * (0.075 * totalStaked) + nextPrize)*0.96;
 
   let headers = new Headers();
   headers.set("Authorization", "Bearer " + API_KEY);
@@ -48,6 +48,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const winnersObj = {};
 
   const lowestBlock = 49165773; // The block where the first winner was drawn
+  const contractChangedAt = 53328743; // The block where the contract was changed to the new version
 
   const getLatestBlock = () => {
     setLoading(true);
@@ -65,12 +66,17 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
 
   const getData = async (initialBlock) => {
     setLoading(true);
+    let address = sweepStakesAddress;
     let latest = !isNaN(initialBlock) ? initialBlock : latestBlock;
     let startBlock = Math.max(latest - 900000, lowestBlock);
-  
+
+    if (latest <= contractChangedAt) {
+      address = '0x058DCD4FcB02d0cD2df9E8Be992bfB89998A6Bbd';
+    }
+
     try {
       const response = await fetch(
-        `https://api.covalenthq.com/v1/harmony-mainnet/events/address/${sweepStakesAddress}/?starting-block=${startBlock}&ending-block=${latest}&`,
+        `https://api.covalenthq.com/v1/harmony-mainnet/events/address/${address}/?starting-block=${startBlock}&ending-block=${latest}&`,
         { method: "GET", headers: headers }
       );
       const data = await response.json();
@@ -109,6 +115,10 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
       setWinners(prevWinners => [...prevWinners, ...newWinners]);
       setLatestBlock(prevBlock => {
         let newLatestBlock = startBlock;
+
+        if(startBlock < contractChangedAt && latest >= contractChangedAt) {
+          newLatestBlock = contractChangedAt;
+        }
     
         // Return the new state
         return newLatestBlock;
@@ -196,7 +206,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
           <div className="col-md-6  pb-4 text-md-right">
           <div className="staker-headers">Your Stake: <strong>{staked} ONE</strong></div>
           {<div className="staker-headers">Your Chances: <strong>{userStaked > 0 ? yourOdds : "Gotta be in to win!"}</strong></div>}
-          <div className="staker-headers">Next Prize: ~<strong>{nextPrize.toFixed(0)} ONE</strong></div>
+          <div className="staker-headers">Next Prize: ~<strong>{nextPrizeCalc.toFixed(0)} ONE</strong></div>
             {drawButton ? (
               nextDrawTime === "assignPrize" ? (
                 <TransactionButton

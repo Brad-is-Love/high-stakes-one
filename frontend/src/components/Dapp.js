@@ -49,7 +49,7 @@ export class Dapp extends React.Component {
     this.initialState = {
       nextDrawTime: undefined,
       drawPeriod: undefined,
-      extraFunds: undefined,
+      nextPrize: undefined,
       currentEpoch: undefined,
       totalStaked: undefined,
       userTokenId: undefined,
@@ -128,7 +128,7 @@ export class Dapp extends React.Component {
                   totalStaked={this.state.totalStaked}
                   nextDrawTime={this.state.nextDrawTime}
                   drawPeriod={this.state.drawPeriod}
-                  extraFunds={this.state.extraFunds}
+                  nextPrize={this.state.nextPrize}
                   drawFunction={this._drawWinner}
                   txBeingSent={this.state.txBeingSent}
                   assignPrize={this._assignPrize}
@@ -234,7 +234,7 @@ export class Dapp extends React.Component {
   async _updateData() {
     await this._getNextDrawTime();
     await this._getTotalStaked();
-    await this._getExtraFunds();
+    await this._getNextPrize();
     await this._updateBalance();
     await this._getCurrentEpoch();
     await this._getUserStaked();
@@ -269,11 +269,21 @@ export class Dapp extends React.Component {
     }
   }
 
-  async _getExtraFunds() {
+  async _getPrizePool() {
+    const prizePoolBN = await this._sweepstakes.prizePool();
+    const prizePool = parseInt(ethers.utils.formatEther(prizePoolBN));
     const extraFundsBN = await this._stakingHelper.extraFunds();
     const extraFunds = parseInt(ethers.utils.formatEther(extraFundsBN));
-    this.setState({ extraFunds });
+    return prizePool + extraFunds;
   }
+
+  async _getNextPrize() {
+    const nextPrizeIndex = await this._sweepstakes.prizeScheduleIndex();
+    const nextPrizePct = await this._sweepstakes.prizeSchedule(nextPrizeIndex);
+    const nextPrize = await this._getPrizePool() * (nextPrizePct / 100);
+    this.setState({ nextPrize });
+  }
+    
 
   async _getCurrentEpoch() {
     const epoch = await this._stakingHelper.epoch();
