@@ -105,7 +105,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         emit Enter(_tokenId, _amount);
     }
 
-    // unstake - will add an withdrawEpoch to the token, along with the amount to unstake
+    // unstake - will add a withdrawEpoch to the token, along with the amount to unstake
     function unstake(address _holder, uint256 _amount, uint256 _tokenId) external onlyStaking {
         require(tokenIdToInfo[_tokenId].staked >= _amount,"Can't unstake more than you've staked");
         require(_isApprovedOrOwner(_holder, _tokenId), "Not owner or approved");

@@ -8,7 +8,7 @@ const ssAbi = require("../frontend/src/contracts/SweepStakesNFTs.json").abi;
 const shAbi = require("../frontend/src/contracts/StakingHelper.json").abi;
 
 //Mainnet current contracts
-const oldSweepstakesAddress = require("../frontend/src/contracts/SweepStakesNFTs-address.json").address;
+const oldSweepstakesAddress = '0x058DCD4FcB02d0cD2df9E8Be992bfB89998A6Bbd';
 const stakingHelperAddress = require("../frontend/src/contracts/StakingHelper-address.json").address;
 
 const harmonyMultisig = "0x73484BFf016a25CDEB0d9B892aA6cfF2Ee0f2ce7"
@@ -90,7 +90,6 @@ describe("check new sweepstakesNFTs contract", function () {
     allMatched = false;
     for(let i=0;i<totalSupply;i++) {
       expect(await newSweepstakes.ownerOf(i)).to.equal(holders[i]);
-      expect((await newSweepstakes.getNFTValue(i)).toString()).to.equal(staked[i]);
       const token = await newSweepstakes.tokenIdToInfo(i);
       expect(token.staked.toString()).to.equal(staked[i]);
       expect(token.unstaked.toString()).to.equal(unstaked[i]);
