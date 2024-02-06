@@ -23,7 +23,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
     uint256[] public prizeSchedule; //array of prize %s
     uint256 public prizeScheduleIndex; //where we are in the prize schedule
     uint256 public lastDrawTime;
-    uint256 public prizeFee = 500; // 5%
+    uint256 public prizeFee = 300; // 3%
     uint256 public feesToCollect; //beneficiary can withdraw these
     address public owner;
     address public beneficiary;
@@ -47,7 +47,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         tokenCounter = 0;
         owner = msg.sender;
         beneficiary = msg.sender;
-        drawPeriod = 24 * 60 * 60;
+        drawPeriod = 23 * 60 * 60; //23 hours
         lastDrawTime = block.timestamp;
         prizeAssigned = true;
         pageSize = 100;

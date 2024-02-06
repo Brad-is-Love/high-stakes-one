@@ -8,7 +8,7 @@ import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, extraFunds, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, nextPrize, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
 
 //run countdown timer every second
   React.useEffect(() => {
@@ -40,7 +40,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const yourOdds = "1/" + yourOddsInverted.toFixed(0);
   //get the next prize amount
   const secondsInAYear = 24*60*60*365;
-  const nextPrize = ((drawPeriod/secondsInAYear) * (0.075 * totalStaked) + extraFunds)*0.96;
+  const nextPrizeCalc = ((drawPeriod/secondsInAYear) * (0.075 * totalStaked) + nextPrize)*0.96;
 
   let headers = new Headers();
   headers.set("Authorization", "Bearer " + API_KEY);
@@ -196,7 +196,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
           <div className="col-md-6  pb-4 text-md-right">
           <div className="staker-headers">Your Stake: <strong>{staked} ONE</strong></div>
           {<div className="staker-headers">Your Chances: <strong>{userStaked > 0 ? yourOdds : "Gotta be in to win!"}</strong></div>}
-          <div className="staker-headers">Next Prize: ~<strong>{nextPrize.toFixed(0)} ONE</strong></div>
+          <div className="staker-headers">Next Prize: ~<strong>{nextPrizeCalc.toFixed(0)} ONE</strong></div>
             {drawButton ? (
               nextDrawTime === "assignPrize" ? (
                 <TransactionButton

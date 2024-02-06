@@ -1,12 +1,17 @@
 const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
+const fs = require("fs");
+const path = require("path");
+
 const ssAbi = require("../frontend/src/contracts/SweepStakesNFTs.json").abi;
 const shAbi = require("../frontend/src/contracts/StakingHelper.json").abi;
 
 //Mainnet current contracts
 const oldSweepstakesAddress = require("../frontend/src/contracts/SweepStakesNFTs-address.json").address;
 const stakingHelperAddress = require("../frontend/src/contracts/StakingHelper-address.json").address;
+
+const harmonyMultisig = "0x73484BFf016a25CDEB0d9B892aA6cfF2Ee0f2ce7"
 
 before(async function () {
   [owner] = await ethers.getSigners();
@@ -96,7 +101,7 @@ describe("check new sweepstakesNFTs contract", function () {
   it("exit if not all matched", async function () {
     if(!allMatched) {
       console.log("not all matched");
-      // process.exit();
+      process.exit();
     }
   });
 });
@@ -107,6 +112,50 @@ describe("set stakinghelper in sweepstakes", function () {
     expect(await newSweepstakes.stakingHelper()).to.equal(stakingHelperAddress);
   });
 });
+
+describe("set prize schedule", function () {
+  it("set prize schedule", async function () {
+    // set prize schedule
+    const prizeSchedule = [15,15,20,25,100,15,15];
+    await newSweepstakes.setPrizeSchedule(prizeSchedule);
+    expect(await newSweepstakes.prizeSchedule(0)).to.equal(15);
+    expect(await newSweepstakes.prizeSchedule(4)).to.equal(100);
+  });
+});
+
+describe("transfer ownership to the multisig", function () {
+  it("transfer ownership to the multisig", async function () {
+    await newSweepstakes.setOwner(harmonyMultisig);
+    expect(await newSweepstakes.owner()).to.equal(harmonyMultisig);
+  });
+});
+
+describe("save to frontend", function () {
+  it("save to frontend", async function () {
+    saveFrontendFiles(newSweepstakes, "SweepStakesNFTs");
+  });
+});
+
+
+function saveFrontendFiles(contract, name) {
+  const contractsDir = path.join(__dirname, "..", "frontend", "src", "contracts");
+
+  if (!fs.existsSync(contractsDir)) {
+    fs.mkdirSync(contractsDir);
+  }
+
+  fs.writeFileSync(
+    path.join(contractsDir, name+"-address.json"),
+    JSON.stringify({ address: contract.address }, undefined, 2)
+  );
+
+  const artifact = artifacts.readArtifactSync(name);
+
+  fs.writeFileSync(
+    path.join(contractsDir, name+".json"),
+    JSON.stringify(artifact, null, 2)
+  );
+}
 
 
 // run with npx hardhat test scripts/redeploySweepstakes.js --network mainnet
