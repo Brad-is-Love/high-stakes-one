@@ -48,6 +48,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const winnersObj = {};
 
   const lowestBlock = 49165773; // The block where the first winner was drawn
+  const contractChangedAt = 53328743; // The block where the contract was changed to the new version
 
   const getLatestBlock = () => {
     setLoading(true);
@@ -65,12 +66,17 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
 
   const getData = async (initialBlock) => {
     setLoading(true);
+    let address = sweepStakesAddress;
     let latest = !isNaN(initialBlock) ? initialBlock : latestBlock;
     let startBlock = Math.max(latest - 900000, lowestBlock);
-  
+
+    if (latest <= contractChangedAt) {
+      address = '0x058DCD4FcB02d0cD2df9E8Be992bfB89998A6Bbd';
+    }
+
     try {
       const response = await fetch(
-        `https://api.covalenthq.com/v1/harmony-mainnet/events/address/${sweepStakesAddress}/?starting-block=${startBlock}&ending-block=${latest}&`,
+        `https://api.covalenthq.com/v1/harmony-mainnet/events/address/${address}/?starting-block=${startBlock}&ending-block=${latest}&`,
         { method: "GET", headers: headers }
       );
       const data = await response.json();
@@ -109,6 +115,10 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
       setWinners(prevWinners => [...prevWinners, ...newWinners]);
       setLatestBlock(prevBlock => {
         let newLatestBlock = startBlock;
+
+        if(startBlock < contractChangedAt && latest >= contractChangedAt) {
+          newLatestBlock = contractChangedAt;
+        }
     
         // Return the new state
         return newLatestBlock;
