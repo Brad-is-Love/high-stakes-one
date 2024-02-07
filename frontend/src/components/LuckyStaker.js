@@ -8,7 +8,7 @@ import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, nextPrize, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, nextPrize, nextPrizePct, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
 
 //run countdown timer every second
   React.useEffect(() => {
@@ -40,7 +40,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const yourOdds = "1/" + yourOddsInverted.toFixed(0);
   //get the next prize amount
   const secondsInAYear = 24*60*60*365;
-  const nextPrizeCalc = ((drawPeriod/secondsInAYear) * (0.075 * totalStaked) + nextPrize)*0.96;
+  const nextPrizeCalc = ((drawPeriod/secondsInAYear) * (0.075 * totalStaked * nextPrizePct/100) + nextPrize)*0.96;
 
   let headers = new Headers();
   headers.set("Authorization", "Bearer " + API_KEY);

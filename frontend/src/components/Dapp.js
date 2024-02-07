@@ -50,6 +50,7 @@ export class Dapp extends React.Component {
       nextDrawTime: undefined,
       drawPeriod: undefined,
       nextPrize: undefined,
+      nextPrizePct: undefined,
       currentEpoch: undefined,
       totalStaked: undefined,
       userTokenId: undefined,
@@ -129,6 +130,7 @@ export class Dapp extends React.Component {
                   nextDrawTime={this.state.nextDrawTime}
                   drawPeriod={this.state.drawPeriod}
                   nextPrize={this.state.nextPrize}
+                  nextPrizePct={this.state.nextPrizePct}
                   drawFunction={this._drawWinner}
                   txBeingSent={this.state.txBeingSent}
                   assignPrize={this._assignPrize}
@@ -281,7 +283,7 @@ export class Dapp extends React.Component {
     const nextPrizeIndex = await this._sweepstakes.prizeScheduleIndex();
     const nextPrizePct = await this._sweepstakes.prizeSchedule(nextPrizeIndex);
     const nextPrize = await this._getPrizePool() * (nextPrizePct / 100);
-    this.setState({ nextPrize });
+    this.setState({ nextPrize, nextPrizePct });
   }
     
 
