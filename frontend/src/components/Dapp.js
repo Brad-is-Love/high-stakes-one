@@ -5,6 +5,9 @@ import sweepstakesAtrifact from "../contracts/SweepStakesNFTs.json";
 import sweepstakesAddress from "../contracts/SweepStakesNFTs-address.json";
 import stakingHelperAtrifact from "../contracts/StakingHelper.json";
 import stakingHelperAddress from "../contracts/StakingHelper-address.json";
+import screenNamesAddress from "../contracts/ScreenNames-address.json";
+import screenNamesArtifact from "../contracts/ScreenNames.json";
+
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
@@ -223,6 +226,12 @@ export class Dapp extends React.Component {
     this._stakingHelper = new ethers.Contract(
       MAINNET.stakingHelperAddress,
       stakingHelperAtrifact.abi,
+      this._provider.getSigner(0)
+    );
+
+    this._screenNames = new ethers.Contract(
+      screenNamesAddress.address,
+      screenNamesArtifact.abi,
       this._provider.getSigner(0)
     );
   }

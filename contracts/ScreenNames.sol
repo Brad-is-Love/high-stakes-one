@@ -4,7 +4,7 @@ pragma solidity ^0.8.9;
 
 contract ScreenNames {
     mapping(address => string) public screenNames;
-    mapping(string => bool) public screenNameExists;
+    mapping(string => address) public screenNameReverse;
     mapping(address => bool) public isAdmin;
     address public owner;
     constructor() {
@@ -31,17 +31,17 @@ contract ScreenNames {
     }
 
     function setScreenName(string memory _screenName) public {
-        require(!screenNameExists[_screenName], "Screen name already exists");
+        require(screenNameReverse[_screenName] == address(0), "Screen name already exists");
         require(bytes(_screenName).length > 0, "Screen name cannot be empty");
         require(bytes(_screenName).length <= 32, "Screen name cannot be longer than 32 characters");
         screenNames[msg.sender] = _screenName;
-        screenNameExists[_screenName] = true;
+        screenNameReverse[_screenName] = msg.sender;
     }
 
     // admin function in case someone adds an offensive screen name
     function removeScreenName(address _addressToRemove) public onlyAdmin {
         string memory _screenName = screenNames[_addressToRemove];
-        screenNameExists[_screenName] = false;
+        delete screenNameReverse[_screenName];
         delete screenNames[_addressToRemove];
     }
 

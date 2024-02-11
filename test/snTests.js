@@ -24,12 +24,12 @@ describe("Set screen name, admin remove", function () {
     it("Should set screen name", async function () {
         await sn.connect(acc2).setScreenName("pig dog");
         expect(await sn.screenNames(acc2.address)).to.equal("pig dog");
-        expect(await sn.screenNameExists("pig dog")).to.equal(true);
+        expect(await sn.screenNameReverse("pig dog")).to.equal(acc2.address);
     });
     it("Should remove screen name", async function () {
         await sn.removeScreenName(acc2.address);
         expect(await sn.screenNames(acc2.address)).to.equal("");
-        expect(await sn.screenNameExists("pig dog")).to.equal(false);
+        expect(await sn.screenNameReverse("pig dog")).to.equal("0x0000000000000000000000000000000000000000");
     })
     it("Should not remove screen name", async function () {
         await sn.connect(acc2).setScreenName("pig dog");
