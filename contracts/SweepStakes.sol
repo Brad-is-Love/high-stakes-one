@@ -20,16 +20,16 @@ contract SweepStakesNFTs is ERC721Enumerable {
     uint256[] public availableTokenIds; //tokens that have been burned and are available for reuse
     uint256 public totalStaked;
     uint256 public drawPeriod;
-    uint256[] public prizeSchedule; //array of prize %s
-    uint256 public prizeScheduleIndex; //where we are in the prize schedule
+    uint256[] public prizeSchedule; // An array of the % of the prize pool given for each draw. This allows for different sized draws.
+    uint256 public prizeScheduleIndex; // where we are in the prize schedule - we iterate through the week with larger draws on the weekend.
     uint256 public lastDrawTime;
     uint256 public prizeFee = 300; // 3%
     uint256 public feesToCollect; //beneficiary can withdraw these
     address public owner;
     address public beneficiary;
     address public stakingHelper;
-    uint256 public minStake = 100 ether;
-    uint256 private lastWinner; //last winner assigned to private variable on draw and revealed on assignPrize to prevent malicious draws
+    uint256 public minStake = 100 ether; // This was changed to 20 ONE after deployment
+    uint256 private lastWinner; //last winner is assigned to private variable on draw and revealed on assignPrize to prevent malicious draws
     uint256 public prizePool;
     bool public prizeAssigned;
     bool internal locked;
@@ -42,7 +42,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
 
     mapping(uint256 => tokenInfo) public tokenIdToInfo;
 
-// add inputs to map existing tokens values
+// add inputs to map existing tokens values on deployment because we updated previous contract.
     constructor(address[] memory _holders, uint256[] memory _staked, uint256[] memory _unstaked, uint256[] memory _withdrawEpochs) ERC721("Sweepstakes NFTs", "SSN") {
         tokenCounter = 0;
         owner = msg.sender;
@@ -96,7 +96,7 @@ contract SweepStakesNFTs is ERC721Enumerable {
         emit Enter(tokenId, _amount);
     }
 
-    // addToToken - will add the stake to the token
+    // addToToken - will add the stake to existing token
     function addToToken(address _entrant, uint256 _amount, uint256 _tokenId) external onlyStaking {
         require(_amount >= minStake, "Too low");
         require(_isApprovedOrOwner(_entrant, _tokenId), "Not owner or approved");
