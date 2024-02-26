@@ -214,6 +214,24 @@
   border: #0b5a10 1px solid;
 }
 
+.modal-card {
+  color: #434343;
+  border-radius: 15px;
+  background-color: #ffffff;  border-radius: 15px;
+  box-shadow: 5px 5px 20px rgba(0, 0, 0, 0.7);
+  border: #0b5a10 1px solid;
+}
+
+.modal-content{
+  border-radius: 15px;
+  background-color: #ffffff00;
+}
+
+.modal-title {
+  font-size: 16px;
+  color: #303030;
+}
+
 .chain {
   /* position fixed top right */
   position: fixed;
@@ -279,4 +297,16 @@ p {
     font-size: 14px;
     padding: 5px;
   }
+  .modal-title {
+    font-size: 12px;
+    color: #303030;
+  }
+}
+
+.profile-link {
+  cursor: pointer;
+}
+
+.profile-link:hover {
+  color: #bcc2ff !important;
 }
