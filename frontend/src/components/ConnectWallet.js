@@ -15,7 +15,7 @@ function ConnectDiv({ connectWallet, networkError, switchChain }) {
     return (
       <div className="col-10 p-4 text-center">
         <p className="text-md-center alpha-warn">
-          *High Stakes is currently in public beta mode. Use at your own risk.
+          *High Stakes is currently in public beta mode.
         </p>
         <p>Connect your wallet to enter.</p>
         <button
