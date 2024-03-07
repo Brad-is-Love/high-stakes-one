@@ -13,7 +13,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
 //run countdown timer every second
   React.useEffect(() => {
     calculateCountdown();
-    getLatestBlock();
+    getData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -24,14 +24,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const [min, setMin] = useState("");
   const [drawButton, setDrawButton] = useState(false);
 
-  const winnerABI = [
-    "event WinnerAssigned(uint256 winningTicket, uint256 indexed _winner, uint256 _amount)",
-  ];
-
-  const winnerInterface = new ethers.utils.Interface(winnerABI);
-  const topic = winnerInterface.getEventTopic("WinnerAssigned");
   const [winners, setWinners] = useState([]);
-  const [latestBlock, setLatestBlock] = useState(0);
   const [loading, setLoading] = useState(false);
   const API_KEY = process.env.REACT_APP_COVALENT_API_KEY;
 
@@ -42,90 +35,60 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const secondsInAYear = 24*60*60*365;
   const nextPrizeCalc = ((drawPeriod/secondsInAYear) * (0.075 * totalStaked * nextPrizePct/100) + nextPrize)*0.96;
 
-  let headers = new Headers();
-  headers.set("Authorization", "Bearer " + API_KEY);
-
+  const GRAPHQL_ENDPOINT = 'https://indexer.bigdevenergy.link/a6a6978/v1/graphql'
+  const headers = {
+    'Content-Type': 'application/json',
+  }
+  const graphqlQuery = {
+    query: `
+      query MyQuery {
+        SweepStakesNFTs_WinnerAssigned(
+          order_by: {timestamp: desc}
+          where: {timestamp: {_gt: 1698692165}}
+        ) {
+          winnerAddress
+          _amount
+          winnerBalance
+          totalBalance
+          timestamp
+        }
+      }
+    `
+  };
   const winnersObj = {};
 
-  const lowestBlock = 49165773; // The block where the first winner was drawn
-  const contractChangedAt = 53328743; // The block where the contract was changed to the new version
-
-  const getLatestBlock = () => {
+  const getData = async () => {
     setLoading(true);
-    fetch(`https://api.covalenthq.com/v1/harmony-mainnet/block_v2/latest/?`, {
-      method: "GET",
-      headers: headers,
-    })
-      .then((resp) => resp.json())
-      .then((data) => {
-        const block = data.data.items[0].height;
-        //subtract 5 because sometimes the api gives a block that can't be queried
-        getData(block-5);
-      });
-  };
-
-  const getData = async (initialBlock) => {
-    setLoading(true);
-    let address = sweepStakesAddress;
-    let latest = !isNaN(initialBlock) ? initialBlock : latestBlock;
-    let startBlock = Math.max(latest - 900000, lowestBlock);
-
-    if (latest <= contractChangedAt) {
-      address = '0x058DCD4FcB02d0cD2df9E8Be992bfB89998A6Bbd';
-    }
-
     try {
-      const response = await fetch(
-        `https://api.covalenthq.com/v1/harmony-mainnet/events/address/${address}/?starting-block=${startBlock}&ending-block=${latest}&`,
-        { method: "GET", headers: headers }
-      );
-      const data = await response.json();
-      const events = data.data.items;
-      const winnerEvents = events.filter(event => event.raw_log_topics[0].includes(topic));
-      const dates = [];
-      const newWinners = [];
-  
-      for (const event of winnerEvents) {
-        const decoded = winnerInterface.decodeEventLog(
-          "WinnerAssigned",
-          event.raw_log_data,
-          event.raw_log_topics
-        );
-        const date = event.block_signed_at.slice(0, 10);
-        const winningToken = decoded._winner.toString();
-        let winner = 'not found';
-        try {
-          const winnerFullAddress = await ownerOf(winningToken);
-          winner = winnerFullAddress.toLowerCase() === selectedAddress.toLowerCase() ? "YOU!" : winnerFullAddress.slice(0, 4) + "..." + winnerFullAddress.slice(-4);
-        } catch (error) {
-          console.error('Error fetching data:', error);
-        }
-        const amount = parseFloat(ethers.utils.formatEther(decoded._amount)).toFixed(2);
-        
-        dates.push(date);
-        winnersObj[date] = { date, winner, amount };
-      }
-  
-      dates.sort((a, b) => new Date(b) - new Date(a));
-  
-      for (const date of dates) {
-        newWinners.push(winnersObj[date]);
-      }
-  
-      setWinners(prevWinners => [...prevWinners, ...newWinners]);
-      setLatestBlock(prevBlock => {
-        let newLatestBlock = startBlock;
-
-        if(startBlock < contractChangedAt && latest >= contractChangedAt) {
-          newLatestBlock = contractChangedAt;
-        }
-    
-        // Return the new state
-        return newLatestBlock;
+      const response = await fetch(GRAPHQL_ENDPOINT, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(graphqlQuery),
       });
+      const data = await response.json();
+      const events = data.data.SweepStakesNFTs_WinnerAssigned;
+      const newWinners = events.map(event => ({
+        winner: event.winnerAddress,
+        amount: event._amount.toString().slice(0,-18)+"."+event._amount.toString().slice(-18,-16) + " ONE",
+        date: new Date(event.timestamp*1000).toISOString().slice(0, 10),
+        odds: "1/" + (event.totalBalance / event.winnerBalance).toFixed(0)
+      }));
+  
+      setWinners([...newWinners]);
+
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Error:', error);
     }
+       
+      // winner = winnerFullAddress.toLowerCase() === selectedAddress.toLowerCase() ? "YOU!" : winnerFullAddress.slice(0, 4) + "..." + winnerFullAddress.slice(-4);
+      // winner = winnerFullAddress
+
+      // const amount = parseFloat(ethers.utils.formatEther(decoded._amount)).toFixed(2);
+        
+      // winnersObj[date] = { date, winner, amount };
+  
+      // setWinners(prevWinners => [...prevWinners, ...newWinners]);
+
     setLoading(false);
   };
 
@@ -185,7 +148,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
     );
   } else if (selectedOption === "prizes") {
     formComponent = (
-      <Prizes selectedAddress={selectedAddress} winners={winners} loading={loading} latestBlock={latestBlock} lowestBlock={lowestBlock} getData={getData}/>
+      <Prizes selectedAddress={selectedAddress} winners={winners} loading={loading} getData={getData}/>
     );
   }
 

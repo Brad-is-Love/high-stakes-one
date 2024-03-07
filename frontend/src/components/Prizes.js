@@ -9,15 +9,22 @@ export function Prizes({
 }) {
   return (
     <div className=" prize-container">
-        {winners.map((winner, index) => {
-          return (
-            <div key={index} className="row text-center py-2 prize-table border-top">
-              <div className="col-4 px-0">{winner.date}</div>
-              <div className="col-4 px-0">{winner.winner}</div>
-              <div className="col-4 px-0">{winner.amount}</div>
-            </div>
-          );
-        })}
+      <div>
+        <div className="row text-center py-2 prize-table border-top">
+          <div className="col-2 px-0"><strong>Date</strong></div>
+          <div className="col-6 px-0"><strong>Winner</strong></div>
+          <div className="col-2 px-0"><strong>Amount</strong></div>
+          <div className="col-2 px-0"><strong>Odds to Win</strong></div>
+        </div>
+        {winners.map((winner, index) => (
+          <div key={index} className="row text-center py-2 prize-table border-top">
+            <div className="col-2 px-0">{winner.date}</div>
+            <div className="col-6 px-0">{winner.winner}</div>
+            <div className="col-2 px-0">{winner.amount}</div>
+            <div className="col-2 px-0">{winner.odds}</div>
+          </div>
+        ))}
+      </div>
       <div className="row pt-4 pl-4">
         {loading ? (
           <p>Loading...</p>
