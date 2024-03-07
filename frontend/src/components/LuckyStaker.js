@@ -26,7 +26,6 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
 
   const [winners, setWinners] = useState([]);
   const [loading, setLoading] = useState(false);
-  const API_KEY = process.env.REACT_APP_COVALENT_API_KEY;
 
   const staked = userStaked ? parseFloat(ethers.utils.formatEther(userStaked)) : 0;
   const yourOddsInverted = totalStaked/staked;
@@ -55,7 +54,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
       }
     `
   };
-  const winnersObj = {};
+  const isNarrowScreen = window.innerWidth < 992;
 
   const getData = async () => {
     setLoading(true);
@@ -68,7 +67,11 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
       const data = await response.json();
       const events = data.data.SweepStakesNFTs_WinnerAssigned;
       const newWinners = events.map(event => ({
-        winner: event.winnerAddress,
+        winner: event.winnerAddress.toLowerCase() === selectedAddress.toLowerCase() 
+          ? "YOU!" :
+          isNarrowScreen
+            ? `${event.winnerAddress.slice(0, 4)}...${event.winnerAddress.slice(-4)}`
+            : event.winnerAddress,
         amount: event._amount.toString().slice(0,-18)+"."+event._amount.toString().slice(-18,-16) + " ONE",
         date: new Date(event.timestamp*1000).toISOString().slice(0, 10),
         odds: "1/" + (event.totalBalance / event.winnerBalance).toFixed(0)
