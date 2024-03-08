@@ -72,7 +72,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
           isNarrowScreen
             ? `${event.winnerAddress.slice(0, 4)}...${event.winnerAddress.slice(-4)}`
             : event.winnerAddress,
-        amount: event._amount.toString().slice(0,-18)+"."+event._amount.toString().slice(-18,-16) + " ONE",
+        amount: event._amount.toString().slice(0,-18)+"."+event._amount.toString().slice(-18,-16),
         date: new Date(event.timestamp*1000).toISOString().slice(0, 10),
         odds: "1/" + (event.totalBalance / event.winnerBalance).toFixed(0)
       }));
@@ -82,15 +82,6 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
     } catch (error) {
       console.error('Error:', error);
     }
-       
-      // winner = winnerFullAddress.toLowerCase() === selectedAddress.toLowerCase() ? "YOU!" : winnerFullAddress.slice(0, 4) + "..." + winnerFullAddress.slice(-4);
-      // winner = winnerFullAddress
-
-      // const amount = parseFloat(ethers.utils.formatEther(decoded._amount)).toFixed(2);
-        
-      // winnersObj[date] = { date, winner, amount };
-  
-      // setWinners(prevWinners => [...prevWinners, ...newWinners]);
 
     setLoading(false);
   };
