@@ -96,7 +96,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
       setDays("");
       setHours("");
       setMin("");
-      setDrawButton(true);
+      // setDrawButton(true);
       return;
     }
     setDrawButton(false)
