@@ -3,7 +3,7 @@ const { expect } = require("chai");
 const { ethers } = require("hardhat");
 
 let jsonData = {
-  sweepstakes: "0x058DCD4FcB02d0cD2df9E8Be992bfB89998A6Bbd",
+  sweepstakes: "0xc71D7C069Ae96794c5d6d54ff04754D2832601c3",
   lastDraw: 1698460661,
   stakingHelper: "0x6eB221b1654BA536784029ce2fd34BA813Cf3261",
   acc2UnstakedAtEpoch: 2259,

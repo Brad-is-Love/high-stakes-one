@@ -13,6 +13,7 @@ export function LuckyStakerRules({ stakingHelperAddress, sweepStakesAddress }) {
     "https://staking.harmony.one/validators/mainnet/one1mlkylwnsgsam8cdxzn05hal3ytjngsunlpmp2j";
   const fortuneValidator =
     "https://staking.harmony.one/validators/mainnet/one1v0n7nw6c4fe88xnuasr0d65luult0fvclvvxmf";
+  const tecViva = "https://staking.harmony.one/validators/mainnet/one18qk5uszfjq5wrkm2gfstqpx56jdpn0xd4563tk";
 
   return (
     <div className="card p-2 px-4">
@@ -80,6 +81,15 @@ export function LuckyStakerRules({ stakingHelperAddress, sweepStakesAddress }) {
                       rel="noopener noreferrer"
                     >
                       Fortune Validator
+                    </a>
+                  </li>
+                  <li>
+                    <a
+                      href={tecViva}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Tec Viva
                     </a>
                   </li>
                 </ul>
