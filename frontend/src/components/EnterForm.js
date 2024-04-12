@@ -42,6 +42,7 @@ export function EnterForm({ balance, stake, txBeingSent }) {
       return;
     }
     stake(tickets);
+    setTickets("");
   }
 
   return (

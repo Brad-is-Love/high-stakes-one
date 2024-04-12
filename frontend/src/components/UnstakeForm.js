@@ -5,8 +5,6 @@ import { TransactionButton } from "./TransactionButton";
 export function UnstakeForm({ userStaked, userUnstaked, userWithdrawable, unstake, withdraw, txBeingSent }) {
   const handleSubmit = (event) => {
     event.preventDefault();
-    // Handle form submission logic for Enter option
-    // ...
   };
 
   const [tickets, setTickets] = useState("");
@@ -15,6 +13,7 @@ export function UnstakeForm({ userStaked, userUnstaked, userWithdrawable, unstak
   const readableStaked = userStaked ? parseFloat(ethers.utils.formatEther(userStaked)).toFixed(2) : 0
 
   const handleTicketsChange = (event) => {
+    setMax(false);
     setTickets(event.target.value);
   };
 
@@ -25,6 +24,7 @@ export function UnstakeForm({ userStaked, userUnstaked, userWithdrawable, unstak
 
   const handleUnstakeClick = () => {
     unstake(tickets, max);
+    setTickets("");
   }
 
   return (

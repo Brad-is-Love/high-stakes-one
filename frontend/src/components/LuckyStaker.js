@@ -27,7 +27,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const [winners, setWinners] = useState([]);
   const [loading, setLoading] = useState(false);
 
-  const staked = userStaked ? parseFloat(ethers.utils.formatEther(userStaked)) : 0;
+  const staked = userStaked ? parseFloat(ethers.utils.formatEther(userStaked)).toFixed(2) : 0;
   const yourOddsInverted = totalStaked/staked;
   const yourOdds = "1/" + yourOddsInverted.toFixed(0);
   //get the next prize amount
