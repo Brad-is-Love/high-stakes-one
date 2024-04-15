@@ -10,7 +10,7 @@ export function Description() {
         </div>
         <div className="row justify-content-center">
           <div className="col-12">
-            <h4 className="pb-4">High Stakes has just launched on Harmony Mainnet!</h4>
+            <h4 className="pb-4">High Stakes has launched on Harmony Mainnet!</h4>
 
             <p>
               Our first game, Sweepstakes, is a no-loss savings lottery inspired
@@ -26,7 +26,7 @@ export function Description() {
               rewards every week!
             </p>
             <p>
-              We have just launched our public beta. Join the{" "}
+              Join the{" "}
               <a
                 href="https://discord.gg/8WtBWdwp7b"
                 target="_blank"

@@ -4,7 +4,7 @@ import { Socials } from "./Socials";
 function ConnectDiv({ connectWallet, networkError, switchChain }) {
   if (networkError) {
     return (
-      <div className="col-10 p-4 text-center">
+      <div className="col-10 p-3 text-center">
         <p className="text-danger">{networkError}</p>
         <button className="btn btn-warning" type="button" onClick={switchChain}>
           Switch to Harmony
@@ -13,11 +13,8 @@ function ConnectDiv({ connectWallet, networkError, switchChain }) {
     );
   } else {
     return (
-      <div className="col-10 p-4 text-center">
-        <p className="text-md-center alpha-warn">
-          *High Stakes is currently in public beta mode.
-        </p>
-        <p>Connect your wallet to enter.</p>
+      <div className="col-10 p-3 text-center">
+        <p className="pb-3">Connect your wallet to enter.</p>
         <button
           className="btn btn-warning"
           type="button"
@@ -41,7 +38,7 @@ export function ConnectWallet({
       <div className="connectWalletBackground d-flex flex-column align-items-center justify-content-center px-3">
         <div
           className="card"
-          style={{ maxWidth: "500px" }}
+          style={{ width: "320px" }}
         >
           <div className="row justify-content-center">
             {/* {networkError && (
