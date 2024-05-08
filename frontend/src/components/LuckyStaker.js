@@ -156,7 +156,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
               Stake your ONE in a pool.
             </div>
             <div className="staker-headers"> 
-              A weekly winner scoops the rewards!
+              A daily winner scoops the rewards!
             </div>
             <div className="staker-headers">Staked on High Stakes: <strong>{totalStaked} ONE</strong></div>
           </div>
