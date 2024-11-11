@@ -83,15 +83,6 @@ export function LuckyStakerRules({ stakingHelperAddress, sweepStakesAddress }) {
                       Fortune Validator
                     </a>
                   </li>
-                  <li>
-                    <a
-                      href={tecViva}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      Tec Viva
-                    </a>
-                  </li>
                 </ul>
               </div>
               <p>
