@@ -8,11 +8,11 @@ import stakingHelperAddress from "../contracts/StakingHelper-address.json";
 import { NoWalletDetected } from "./NoWalletDetected";
 import { ConnectWallet } from "./ConnectWallet";
 import { Loading } from "./Loading";
-import { LuckyStaker } from "./LuckyStaker";
 import { TransactionErrorMessage } from "./TransactionErrorMessage";
 import { WaitingForTransactionMessage } from "./WaitingForTransactionMessage";
 import { Nav } from "./Nav";
 import { Socials } from "./Socials";
+import { GamesWrapper } from "./GamesWrapper";
 
 // const TESTNET = {
 //   ID: 1666700000,
@@ -73,9 +73,9 @@ export class Dapp extends React.Component {
       return (
         <>
           <NoWalletDetected />
-          <Socials />        
+          <Socials />
         </>
-      )
+      );
     }
 
     if (!this.state.selectedAddress || this.state.networkError) {
@@ -86,7 +86,7 @@ export class Dapp extends React.Component {
             networkError={this.state.networkError}
             dismiss={() => this._dismissNetworkError()}
             switchChain={() => this._switchChain()}
-          />       
+          />
         </>
       );
     }
@@ -98,9 +98,7 @@ export class Dapp extends React.Component {
     return (
       <>
         <div className="background"></div>
-        <Nav
-          selectedAddress={this.state.selectedAddress}
-        />
+        <Nav selectedAddress={this.state.selectedAddress} />
         <div className="app mt-md-5">
           <div className="container p-3 mt-2">
             <div className="row my-1">
@@ -123,7 +121,7 @@ export class Dapp extends React.Component {
             </div>
             <div className="row">
               <div className="col-12">
-                <LuckyStaker
+                <GamesWrapper
                   balance={this.state.balance}
                   currentEpoch={this.state.currentEpoch}
                   totalStaked={this.state.totalStaked}
@@ -144,16 +142,12 @@ export class Dapp extends React.Component {
                   stakingHelperAddress={MAINNET.stakingHelperAddress.toString()}
                   sweepStakesAddress={MAINNET.sweepstakesAddress.toString()}
                   selectedAddress={this.state.selectedAddress}
-                  lastWinner={this.state.lastWinner}
-                  lastPrize={this.state.lastPrize}
-                  ownerOf={this._ownerOf}
                 />
               </div>
             </div>
           </div>
           <Socials />
         </div>
-
       </>
     );
   }
@@ -240,7 +234,6 @@ export class Dapp extends React.Component {
     await this._updateBalance();
     await this._getCurrentEpoch();
     await this._getUserStaked();
-
   }
 
   _stopPollingData() {
@@ -282,10 +275,9 @@ export class Dapp extends React.Component {
   async _getNextPrize() {
     const nextPrizeIndex = await this._sweepstakes.prizeScheduleIndex();
     const nextPrizePct = await this._sweepstakes.prizeSchedule(nextPrizeIndex);
-    const nextPrize = await this._getPrizePool() * (nextPrizePct / 100);
+    const nextPrize = (await this._getPrizePool()) * (nextPrizePct / 100);
     this.setState({ nextPrize, nextPrizePct });
   }
-    
 
   async _getCurrentEpoch() {
     const epoch = await this._stakingHelper.epoch();

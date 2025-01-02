@@ -148,7 +148,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
 
   return (
     <>
-      <div className="card p-4 mb-5 mt-1">
+      <div className="sweepstakes-card card mb-5">
         <div className="row">
           <div className="col-md-6 pb-4">
             <h3>Sweepstakes</h3>

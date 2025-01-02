@@ -73,6 +73,7 @@
 .btn-outline-primary {
   color: #303030;
   border-color: #303030;
+  background-color: #fff;
 }
 
 .btn-success {
@@ -212,6 +213,18 @@
   padding: 20px;
   margin-bottom: 20px;
   border: #0b5a10 1px solid;
+}
+
+.sweepstakes-card{
+  border-top-left-radius: 0 !important;
+  border-top-right-radius: 0 !important;
+  box-shadow: 5px 10px 20px rgba(0, 0, 0, 0.7) !important;
+}
+
+.wrapper-group {
+  color: #434343;
+  border: #0b5a10 1px solid;
+  border-bottom: 0px;
 }
 
 .chain {
