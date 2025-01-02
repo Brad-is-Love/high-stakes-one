@@ -34,7 +34,7 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const secondsInAYear = 24*60*60*365;
   const nextPrizeCalc = ((drawPeriod/secondsInAYear) * (0.075 * totalStaked * nextPrizePct/100) + nextPrize)*0.96;
 
-  const GRAPHQL_ENDPOINT = 'https://indexer.dev.hyperindex.xyz/1a7fc84/v1/graphql'
+  const GRAPHQL_ENDPOINT = 'https://indexer.dev.hyperindex.xyz/4e8aa46/v1/graphql'
   const headers = {
     'Content-Type': 'application/json',
   }
