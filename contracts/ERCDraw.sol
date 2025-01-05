@@ -8,6 +8,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 contract ERCDraw {
     address public owner;
+    address public beneficiary;
     address public prizeTokenAddress;
     address public sweepstakesNFTsAddress;
     IERC20 public prizeToken;
@@ -71,11 +72,15 @@ contract ERCDraw {
 
     function withdrawPrizeToken(uint256 amount) external onlyOwner {
         // Withdraw prize token from the contract in case of emergency
-        require(prizeToken.transfer(owner, amount), "Transfer failed");
+        require(prizeToken.transfer(beneficiary, amount), "Transfer failed");
     }
 
     function setOwner(address _owner) external onlyOwner {
         owner = _owner;
+    }
+
+    function setBeneficiary(address _beneficiary) external onlyOwner {
+        beneficiary = _beneficiary;
     }
 
     function setPrizeToken(address _prizeTokenAddress) external onlyOwner {

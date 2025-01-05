@@ -224,6 +224,7 @@
 .wrapper-group {
   color: #434343;
   border: #0b5a10 1px solid;
+  border-radius: 5px;
   border-bottom: 0px;
 }
 
