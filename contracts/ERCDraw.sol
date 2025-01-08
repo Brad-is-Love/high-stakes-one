@@ -85,6 +85,7 @@ contract ERCDraw {
 
     function setPrizeToken(address _prizeTokenAddress) external onlyOwner {
         prizeToken = IERC20(_prizeTokenAddress);
+        prizeTokenAddress = _prizeTokenAddress;
     }
 
     function setWeeklyPrizePool(uint256 _weeklyPrizePool) external onlyOwner {

@@ -22,7 +22,6 @@ export function GamesWrapper({
   stakingHelperAddress,
   sweepStakesAddress,
   selectedAddress,
-  ownerOf,
 }) {
   const [selectedOption, setSelectedOption] = useState("ONE");
   //date states

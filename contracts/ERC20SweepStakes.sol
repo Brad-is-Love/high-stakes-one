@@ -22,7 +22,9 @@ contract ERC20SweepStakesNFTs is ERC721Enumerable {
     address public beneficiary;
     address public prizeTokenAddress;
     IERC20 public prizeToken;
-    uint256 public prizeTokenBalanceForPrizes;
+    address public stakingTokenAddress;
+    IERC20 public stakingToken;
+    uint256 public prizePool; // the balance of the prize token in the contract dedicated to prizes
     uint256 public minStake = 100 ether; // This was changed to 20 ONE after deployment
     uint256 private lastWinner; //last winner is assigned to private variable on draw and revealed on sendPrize to prevent malicious draws
     uint256 public weeklyPrizePool;
@@ -33,7 +35,7 @@ contract ERC20SweepStakesNFTs is ERC721Enumerable {
     mapping(uint256 => uint256) public tokenIdToStakedAmount;
 
 // add inputs to map existing tokens values on deployment because we updated previous contract.
-    constructor(address _prizeTokenAddress) ERC721("ERC20 Sweepstakes", "ESS") {
+    constructor(address _prizeTokenAddress, address _stakingTokenAddress) ERC721("ERC20 Sweepstakes", "ESS") {
         tokenCounter = 0;
         owner = msg.sender;
         beneficiary = msg.sender;
@@ -43,6 +45,8 @@ contract ERC20SweepStakesNFTs is ERC721Enumerable {
         pageSize = 100;
         prizeToken = IERC20(_prizeTokenAddress);
         prizeTokenAddress = _prizeTokenAddress;
+        stakingToken = IERC20(_stakingTokenAddress);
+        stakingTokenAddress = _stakingTokenAddress;
     }
 
     event Enter(address _user, uint256 indexed _tokenId, uint256 _amount);
@@ -58,29 +62,26 @@ contract ERC20SweepStakesNFTs is ERC721Enumerable {
     // enter - will mint a new token and add the stake to the token
     function enter(uint256 _amount) external {
         require(_amount >= minStake, "Too low");
-        address entrant = msg.sender;
-        require(prizeToken.transferFrom(entrant, address(this), _amount), "Transfer failed");
-        _safeMint(entrant, tokenCounter);
+        require(stakingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
+        _safeMint(msg.sender, tokenCounter);
         addStake(tokenCounter, _amount);
 
-        emit Enter(entrant, tokenCounter, _amount);
+        emit Enter(msg.sender, tokenCounter, _amount);
         tokenCounter++;
     }
 
     // addToToken - will add the stake to existing token
     function addToToken(uint256 _amount, uint256 _tokenId) external {
-        address entrant = msg.sender;
-        require(_isApprovedOrOwner(entrant, _tokenId), "Not owner or approved");
-        require(prizeToken.transferFrom(entrant, address(this), _amount), "Transfer failed");
+        require(_isApprovedOrOwner(msg.sender, _tokenId), "Not owner or approved");
+        require(stakingToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
         addStake(_tokenId, _amount);
 
-        emit Enter(entrant, _tokenId, _amount);
+        emit Enter(msg.sender, _tokenId, _amount);
     }
 
     // unstake - will add a withdrawEpoch to the token, along with the amount to unstake
     function withdraw(uint256 _amount, uint256 _tokenId) external {
-        address _holder = msg.sender;
-        require(_isApprovedOrOwner(_holder, _tokenId), "Not owner or approved");
+        require(_isApprovedOrOwner(msg.sender, _tokenId), "Not owner or approved");
         require(tokenIdToStakedAmount[_tokenId] >= _amount, "Not enough staked");
         tokenIdToStakedAmount[_tokenId] -= _amount;
         pages[_tokenId / pageSize] -= _amount;
@@ -89,9 +90,9 @@ contract ERC20SweepStakesNFTs is ERC721Enumerable {
         if (tokenIdToStakedAmount[_tokenId] == 0) {
             burn(_tokenId);
         }
-        require(prizeToken.transfer(_holder, _amount), "Transfer failed");
+        require(stakingToken.transfer(msg.sender, _amount), "Transfer failed");
 
-        emit Withdraw(_holder, _tokenId, _amount);
+        emit Withdraw(msg.sender, _tokenId, _amount);
     }
 
     function burn(uint256 _tokenId) internal {
@@ -121,8 +122,8 @@ contract ERC20SweepStakesNFTs is ERC721Enumerable {
             lastWinner = lastWinner % (totalStaked - 1);
         } 
         uint256 prize = weeklyPrizePool * prizeSchedule[prizeScheduleIndex]/100;
-        require(prizeTokenBalanceForPrizes >= prize, "Not enough prize tokens");
-        prizeTokenBalanceForPrizes -= prize;
+        require(prizePool >= prize, "Not enough prize tokens");
+        prizePool -= prize;
 
         uint256 fees = (prize * prizeFee) / 10000;
 
@@ -137,8 +138,7 @@ contract ERC20SweepStakesNFTs is ERC721Enumerable {
         
         uint256 winningToken = tokenAtIndex(lastWinner);
         
-        //auto compound prizes
-        addStake(winningToken, prize);
+        require(prizeToken.transfer(ownerOf(winningToken), prize), "Transfer failed");
 
         emit PrizeSent(ownerOf(winningToken), winningToken, prize);
     }
@@ -188,7 +188,7 @@ contract ERC20SweepStakesNFTs is ERC721Enumerable {
 
     function fundWithPrizeTokens(uint256 _amount) external {
         require(prizeToken.transferFrom(msg.sender, address(this), _amount), "Transfer failed");
-        prizeTokenBalanceForPrizes += _amount;
+        prizePool += _amount;
     }
 
     function withdrawPrizeToken(uint256 amount) external onlyOwner {
@@ -214,6 +214,12 @@ contract ERC20SweepStakesNFTs is ERC721Enumerable {
 
     function setPrizeToken(address _prizeTokenAddress) external onlyOwner {
         prizeToken = IERC20(_prizeTokenAddress);
+        prizeTokenAddress = _prizeTokenAddress;
+    }
+
+    function setStakingToken(address _stakingTokenAddress) external onlyOwner {
+        stakingToken = IERC20(_stakingTokenAddress);
+        stakingTokenAddress = _stakingTokenAddress;
     }
 
     function setOwner(address _owner) external onlyOwner {

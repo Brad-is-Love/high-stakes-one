@@ -8,7 +8,7 @@ import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, nextPrize, nextPrizePct, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress, ownerOf}) {
+export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, nextPrize, nextPrizePct, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress}) {
 
 //run countdown timer every second
   React.useEffect(() => {
