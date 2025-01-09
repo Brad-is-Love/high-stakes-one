@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
+import { Web3Context } from "../contexts/web3Context";
 import { ethers } from "ethers"; 
 import { TransactionButton } from "./TransactionButton";
 import { EnterForm } from "./EnterForm";
@@ -8,7 +9,29 @@ import { Prizes } from "./Prizes";
 import { LuckyStakerRules } from "./LuckyStakerRules";
 
 
-export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, drawPeriod, nextPrize, nextPrizePct, drawFunction, txBeingSent, assignPrize, stake, unstake, withdraw, userStaked, userUnstaked, userWithdrawable, userWithdrawEpoch, stakingHelperAddress, sweepStakesAddress, selectedAddress}) {
+export function LuckyStaker() {
+  const {
+    selectedAddress,
+    balance,
+    txBeingSent,
+    drawFunction,
+    userStaked,
+    userUnstaked,
+    userWithdrawEpoch,
+    userWithdrawable,
+    assignPrize,
+    stake,
+    unstake,
+    withdraw,
+    nextDrawTime,
+    drawPeriod,
+    nextPrize,
+    nextPrizePct,
+    currentEpoch,
+    totalStaked,
+    stakingHelperAddress,
+    sweepStakesAddress,
+  } = useContext(Web3Context);
 
 //run countdown timer every second
   React.useEffect(() => {

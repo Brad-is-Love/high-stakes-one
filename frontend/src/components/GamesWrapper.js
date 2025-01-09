@@ -1,28 +1,7 @@
 import React, { useState } from "react";
 import { LuckyStaker } from "./LuckyStaker";
 
-export function GamesWrapper({
-  balance,
-  currentEpoch,
-  totalStaked,
-  nextDrawTime,
-  drawPeriod,
-  nextPrize,
-  nextPrizePct,
-  drawFunction,
-  txBeingSent,
-  assignPrize,
-  stake,
-  unstake,
-  withdraw,
-  userStaked,
-  userUnstaked,
-  userWithdrawable,
-  userWithdrawEpoch,
-  stakingHelperAddress,
-  sweepStakesAddress,
-  selectedAddress,
-}) {
+export function GamesWrapper() {
   const [selectedOption, setSelectedOption] = useState("ONE");
   //date states
 
@@ -34,28 +13,7 @@ export function GamesWrapper({
 
   if (selectedOption === "ONE") {
     formComponent = (
-      <LuckyStaker
-        balance={balance}
-        currentEpoch={currentEpoch}
-        totalStaked={totalStaked}
-        nextDrawTime={nextDrawTime}
-        drawPeriod={drawPeriod}
-        nextPrize={nextPrize}
-        nextPrizePct={nextPrizePct}
-        drawFunction={drawFunction}
-        txBeingSent={txBeingSent}
-        assignPrize={assignPrize}
-        stake={stake}
-        unstake={unstake}
-        withdraw={withdraw}
-        userStaked={userStaked}
-        userUnstaked={userUnstaked}
-        userWithdrawEpoch={userWithdrawEpoch}
-        userWithdrawable={userWithdrawable}
-        stakingHelperAddress={stakingHelperAddress}
-        sweepStakesAddress={sweepStakesAddress}
-        selectedAddress={selectedAddress}
-      />
+      <LuckyStaker />
     );
   } else if (selectedOption === "ERC20") {
     formComponent = <h1>ERC20</h1>;
