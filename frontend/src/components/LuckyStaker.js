@@ -34,53 +34,32 @@ export function LuckyStaker({balance, currentEpoch, totalStaked, nextDrawTime, d
   const secondsInAYear = 24*60*60*365;
   const nextPrizeCalc = ((drawPeriod/secondsInAYear) * (0.075 * totalStaked * nextPrizePct/100) + nextPrize)*0.96;
 
-  const GRAPHQL_ENDPOINT = 'https://indexer.dev.hyperindex.xyz/13b521f/v1/graphql'
-  const headers = {
-    'Content-Type': 'application/json',
-  }
-  const graphqlQuery = {
-    query: `
-      query MyQuery {
-        SweepStakesNFTs_WinnerAssigned(
-          order_by: {timestamp: desc}
-          where: {timestamp: {_gt: 1698692165}}
-        ) {
-          winnerAddress
-          _amount
-          winnerBalance
-          totalBalance
-          timestamp
-        }
-      }
-    `
-  };
+  const INDEXER_URL = process.env.REACT_APP_INDEXER_URL || 'http://localhost:3001/api';
   const isNarrowScreen = window.innerWidth < 992;
 
   const getData = async () => {
     setLoading(true);
     try {
-      const response = await fetch(GRAPHQL_ENDPOINT, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(graphqlQuery),
-      });
-      const data = await response.json();
-      const events = data.data.SweepStakesNFTs_WinnerAssigned;
+      const response = await fetch(`${INDEXER_URL}/winners`);
+      const result = await response.json();
+      const events = result.data;
+      
       const newWinners = events.map(event => ({
         winner: event.winnerAddress.toLowerCase() === selectedAddress.toLowerCase() 
           ? "YOU!" :
           isNarrowScreen
             ? `${event.winnerAddress.slice(0, 4)}...${event.winnerAddress.slice(-4)}`
             : event.winnerAddress,
-        amount: event._amount.toString().slice(0,-18)+"."+event._amount.toString().slice(-18,-16),
-        date: new Date(event.timestamp*1000).toISOString().slice(0, 10),
-        odds: "1/" + (event.totalBalance / event.winnerBalance).toFixed(0)
+        amount: parseFloat(event.amount).toFixed(2),
+        date: new Date(event.timestamp * 1000).toISOString().slice(0, 10),
+        odds: event.odds || "-"
       }));
   
       setWinners([...newWinners]);
 
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error fetching winners:', error);
+      setWinners([]); 
     }
 
     setLoading(false);

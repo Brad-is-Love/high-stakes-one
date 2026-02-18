@@ -40,6 +40,9 @@ const MAINNET = {
   sweepstakesAddress: sweepstakesAddress.address,
   stakingHelperAddress: stakingHelperAddress.address,
 };
+
+const SELECTED_NETWORK = MAINNET;
+
 const ERROR_CODE_TX_REJECTED_BY_USER = 4001;
 
 export class Dapp extends React.Component {
@@ -141,8 +144,8 @@ export class Dapp extends React.Component {
                   userUnstaked={this.state.userUnstaked}
                   userWithdrawEpoch={this.state.userWithdrawEpoch}
                   userWithdrawable={this.state.userWithdrawable}
-                  stakingHelperAddress={MAINNET.stakingHelperAddress.toString()}
-                  sweepStakesAddress={MAINNET.sweepstakesAddress.toString()}
+          stakingHelperAddress={SELECTED_NETWORK.stakingHelperAddress.toString()}
+          sweepStakesAddress={SELECTED_NETWORK.sweepstakesAddress.toString()}
                   selectedAddress={this.state.selectedAddress}
                   lastWinner={this.state.lastWinner}
                   lastPrize={this.state.lastPrize}
@@ -215,13 +218,13 @@ export class Dapp extends React.Component {
     await this._provider.getNetwork();
 
     this._sweepstakes = new ethers.Contract(
-      MAINNET.sweepstakesAddress,
+      SELECTED_NETWORK.sweepstakesAddress,
       sweepstakesAtrifact.abi,
       this._provider.getSigner(0)
     );
 
     this._stakingHelper = new ethers.Contract(
-      MAINNET.stakingHelperAddress,
+      SELECTED_NETWORK.stakingHelperAddress,
       stakingHelperAtrifact.abi,
       this._provider.getSigner(0)
     );
@@ -428,16 +431,16 @@ export class Dapp extends React.Component {
   }
 
   async _addChain() {
-    const chainIdHex = `0x${MAINNET.ID.toString(16)}`;
+    const chainIdHex = `0x${SELECTED_NETWORK.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_addEthereumChain",
       params: [
         {
           chainId: chainIdHex,
-          chainName: MAINNET.chainName,
-          nativeCurrency: MAINNET.nativeCurrency,
-          rpcUrls: MAINNET.rpcUrls,
-          blockExplorerUrls: MAINNET.blockExplorerUrls,
+          chainName: SELECTED_NETWORK.chainName,
+          nativeCurrency: SELECTED_NETWORK.nativeCurrency,
+          rpcUrls: SELECTED_NETWORK.rpcUrls,
+          blockExplorerUrls: SELECTED_NETWORK.blockExplorerUrls,
         },
       ],
     });
@@ -445,7 +448,7 @@ export class Dapp extends React.Component {
 
   async _switchChain() {
     await this._addChain();
-    const chainIdHex = `0x${MAINNET.ID.toString(16)}`;
+    const chainIdHex = `0x${SELECTED_NETWORK.ID.toString(16)}`;
     await window.ethereum.request({
       method: "wallet_switchEthereumChain",
       params: [{ chainId: chainIdHex }],
@@ -459,9 +462,11 @@ export class Dapp extends React.Component {
         method: "eth_chainId",
       })
       .then((chainId) => {
-        if (chainId !== `0x${MAINNET.ID.toString(16)}`) {
+        // Handle both hex string return values (some wallets return with/without leading 0s)
+        const expectedChainId = `0x${SELECTED_NETWORK.ID.toString(16)}`;
+        if (chainId !== expectedChainId && parseInt(chainId) !== SELECTED_NETWORK.ID) {
           this.setState({
-            networkError: "Please switch to the Harmony Mainnet",
+            networkError: `Please switch to ${SELECTED_NETWORK.chainName}`,
           });
         } else {
           this.setState({ networkError: undefined });
