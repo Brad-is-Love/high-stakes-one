@@ -10,7 +10,7 @@ export function UnstakeForm({ userStaked, userUnstaked, userWithdrawable, unstak
   const [tickets, setTickets] = useState("");
   const [max, setMax] = useState(false);
   
-  const readableStaked = userStaked ? parseFloat(ethers.utils.formatEther(userStaked)).toFixed(2) : 0
+  const readableStaked = userStaked ? parseFloat(ethers.formatEther(userStaked)).toFixed(2) : 0
 
   const handleTicketsChange = (event) => {
     setMax(false);
