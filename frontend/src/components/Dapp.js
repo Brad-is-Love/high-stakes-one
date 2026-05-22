@@ -210,7 +210,7 @@ export class Dapp extends React.Component {
   }
 
   async _initializeEthers() {
-    this._provider = new ethers.providers.Web3Provider(window.ethereum);
+    this._provider = new ethers.BrowserProvider(window.ethereum);
 
     await this._provider.getNetwork();
 
@@ -250,7 +250,7 @@ export class Dapp extends React.Component {
 
   async _getTotalStaked() {
     let totalStaked = await this._sweepstakes.totalStaked();
-    totalStaked = ethers.utils.formatEther(totalStaked);
+    totalStaked = ethers.formatEther(totalStaked);
     totalStaked = parseFloat(totalStaked).toFixed(0);
     this.setState({ totalStaked });
   }
@@ -273,9 +273,9 @@ export class Dapp extends React.Component {
 
   async _getPrizePool() {
     const prizePoolBN = await this._sweepstakes.prizePool();
-    const prizePool = parseInt(ethers.utils.formatEther(prizePoolBN));
+    const prizePool = parseInt(ethers.formatEther(prizePoolBN));
     const extraFundsBN = await this._stakingHelper.extraFunds();
-    const extraFunds = parseInt(ethers.utils.formatEther(extraFundsBN));
+    const extraFunds = parseInt(ethers.formatEther(extraFundsBN));
     return prizePool + extraFunds;
   }
 
@@ -319,7 +319,7 @@ export class Dapp extends React.Component {
 
   async _updateBalance() {
     let balance = await this._provider.getBalance(this.state.selectedAddress);
-    balance = ethers.utils.formatEther(balance);
+    balance = ethers.formatEther(balance);
     balance = parseFloat(balance).toFixed(2);
     this.setState({ balance });
   }
@@ -342,7 +342,7 @@ export class Dapp extends React.Component {
   }
 
   async _stake(amount) {
-    const stake = ethers.utils.parseEther(amount.toString());
+    const stake = ethers.parseEther(amount.toString());
     if (this.state.userTokenId === undefined) {
       //enter the draw and mint a token
       await this._sendTransaction("Stake", async () => {
@@ -366,7 +366,7 @@ export class Dapp extends React.Component {
     if (isMax) {
       toUnstake = this.state.userStaked;
     } else {
-      toUnstake = ethers.utils.parseEther(amount.toString());
+      toUnstake = ethers.parseEther(amount.toString());
     }
     await this._sendTransaction("Unstake", async () => {
       return await this._stakingHelper.unstake(

@@ -11,10 +11,10 @@ export function WithdrawForm({
   txBeingSent,
 }) {
   const readableUnstaked = userUnstaked
-    ? parseFloat(ethers.utils.formatEther(userUnstaked)).toFixed(2)
+    ? parseFloat(ethers.formatEther(userUnstaked)).toFixed(2)
     : 0;
   const readableWithdrawable = userWithdrawable
-    ? parseFloat(ethers.utils.formatEther(userWithdrawable)).toFixed(3)
+    ? parseFloat(ethers.formatEther(userWithdrawable)).toFixed(3)
     : 0;
   let withdrawButton = false;
 
